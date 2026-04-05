@@ -10,16 +10,16 @@ export default function RevenueChart({ renters, charges, currency }) {
     months.push({
       name: d.toLocaleDateString('en-US', { month: 'short' }),
       month: d.getMonth(),
-      year: d.getFullYear(),
+      year: d.getFullYear()
     });
   }
 
-  const totalMonthlyRent = renters
-    .filter(r => r.status === 'active')
-    .reduce((sum, r) => sum + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
+  const totalMonthlyRent = renters.
+  filter((r) => r.status === 'active').
+  reduce((sum, r) => sum + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
 
-  const totalMonthlyCharges = charges
-    .reduce((sum, c) => sum + (c.amount || 0) * freqMultiplier(c.frequency), 0);
+  const totalMonthlyCharges = charges.
+  reduce((sum, c) => sum + (c.amount || 0) * freqMultiplier(c.frequency), 0);
 
   const data = months.map((m, i) => {
     // Simulate slight variation for past months, current month exact
@@ -27,7 +27,7 @@ export default function RevenueChart({ renters, charges, currency }) {
     return {
       name: m.name,
       rent: Math.round(totalMonthlyRent * factor * 100) / 100,
-      charges: Math.round(totalMonthlyCharges * factor * 100) / 100,
+      charges: Math.round(totalMonthlyCharges * factor * 100) / 100
     };
   });
 
@@ -36,17 +36,17 @@ export default function RevenueChart({ renters, charges, currency }) {
     return (
       <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
         <p className="text-xs font-medium text-muted-foreground mb-1.5">{label}</p>
-        {payload.map((p, i) => (
-          <p key={i} className="text-sm font-mono" style={{ color: p.color }}>
+        {payload.map((p, i) =>
+        <p key={i} className="text-sm font-mono" style={{ color: p.color }}>
             {p.name}: {formatCurrency(p.value, currency)}
           </p>
-        ))}
-      </div>
-    );
+        )}
+      </div>);
+
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5 sm:p-6 animate-fade-in">
+    <div className="bg-card p-5 opacity-100 rounded-xl border border-border sm:p-6 animate-fade-in">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-sm font-semibold">Revenue Overview</h3>
@@ -61,20 +61,20 @@ export default function RevenueChart({ renters, charges, currency }) {
               dataKey="name"
               tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               tickLine={false}
-              axisLine={false}
-            />
+              axisLine={false} />
+            
             <YAxis
               tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={v => `${currency}${v}`}
-            />
+              tickFormatter={(v) => `${currency}${v}`} />
+            
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="rent" name="Rent" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
             <Bar dataKey="charges" name="Charges" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
-    </div>
-  );
+    </div>);
+
 }
