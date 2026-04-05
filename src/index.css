@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-sans: 'Inter', sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --background: 220 14% 96%;
@@ -15,7 +15,7 @@
     --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
-    --primary: 239 84% 67%;
+    --primary: 43 96% 56%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 96%;
     --secondary-foreground: 220 9% 46%;
@@ -27,8 +27,8 @@
     --destructive-foreground: 0 0% 100%;
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 239 84% 67%;
-    --chart-1: 239 84% 67%;
+    --ring: 43 96% 56%;
+    --chart-1: 43 96% 56%;
     --chart-2: 160 84% 39%;
     --chart-3: 43 96% 56%;
     --chart-4: 280 67% 60%;
@@ -36,12 +36,12 @@
     --radius: 0.625rem;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 224 71% 4%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 43 96% 56%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 96%;
     --sidebar-accent-foreground: 224 71% 4%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 43 96% 56%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
