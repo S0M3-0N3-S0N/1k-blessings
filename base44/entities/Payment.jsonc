@@ -1,0 +1,47 @@
+{
+  "name": "Payment",
+  "type": "object",
+  "properties": {
+    "renter_id": {
+      "type": "string",
+      "title": "Renter ID"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount"
+    },
+    "period": {
+      "type": "string",
+      "title": "Period"
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "paid",
+        "pending",
+        "overdue"
+      ],
+      "default": "pending"
+    },
+    "paid_date": {
+      "type": "string",
+      "title": "Paid Date",
+      "format": "date-time"
+    },
+    "due_date": {
+      "type": "string",
+      "title": "Due Date",
+      "format": "date-time"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "renter_id",
+    "amount",
+    "status"
+  ]
+}

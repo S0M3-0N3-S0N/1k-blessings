@@ -1,0 +1,52 @@
+{
+  "name": "Renter",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "role": {
+      "type": "string",
+      "title": "Role",
+      "default": "Chair"
+    },
+    "rent_amount": {
+      "type": "number",
+      "title": "Rent Amount",
+      "default": 0
+    },
+    "frequency": {
+      "type": "string",
+      "title": "Frequency",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "monthly"
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "avatar_color": {
+      "type": "string",
+      "title": "Avatar Color"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "name",
+    "rent_amount",
+    "frequency"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "Charge",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "renter_id": {
+      "type": "string",
+      "title": "Renter ID"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount",
+      "default": 0
+    },
+    "frequency": {
+      "type": "string",
+      "title": "Frequency",
+      "enum": [
+        "weekly",
+        "biweekly",
+        "monthly"
+      ],
+      "default": "monthly"
+    }
+  },
+  "required": [
+    "description",
+    "amount",
+    "frequency"
+  ]
+}

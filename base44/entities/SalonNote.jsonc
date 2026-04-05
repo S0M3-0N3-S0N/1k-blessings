@@ -1,0 +1,11 @@
+{
+  "name": "SalonNote",
+  "type": "object",
+  "properties": {
+    "content": {
+      "type": "string",
+      "title": "Content"
+    }
+  },
+  "required": []
+}
