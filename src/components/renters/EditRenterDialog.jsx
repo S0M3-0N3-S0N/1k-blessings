@@ -18,6 +18,7 @@ export default function EditRenterDialog({ renter, open, onClose, onUpdated }) {
         rent_amount: renter.rent_amount || 0,
         frequency: renter.frequency || 'monthly',
         status: renter.status || 'active',
+        commission_owner: renter.commission_owner ?? 100,
       });
     }
   }, [renter]);
@@ -76,6 +77,23 @@ export default function EditRenterDialog({ renter, open, onClose, onUpdated }) {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Commission Split</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={form.commission_owner ?? 100}
+                onChange={e => setForm({ ...form, commission_owner: parseFloat(e.target.value) || 0 })}
+                className="h-9 font-mono"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                Owner {form.commission_owner ?? 100}% / Renter {100 - (form.commission_owner ?? 100)}%
+              </span>
+            </div>
           </div>
           <div className="flex gap-2 pt-2">
             <Button type="button" variant="outline" className="flex-1 h-9" onClick={onClose}>Cancel</Button>

@@ -59,9 +59,14 @@ export default function RenterCard({ renter, index, currency, onDelete }) {
             per {renter.frequency === 'monthly' ? 'month' : renter.frequency === 'weekly' ? 'week' : '2 weeks'}
           </p>
         </div>
-        <p className="text-xs text-muted-foreground font-mono">
-          ≈ {formatCurrency(monthlyTotal, currency)}/mo
-        </p>
+        <div className="text-right">
+          <p className="text-xs text-muted-foreground font-mono">≈ {formatCurrency(monthlyTotal, currency)}/mo</p>
+          {(renter.commission_owner !== undefined && renter.commission_owner !== 100) && (
+            <p className="text-[10px] text-primary font-semibold mt-0.5">
+              You {renter.commission_owner}% / Renter {100 - renter.commission_owner}%
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

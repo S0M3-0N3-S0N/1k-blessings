@@ -42,6 +42,13 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "commission_owner": {
+      "type": "number",
+      "title": "Owner Commission %",
+      "default": 100,
+      "minimum": 0,
+      "maximum": 100
     }
   },
   "required": [

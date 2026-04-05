@@ -42,7 +42,7 @@ export default function Layout() {
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Scissors className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold text-sm tracking-tight">Salon Tracker</span>
+          <span className="font-semibold text-sm tracking-tight">1k Blessings</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -70,7 +70,7 @@ export default function Layout() {
             <Scissors className="w-4 h-4 text-primary-foreground" />
           </div>
           <div>
-            <span className="font-semibold text-sm tracking-tight">Salon Tracker</span>
+            <span className="font-semibold text-sm tracking-tight">1k Blessings</span>
             <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Rent Management</p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function Layout() {
           ))}
         </nav>
         <div className="p-4 border-t border-border">
-          <p className="text-[11px] text-muted-foreground">© 2026 Salon Tracker</p>
+          <p className="text-[11px] text-muted-foreground">© 2026 1k Blessings</p>
         </div>
       </aside>
 

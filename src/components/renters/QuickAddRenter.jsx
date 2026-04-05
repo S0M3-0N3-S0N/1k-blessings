@@ -17,6 +17,7 @@ export default function QuickAddRenter({ onAdded }) {
     role: '',
     rent_amount: '',
     frequency: 'monthly',
+    commission_owner: 100,
   });
 
   const handleSubmit = async (e) => {
@@ -30,8 +31,9 @@ export default function QuickAddRenter({ onAdded }) {
       frequency: form.frequency,
       status: 'active',
       avatar_color: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
+      commission_owner: parseFloat(form.commission_owner) || 100,
     });
-    setForm({ name: '', role: '', rent_amount: '', frequency: 'monthly' });
+    setForm({ name: '', role: '', rent_amount: '', frequency: 'monthly', commission_owner: 100 });
     setOpen(false);
     setLoading(false);
     onAdded();
@@ -96,7 +98,26 @@ export default function QuickAddRenter({ onAdded }) {
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" disabled={loading || !form.name || !form.rent_amount} className="w-full h-9 text-sm">
+      <div className="space-y-1">
+        <label className="text-[11px] text-muted-foreground font-medium">Commission Split (Owner % / Renter %)</label>
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            placeholder="Owner %"
+            value={form.commission_owner}
+            onChange={(e) => setForm({ ...form, commission_owner: e.target.value })}
+            className="h-9 text-sm font-mono"
+            min="0"
+            max="100"
+            step="1"
+          />
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            Renter gets {100 - (parseFloat(form.commission_owner) || 0)}%
+          </span>
+        </div>
+      </div>
+      <Button type="submit" disabled={loading || !form.name || !form.rent_amount}
+      className="w-full h-9 text-sm">
         {loading ? 'Adding...' : 'Add Renter'}
       </Button>
     </form>

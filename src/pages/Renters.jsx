@@ -4,14 +4,14 @@ import RenterCard from "../components/renters/RenterCard";
 import QuickAddRenter from "../components/renters/QuickAddRenter";
 import EditRenterDialog from "../components/renters/EditRenterDialog";
 import ChargesLedger from "../components/charges/ChargesLedger";
-import CurrencySelector from "../components/CurrencySelector";
+
 import { Loader2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export default function Renters() {
   const [renters, setRenters] = useState([]);
   const [charges, setCharges] = useState([]);
-  const [currency, setCurrency] = useState('$');
+  const currency = '$';
   const [loading, setLoading] = useState(true);
   const [editRenter, setEditRenter] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -57,7 +57,7 @@ export default function Renters() {
           <h1 className="text-2xl font-bold tracking-tight">Renters</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage stations and chair renters</p>
         </div>
-        <CurrencySelector value={currency} onChange={setCurrency} />
+
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">

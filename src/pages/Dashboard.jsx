@@ -6,14 +6,14 @@ import RevenueChart from "../components/dashboard/RevenueChart";
 import BreakdownCard from "../components/dashboard/BreakdownCard";
 import PaymentSchedule from "../components/payments/PaymentSchedule";
 import NotesCard from "../components/notes/NotesCard";
-import CurrencySelector from "../components/CurrencySelector";
+
 import { Loader2 } from "lucide-react";
 
 export default function Dashboard() {
   const [renters, setRenters] = useState([]);
   const [charges, setCharges] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [currency, setCurrency] = useState('$');
+  const currency = '$';
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -59,7 +59,7 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Overview of your salon rentals</p>
         </div>
-        <CurrencySelector value={currency} onChange={setCurrency} />
+
       </div>
 
       <KpiCards stats={stats} currency={currency} />

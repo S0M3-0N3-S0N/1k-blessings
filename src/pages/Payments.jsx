@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, freqMultiplier, freqLabel, getInitials, getAvatarColor, cn } from "@/lib/utils";
-import CurrencySelector from "../components/CurrencySelector";
+
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, AlertCircle, Clock, Loader2 } from "lucide-react";
@@ -9,7 +9,7 @@ import { CheckCircle2, AlertCircle, Clock, Loader2 } from "lucide-react";
 export default function Payments() {
   const [renters, setRenters] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [currency, setCurrency] = useState('$');
+  const currency = '$';
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -90,7 +90,7 @@ export default function Payments() {
             {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} — Track rent collection
           </p>
         </div>
-        <CurrencySelector value={currency} onChange={setCurrency} />
+
       </div>
 
       {/* Status summary pills */}
