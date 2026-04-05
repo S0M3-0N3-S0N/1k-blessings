@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import PullToRefresh from "../components/PullToRefresh";
 import { base44 } from "@/api/base44Client";
 import RenterCard from "../components/renters/RenterCard";
 import QuickAddRenter from "../components/renters/QuickAddRenter";
@@ -20,7 +21,7 @@ export default function Renters() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [r, c] = await Promise.all([
       base44.entities.Renter.list(),
       base44.entities.Charge.list(),
@@ -28,7 +29,7 @@ export default function Renters() {
     setRenters(r);
     setCharges(c);
     setLoading(false);
-  };
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -51,6 +52,7 @@ export default function Renters() {
   }
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -95,5 +97,6 @@ export default function Renters() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </PullToRefresh>
   );
 }

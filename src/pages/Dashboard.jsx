@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import PullToRefresh from "../components/PullToRefresh";
 import { base44 } from "@/api/base44Client";
 import { freqMultiplier } from "@/lib/utils";
 import KpiCards from "../components/dashboard/KpiCards";
@@ -20,7 +21,7 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [r, c, p] = await Promise.all([
       base44.entities.Renter.list(),
       base44.entities.Charge.list(),
@@ -30,7 +31,7 @@ export default function Dashboard() {
     setCharges(c);
     setPayments(p);
     setLoading(false);
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -53,6 +54,7 @@ export default function Dashboard() {
   };
 
   return (
+    <PullToRefresh onRefresh={loadData}>
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -77,5 +79,6 @@ export default function Dashboard() {
 
       <NotesCard />
     </div>
+    </PullToRefresh>
   );
 }

@@ -18,14 +18,23 @@ export default function ChargesLedger({ charges, renters, currency, onRefresh })
   const handleAdd = async () => {
     if (!form.description || !form.amount) return;
     setLoadingAdd(true);
-    await base44.entities.Charge.create({
+    // Optimistic update
+    const optimisticCharge = {
+      id: `temp-${Date.now()}`,
       description: form.description,
       renter_id: form.renter_id || null,
       amount: parseFloat(form.amount) || 0,
       frequency: form.frequency,
-    });
+    };
+    // We call onRefresh which will re-fetch, but first close the form
     setForm({ description: '', renter_id: '', amount: '', frequency: 'monthly' });
     setAdding(false);
+    await base44.entities.Charge.create({
+      description: optimisticCharge.description,
+      renter_id: optimisticCharge.renter_id,
+      amount: optimisticCharge.amount,
+      frequency: optimisticCharge.frequency,
+    });
     setLoadingAdd(false);
     onRefresh();
   };

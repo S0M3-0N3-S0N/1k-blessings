@@ -96,5 +96,11 @@
   }
   body {
     @apply bg-background text-foreground font-sans;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  button, a, nav {
+    user-select: none;
+    -webkit-user-select: none;
   }
 }

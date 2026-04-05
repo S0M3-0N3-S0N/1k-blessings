@@ -6,9 +6,24 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
+import AccountSettings from './pages/AccountSettings';
 import Dashboard from './pages/Dashboard';
+import { useEffect } from 'react';
 import Renters from './pages/Renters';
 import Payments from './pages/Payments';
+
+const ThemeProvider = ({ children }) => {
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = (e) => {
+      document.documentElement.classList.toggle('dark', e.matches);
+    };
+    apply(mq);
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+  return children;
+};
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -40,6 +55,7 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/renters" element={<Renters />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/account" element={<AccountSettings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     </Routes>
@@ -50,6 +66,7 @@ const AuthenticatedApp = () => {
 function App() {
 
   return (
+    <ThemeProvider>
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
@@ -58,7 +75,8 @@ function App() {
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
-  )
+    </ThemeProvider>
+  );
 }
 
 export default App
