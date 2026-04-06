@@ -1,0 +1,37 @@
+{
+  "name": "TimeEntry",
+  "type": "object",
+  "properties": {
+    "renter_id": {
+      "type": "string",
+      "title": "Renter ID"
+    },
+    "clock_in": {
+      "type": "string",
+      "title": "Clock In",
+      "format": "date-time"
+    },
+    "clock_out": {
+      "type": "string",
+      "title": "Clock Out",
+      "format": "date-time"
+    },
+    "total_hours": {
+      "type": "number",
+      "title": "Total Hours",
+      "default": 0
+    },
+    "week_start": {
+      "type": "string",
+      "title": "Week Start (YYYY-MM-DD)"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "renter_id",
+    "clock_in"
+  ]
+}

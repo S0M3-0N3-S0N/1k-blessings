@@ -49,6 +49,15 @@
       "default": 100,
       "minimum": 0,
       "maximum": 100
+    },
+    "hourly_wage": {
+      "type": "number",
+      "title": "Hourly Wage ($)",
+      "default": 0
+    },
+    "user_email": {
+      "type": "string",
+      "title": "Linked User Email"
     }
   },
   "required": [

@@ -1,0 +1,45 @@
+{
+  "name": "CalendarEvent",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "type": {
+      "type": "string",
+      "title": "Type",
+      "enum": [
+        "callout",
+        "day_off",
+        "shop_event"
+      ],
+      "default": "day_off"
+    },
+    "date": {
+      "type": "string",
+      "title": "Date (YYYY-MM-DD)"
+    },
+    "end_date": {
+      "type": "string",
+      "title": "End Date (YYYY-MM-DD)"
+    },
+    "renter_id": {
+      "type": "string",
+      "title": "Renter ID"
+    },
+    "color": {
+      "type": "string",
+      "title": "Color"
+    }
+  },
+  "required": [
+    "title",
+    "type",
+    "date"
+  ]
+}

@@ -7,8 +7,12 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout';
 import AccountSettings from './pages/AccountSettings';
-import Dashboard from './pages/Dashboard';
-import { useEffect } from 'react';
+import AdminDashboard from './pages/AdminDashboard';
+import RenterDashboard from './pages/RenterDashboard';
+import MasterLedger from './pages/MasterLedger';
+import UserManagement from './pages/UserManagement';
+import Paystub from './pages/Paystub';
+import TeamCalendar from './pages/TeamCalendar';
 import Renters from './pages/Renters';
 import Payments from './pages/Payments';
 
@@ -26,7 +30,7 @@ const ThemeProvider = ({ children }) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -49,12 +53,18 @@ const AuthenticatedApp = () => {
   }
 
   // Render the main app
+  const isAdmin = user?.role === 'admin';
+
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
+        <Route path="/master-ledger" element={<MasterLedger />} />
         <Route path="/renters" element={<Renters />} />
         <Route path="/payments" element={<Payments />} />
+        <Route path="/calendar" element={<TeamCalendar />} />
+        <Route path="/user-management" element={<UserManagement />} />
+        <Route path="/paystub" element={<Paystub />} />
         <Route path="/account" element={<AccountSettings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
