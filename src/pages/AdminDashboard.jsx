@@ -15,43 +15,43 @@ export default function AdminDashboard() {
 
   const loadData = useCallback(async () => {
     const [r, p, t] = await Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.Payment.list(),
-      base44.entities.TimeEntry.list(),
-    ]);
+    base44.entities.Renter.list(),
+    base44.entities.Payment.list(),
+    base44.entities.TimeEntry.list()]
+    );
     setRenters(r);
     setPayments(p);
     setTimeEntries(t);
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {loadData();}, []);
 
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
       <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+    </div>);
 
-  const activeRenters = renters.filter(r => r.status === "active");
+
+  const activeRenters = renters.filter((r) => r.status === "active");
   const totalMonthly = activeRenters.reduce((s, r) => s + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const paidThisMonth = payments.filter(p => p.period === currentMonth && p.status === "paid")
-    .reduce((s, p) => s + (p.amount || 0), 0);
+  const paidThisMonth = payments.filter((p) => p.period === currentMonth && p.status === "paid").
+  reduce((s, p) => s + (p.amount || 0), 0);
 
   const thisWeekStart = new Date(now);
   thisWeekStart.setDate(now.getDate() - now.getDay());
-  const totalHoursThisWeek = timeEntries
-    .filter(t => t.clock_in && new Date(t.clock_in) >= thisWeekStart)
-    .reduce((s, t) => s + (t.total_hours || 0), 0);
+  const totalHoursThisWeek = timeEntries.
+  filter((t) => t.clock_in && new Date(t.clock_in) >= thisWeekStart).
+  reduce((s, t) => s + (t.total_hours || 0), 0);
 
   const stats = [
-    { label: "Monthly Rent Revenue", value: formatCurrency(totalMonthly, currency), icon: DollarSign, color: "text-primary", bg: "bg-primary/10", sub: "projected" },
-    { label: "Collected This Month", value: formatCurrency(paidThisMonth, currency), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", sub: "payments received" },
-    { label: "Active Renters", value: activeRenters.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", sub: "stations occupied" },
-    { label: "Hours Logged This Week", value: totalHoursThisWeek.toFixed(1) + "h", icon: Clock, color: "text-amber-600", bg: "bg-amber-50", sub: "across all renters" },
-  ];
+  { label: "Monthly Rent Revenue", value: formatCurrency(totalMonthly, currency), icon: DollarSign, color: "text-primary", bg: "bg-primary/10", sub: "projected" },
+  { label: "Collected This Month", value: formatCurrency(paidThisMonth, currency), icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50", sub: "payments received" },
+  { label: "Active Renters", value: activeRenters.length, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50", sub: "stations occupied" },
+  { label: "Hours Logged This Week", value: totalHoursThisWeek.toFixed(1) + "h", icon: Clock, color: "text-amber-600", bg: "bg-amber-50", sub: "across all renters" }];
+
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -74,8 +74,8 @@ export default function AdminDashboard() {
                 </div>
                 <p className={`text-xl sm:text-2xl font-semibold font-mono tracking-tight ${s.color}`}>{s.value}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">{s.sub}</p>
-              </div>
-            );
+              </div>);
+
           })}
         </div>
 
@@ -88,9 +88,9 @@ export default function AdminDashboard() {
             </div>
             <div className="divide-y divide-border">
               {activeRenters.slice(0, 5).map((r) => {
-                const hours = timeEntries
-                  .filter(t => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= thisWeekStart)
-                  .reduce((s, t) => s + (t.total_hours || 0), 0);
+                const hours = timeEntries.
+                filter((t) => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= thisWeekStart).
+                reduce((s, t) => s + (t.total_hours || 0), 0);
                 const gross = hours * (r.hourly_wage || 0);
                 const weeklyRent = (r.rent_amount || 0) * freqMultiplier(r.frequency) / 4.33;
                 const net = gross - weeklyRent;
@@ -106,36 +106,36 @@ export default function AdminDashboard() {
                       </p>
                       <p className="text-[10px] text-muted-foreground">{net >= 0 ? "net pay" : "balance due"}</p>
                     </div>
-                  </div>
-                );
+                  </div>);
+
               })}
-              {activeRenters.length === 0 && (
-                <p className="px-5 py-6 text-sm text-muted-foreground text-center">No active renters yet.</p>
-              )}
+              {activeRenters.length === 0 &&
+              <p className="px-5 py-6 text-sm text-muted-foreground text-center">No active renters yet.</p>
+              }
             </div>
           </div>
 
           {/* Quick Links */}
-          <div className="bg-card rounded-xl border border-border">
-            <div className="px-5 py-4 border-b border-border">
-              <h3 className="text-sm font-semibold">Quick Actions</h3>
-            </div>
-            <div className="p-4 grid grid-cols-2 gap-3">
-              {[
-                { label: "Master Ledger", to: "/master-ledger", color: "bg-indigo-50 text-indigo-700 border-indigo-100" },
-                { label: "Manage Renters", to: "/renters", color: "bg-primary/10 text-primary border-primary/20" },
-                { label: "Payments", to: "/payments", color: "bg-emerald-50 text-emerald-700 border-emerald-100" },
-                { label: "Team Calendar", to: "/calendar", color: "bg-violet-50 text-violet-700 border-violet-100" },
-                { label: "User Management", to: "/user-management", color: "bg-amber-50 text-amber-700 border-amber-100" },
-              ].map(({ label, to, color }) => (
-                <Link key={to} to={to} className={`flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-opacity hover:opacity-80 ${color}`}>
-                  {label} <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              ))}
-            </div>
-          </div>
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
         </div>
       </div>
-    </PullToRefresh>
-  );
+    </PullToRefresh>);
+
 }
