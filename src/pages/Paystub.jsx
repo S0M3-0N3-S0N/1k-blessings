@@ -22,7 +22,7 @@ export default function Paystub() {
   const currency = "$";
 
   useEffect(() => {
-    if (!user?.email) return;
+    if (!user?.email) { setLoading(false); return; }
     Promise.all([
       base44.entities.Renter.filter({ user_email: user.email }),
       base44.entities.TimeEntry.list(),

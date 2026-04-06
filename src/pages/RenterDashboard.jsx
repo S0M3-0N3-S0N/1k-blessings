@@ -15,7 +15,7 @@ export default function RenterDashboard() {
   const currency = "$";
 
   const loadData = useCallback(async () => {
-    if (!user?.email) return;
+    if (!user?.email) { setLoading(false); return; }
     const [renters, entries] = await Promise.all([
       base44.entities.Renter.filter({ user_email: user.email }),
       base44.entities.TimeEntry.list(),
