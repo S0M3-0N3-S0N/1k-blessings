@@ -68,9 +68,9 @@ export default function AdminDashboard() {
               <div key={s.label} className="bg-card rounded-xl border border-border p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">{s.label}</span>
-                  <div className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center shrink-0`}>
-                    <Icon className={`w-4 h-4 ${s.color}`} />
-                  </div>
+                  
+
+                  
                 </div>
                 <p className={`text-xl sm:text-2xl font-semibold font-mono tracking-tight ${s.color}`}>{s.value}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">{s.sub}</p>
