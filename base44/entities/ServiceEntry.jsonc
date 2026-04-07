@@ -1,0 +1,47 @@
+{
+  "name": "ServiceEntry",
+  "type": "object",
+  "properties": {
+    "renter_id": {
+      "type": "string",
+      "title": "Renter ID"
+    },
+    "client_name": {
+      "type": "string",
+      "title": "Client Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Service Description"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Service Amount ($)",
+      "default": 0
+    },
+    "service_date": {
+      "type": "string",
+      "title": "Service Date (YYYY-MM-DD)"
+    },
+    "renter_pct": {
+      "type": "number",
+      "title": "Renter Commission %",
+      "default": 0
+    },
+    "renter_earnings": {
+      "type": "number",
+      "title": "Renter Earnings ($)",
+      "default": 0
+    },
+    "owner_earnings": {
+      "type": "number",
+      "title": "Owner Earnings ($)",
+      "default": 0
+    }
+  },
+  "required": [
+    "renter_id",
+    "amount",
+    "service_date"
+  ]
+}

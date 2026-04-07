@@ -15,6 +15,7 @@ export default function MasterLedger() {
   const [renters, setRenters] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [charges, setCharges] = useState([]);
+  const [serviceEntries, setServiceEntries] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const currency = "$";
@@ -24,10 +25,12 @@ export default function MasterLedger() {
       base44.entities.Renter.list(),
       base44.entities.TimeEntry.list(),
       base44.entities.Charge.list(),
-    ]).then(([r, t, c]) => {
+      base44.entities.ServiceEntry.list(),
+    ]).then(([r, t, c, s]) => {
       setRenters(r);
       setTimeEntries(t);
       setCharges(c);
+      setServiceEntries(s);
       setLoading(false);
     });
   }, []);
@@ -50,10 +53,13 @@ export default function MasterLedger() {
     const gross = hours * (r.hourly_wage || 0);
     const weeklyRent = (r.rent_amount || 0) * freqMultiplier(r.frequency) / 4.33;
     const renterCharges = charges.filter(c => c.renter_id === r.id).reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency) / 4.33, 0);
+    const serviceEarnings = serviceEntries
+      .filter(se => se.renter_id === r.id && se.service_date >= weekStart.toISOString().split('T')[0] && se.service_date < weekEnd.toISOString().split('T')[0])
+      .reduce((s, se) => s + (se.renter_earnings || 0), 0);
     const totalDeductions = weeklyRent + renterCharges;
-    const net = gross - totalDeductions;
+    const net = gross + serviceEarnings - totalDeductions;
     const avatar = getAvatarColor(i);
-    return { renter: r, hours, gross, weeklyRent, renterCharges, totalDeductions, net, avatar };
+    return { renter: r, hours, gross, weeklyRent, renterCharges, serviceEarnings, totalDeductions, net, avatar };
   });
 
   const totals = rows.reduce((acc, r) => ({
@@ -97,6 +103,7 @@ export default function MasterLedger() {
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Gross Pay</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Rent</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Charges</th>
+              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Services</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Net Pay</th>
             </tr>
           </thead>
@@ -104,7 +111,7 @@ export default function MasterLedger() {
             {rows.length === 0 && (
               <tr><td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">No active renters.</td></tr>
             )}
-            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, net, avatar }) => (
+            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, serviceEarnings, net, avatar }) => (
               <tr key={renter.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2.5">
@@ -122,6 +129,7 @@ export default function MasterLedger() {
                 <td className="px-3 py-3 text-right font-mono font-medium">{formatCurrency(gross, currency)}</td>
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(weeklyRent, currency)}</td>
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(renterCharges, currency)}</td>
+                <td className="px-3 py-3 text-right font-mono text-emerald-600 hidden md:table-cell">+{formatCurrency(serviceEarnings, currency)}</td>
                 <td className="px-3 py-3 text-right">
                   <span className={cn("font-mono font-bold text-sm", net >= 0 ? "text-emerald-600" : "text-red-500")}>
                     {net >= 0 ? "+" : ""}{formatCurrency(net, currency)}

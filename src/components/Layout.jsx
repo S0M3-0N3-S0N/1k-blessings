@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
   LayoutDashboard, Users, CreditCard, Scissors, ChevronLeft, Settings,
-  BookOpen, UserCog, Calendar, Clock, FileText
+  BookOpen, UserCog, Calendar, Clock, FileText, MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,8 @@ const ADMIN_NAV = [
   { path: "/master-ledger", label: "Master Ledger", icon: BookOpen },
   { path: "/renters", label: "Renters", icon: Users },
   { path: "/payments", label: "Payments", icon: CreditCard },
+  { path: "/services", label: "Services", icon: Scissors },
+  { path: "/messages", label: "Messages", icon: MessageSquare },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/user-management", label: "User Mgmt", icon: UserCog },
   { path: "/account", label: "Account", icon: Settings },
@@ -19,11 +21,13 @@ const ADMIN_NAV = [
 const RENTER_NAV = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
   { path: "/paystub", label: "Paystub", icon: FileText },
+  { path: "/services", label: "Services", icon: Scissors },
+  { path: "/messages", label: "Messages", icon: MessageSquare },
   { path: "/calendar", label: "Calendar", icon: Calendar },
   { path: "/account", label: "Account", icon: Settings },
 ];
 
-const PRIMARY_ROUTES = ["/", "/renters", "/payments", "/account", "/master-ledger", "/calendar", "/user-management", "/paystub"];
+const PRIMARY_ROUTES = ["/", "/renters", "/payments", "/account", "/master-ledger", "/calendar", "/user-management", "/paystub", "/services", "/messages"];
 
 function NavLink({ item }) {
   const location = useLocation();

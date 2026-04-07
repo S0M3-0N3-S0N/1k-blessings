@@ -15,6 +15,8 @@ import UserManagement from './pages/UserManagement';
 import Paystub from './pages/Paystub';
 import TeamCalendar from './pages/TeamCalendar';
 import Renters from './pages/Renters';
+import Messages from './pages/Messages';
+import ServiceTracker from './pages/ServiceTracker';
 import Payments from './pages/Payments';
 
 const ThemeProvider = ({ children }) => {
@@ -66,6 +68,8 @@ const AuthenticatedApp = () => {
         <Route path="/calendar" element={<TeamCalendar />} />
         <Route path="/user-management" element={<UserManagement />} />
         <Route path="/paystub" element={<Paystub />} />
+        <Route path="/services" element={<ServiceTracker />} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/account" element={<AccountSettings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
