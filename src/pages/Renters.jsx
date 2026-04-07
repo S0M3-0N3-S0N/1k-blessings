@@ -30,7 +30,7 @@ function RentersTab({ renters, charges, onRefresh }) {
   const handleDelete = async () => {
     if (!deleteId) return;
     await base44.entities.Renter.delete(deleteId);
-    const related = charges.filter(c => c.renter_id === deleteId);
+    const related = charges.filter((c) => c.renter_id === deleteId);
     for (const c of related) await base44.entities.Charge.delete(c.id);
     setDeleteId(null);
     onRefresh();
@@ -39,11 +39,11 @@ function RentersTab({ renters, charges, onRefresh }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {renters.map((r, i) => (
-          <div key={r.id} onClick={() => setEditRenter(r)} className="cursor-pointer">
+        {renters.map((r, i) =>
+        <div key={r.id} onClick={() => setEditRenter(r)} className="cursor-pointer">
             <RenterCard renter={r} index={i} currency={currency} onDelete={(id) => setDeleteId(id)} />
           </div>
-        ))}
+        )}
         <QuickAddRenter onAdded={onRefresh} />
       </div>
 
@@ -53,8 +53,8 @@ function RentersTab({ renters, charges, onRefresh }) {
         renter={editRenter}
         open={!!editRenter}
         onClose={() => setEditRenter(null)}
-        onUpdated={onRefresh}
-      />
+        onUpdated={onRefresh} />
+      
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
@@ -72,8 +72,8 @@ function RentersTab({ renters, charges, onRefresh }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Tab: Master Ledger ───────────────────────────────────────────────────────
@@ -83,17 +83,17 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
 
-  const activeRenters = renters.filter(r => r.status === "active");
+  const activeRenters = renters.filter((r) => r.status === "active");
 
   const rows = activeRenters.map((r, i) => {
-    const entries = timeEntries.filter(t => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= weekStart && new Date(t.clock_in) < weekEnd);
+    const entries = timeEntries.filter((t) => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= weekStart && new Date(t.clock_in) < weekEnd);
     const hours = entries.reduce((s, t) => s + (t.total_hours || 0), 0);
     const gross = hours * (r.hourly_wage || 0);
     const weeklyRent = (r.rent_amount || 0) * freqMultiplier(r.frequency) / 4.33;
-    const renterCharges = charges.filter(c => c.renter_id === r.id).reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency) / 4.33, 0);
-    const serviceEarnings = serviceEntries
-      .filter(se => se.renter_id === r.id && se.service_date >= weekStart.toISOString().split('T')[0] && se.service_date < weekEnd.toISOString().split('T')[0])
-      .reduce((s, se) => s + (se.renter_earnings || 0), 0);
+    const renterCharges = charges.filter((c) => c.renter_id === r.id).reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency) / 4.33, 0);
+    const serviceEarnings = serviceEntries.
+    filter((se) => se.renter_id === r.id && se.service_date >= weekStart.toISOString().split('T')[0] && se.service_date < weekEnd.toISOString().split('T')[0]).
+    reduce((s, se) => s + (se.renter_earnings || 0), 0);
     const totalDeductions = weeklyRent + renterCharges;
     const net = gross + serviceEarnings - totalDeductions;
     const avatar = getAvatarColor(i);
@@ -104,7 +104,7 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
     hours: acc.hours + r.hours,
     gross: acc.gross + r.gross,
     deductions: acc.deductions + r.totalDeductions,
-    net: acc.net + r.net,
+    net: acc.net + r.net
   }), { hours: 0, gross: 0, deductions: 0, net: 0 });
 
   return (
@@ -113,7 +113,7 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
         <p className="text-xs text-muted-foreground">
           Week of {weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – {weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
         </p>
-        <Select value={String(weekOffset)} onValueChange={v => setWeekOffset(Number(v))}>
+        <Select value={String(weekOffset)} onValueChange={(v) => setWeekOffset(Number(v))}>
           <SelectTrigger className="h-9 text-xs w-[160px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="0">This Week</SelectItem>
@@ -133,17 +133,17 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Wage</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Gross Pay</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Rent</th>
-              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Charges</th>
+              
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Services</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Net Pay</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {rows.length === 0 && (
-              <tr><td colSpan={8} className="px-5 py-10 text-center text-muted-foreground text-sm">No active renters.</td></tr>
-            )}
-            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, serviceEarnings, net, avatar }) => (
-              <tr key={renter.id} className="hover:bg-muted/30 transition-colors">
+            {rows.length === 0 &&
+            <tr><td colSpan={8} className="px-5 py-10 text-center text-muted-foreground text-sm">No active renters.</td></tr>
+            }
+            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, serviceEarnings, net, avatar }) =>
+            <tr key={renter.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2.5">
                     <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", avatar.bg, avatar.text)}>
@@ -159,7 +159,7 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground">{formatCurrency(renter.hourly_wage || 0, currency)}/hr</td>
                 <td className="px-3 py-3 text-right font-mono font-medium">{formatCurrency(gross, currency)}</td>
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(weeklyRent, currency)}</td>
-                <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(renterCharges, currency)}</td>
+                
                 <td className="px-3 py-3 text-right font-mono text-emerald-600 hidden md:table-cell">+{formatCurrency(serviceEarnings, currency)}</td>
                 <td className="px-3 py-3 text-right">
                   <span className={cn("font-mono font-bold text-sm", net >= 0 ? "text-emerald-600" : "text-red-500")}>
@@ -168,7 +168,7 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
                   <p className="text-[10px] text-muted-foreground">{net >= 0 ? "net pay" : "balance due"}</p>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
           <tfoot>
             <tr className="bg-muted/50 border-t border-border">
@@ -186,8 +186,8 @@ function LedgerTab({ renters, timeEntries, charges, serviceEntries }) {
           </tfoot>
         </table>
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Tab: User Management ─────────────────────────────────────────────────────
@@ -204,7 +204,7 @@ function UserMgmtTab({ renters, onRefresh }) {
     await base44.entities.Renter.update(id, {
       hourly_wage: parseFloat(editForm.hourly_wage) || 0,
       user_email: editForm.user_email,
-      status: editForm.status,
+      status: editForm.status
     });
     toast.success("Renter updated");
     setEditing(null);
@@ -242,60 +242,60 @@ function UserMgmtTab({ renters, onRefresh }) {
                     </div>
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell">
-                    {isEditing ? (
-                      <Input value={editForm.user_email} onChange={e => setEditForm({ ...editForm, user_email: e.target.value })} className="h-7 text-xs w-48" placeholder="email@example.com" />
-                    ) : (
-                      <span className={cn("text-xs", r.user_email ? "text-foreground" : "text-muted-foreground italic")}>{r.user_email || "Not linked"}</span>
-                    )}
+                    {isEditing ?
+                    <Input value={editForm.user_email} onChange={(e) => setEditForm({ ...editForm, user_email: e.target.value })} className="h-7 text-xs w-48" placeholder="email@example.com" /> :
+
+                    <span className={cn("text-xs", r.user_email ? "text-foreground" : "text-muted-foreground italic")}>{r.user_email || "Not linked"}</span>
+                    }
                   </td>
                   <td className="px-3 py-3 text-right">
-                    {isEditing ? (
-                      <Input type="number" value={editForm.hourly_wage} onChange={e => setEditForm({ ...editForm, hourly_wage: e.target.value })} className="h-7 text-xs w-20 font-mono ml-auto" min="0" step="0.5" />
-                    ) : (
-                      <span className="font-mono text-sm font-medium">{formatCurrency(r.hourly_wage || 0, currency)}/hr</span>
-                    )}
+                    {isEditing ?
+                    <Input type="number" value={editForm.hourly_wage} onChange={(e) => setEditForm({ ...editForm, hourly_wage: e.target.value })} className="h-7 text-xs w-20 font-mono ml-auto" min="0" step="0.5" /> :
+
+                    <span className="font-mono text-sm font-medium">{formatCurrency(r.hourly_wage || 0, currency)}/hr</span>
+                    }
                   </td>
                   <td className="px-3 py-3 hidden sm:table-cell text-right">
-                    {isEditing ? (
-                      <Select value={editForm.status} onValueChange={v => setEditForm({ ...editForm, status: v })}>
+                    {isEditing ?
+                    <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v })}>
                         <SelectTrigger className="h-7 text-xs w-24"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="active">Active</SelectItem>
                           <SelectItem value="inactive">Inactive</SelectItem>
                         </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border", r.status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
+                      </Select> :
+
+                    <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border", r.status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200")}>
                         {r.status}
                       </span>
-                    )}
+                    }
                   </td>
                   <td className="px-3 py-3">
-                    {isEditing ? (
-                      <div className="flex gap-1 justify-end">
+                    {isEditing ?
+                    <div className="flex gap-1 justify-end">
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-emerald-600" onClick={() => saveEdit(r.id)}><Check className="w-3.5 h-3.5" /></Button>
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground" onClick={() => setEditing(null)}><X className="w-3.5 h-3.5" /></Button>
-                      </div>
-                    ) : (
-                      <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground ml-auto flex" onClick={() => startEdit(r)}>
+                      </div> :
+
+                    <Button size="icon" variant="ghost" className="h-7 w-7 text-muted-foreground hover:text-foreground ml-auto flex" onClick={() => startEdit(r)}>
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>
-                    )}
+                    }
                   </td>
-                </tr>
-              );
+                </tr>);
+
             })}
-            {renters.length === 0 && (
-              <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground text-sm">No renters found.</td></tr>
-            )}
+            {renters.length === 0 &&
+            <tr><td colSpan={5} className="px-5 py-10 text-center text-muted-foreground text-sm">No renters found.</td></tr>
+            }
           </tbody>
         </table>
       </div>
       <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-sm text-indigo-700">
         <strong>Tip:</strong> Link a renter's email to their app user account so they can log in and see their private dashboard. Their hourly wage is used to calculate payroll.
       </div>
-    </div>
-  );
+    </div>);
+
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -311,11 +311,11 @@ export default function Renters() {
 
   const loadData = useCallback(async () => {
     const [r, c, t, s] = await Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.Charge.list(),
-      base44.entities.TimeEntry.list(),
-      base44.entities.ServiceEntry.list(),
-    ]);
+    base44.entities.Renter.list(),
+    base44.entities.Charge.list(),
+    base44.entities.TimeEntry.list(),
+    base44.entities.ServiceEntry.list()]
+    );
     setRenters(r);
     setCharges(c);
     setTimeEntries(t);
@@ -323,13 +323,13 @@ export default function Renters() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {loadData();}, [loadData]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
       <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+    </div>);
+
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -341,24 +341,24 @@ export default function Renters() {
 
         {/* Tab Bar */}
         <div className="flex gap-1 bg-muted/50 p-1 rounded-xl w-fit">
-          {TABS.map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
-                activeTab === tab ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
+          {TABS.map((tab) =>
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              "px-4 py-1.5 rounded-lg text-sm font-medium transition-all",
+              activeTab === tab ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+            )}>
+            
               {tab}
             </button>
-          ))}
+          )}
         </div>
 
         {activeTab === "Renters" && <RentersTab renters={renters} charges={charges} onRefresh={loadData} />}
         {activeTab === "Payroll Ledger" && <LedgerTab renters={renters} timeEntries={timeEntries} charges={charges} serviceEntries={serviceEntries} />}
         {activeTab === "User Management" && <UserMgmtTab renters={renters} onRefresh={loadData} />}
       </div>
-    </PullToRefresh>
-  );
+    </PullToRefresh>);
+
 }
