@@ -22,24 +22,24 @@ export default function Payments() {
 
   const loadData = async () => {
     const [r, p] = await Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.Payment.list(),
-    ]);
+    base44.entities.Renter.list(),
+    base44.entities.Payment.list()]
+    );
     setRenters(r);
     setPayments(p);
     setLoading(false);
   };
 
   const getPaymentStatus = (renter) => {
-    const renterPayments = payments.filter(p => p.renter_id === renter.id && p.period === currentMonth);
-    if (renterPayments.some(p => p.status === 'paid')) return 'paid';
+    const renterPayments = payments.filter((p) => p.renter_id === renter.id && p.period === currentMonth);
+    if (renterPayments.some((p) => p.status === 'paid')) return 'paid';
     if (now.getDate() > 5) return 'overdue';
     return 'pending';
   };
 
   const togglePayment = async (renter) => {
     const status = getPaymentStatus(renter);
-    const existing = payments.find(p => p.renter_id === renter.id && p.period === currentMonth);
+    const existing = payments.find((p) => p.renter_id === renter.id && p.period === currentMonth);
 
     if (status === 'paid' && existing) {
       await base44.entities.Payment.update(existing.id, { status: 'pending', paid_date: null });
@@ -52,7 +52,7 @@ export default function Payments() {
         period: currentMonth,
         status: 'paid',
         paid_date: new Date().toISOString(),
-        due_date: new Date(now.getFullYear(), now.getMonth(), 5).toISOString(),
+        due_date: new Date(now.getFullYear(), now.getMonth(), 5).toISOString()
       });
     }
     loadData();
@@ -62,23 +62,23 @@ export default function Payments() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+      </div>);
+
   }
 
-  const activeRenters = renters.filter(r => r.status === 'active');
-  const displayRenters = filterStatus === "all"
-    ? activeRenters
-    : activeRenters.filter(r => getPaymentStatus(r) === filterStatus);
+  const activeRenters = renters.filter((r) => r.status === 'active');
+  const displayRenters = filterStatus === "all" ?
+  activeRenters :
+  activeRenters.filter((r) => getPaymentStatus(r) === filterStatus);
 
-  const paidCount = activeRenters.filter(r => getPaymentStatus(r) === 'paid').length;
-  const overdueCount = activeRenters.filter(r => getPaymentStatus(r) === 'overdue').length;
-  const pendingCount = activeRenters.filter(r => getPaymentStatus(r) === 'pending').length;
+  const paidCount = activeRenters.filter((r) => getPaymentStatus(r) === 'paid').length;
+  const overdueCount = activeRenters.filter((r) => getPaymentStatus(r) === 'overdue').length;
+  const pendingCount = activeRenters.filter((r) => getPaymentStatus(r) === 'pending').length;
 
   const statusConfig = {
     paid: { icon: CheckCircle2, label: 'Paid', color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
     overdue: { icon: AlertCircle, label: 'Overdue', color: 'text-red-600 bg-red-50 border-red-200' },
-    pending: { icon: Clock, label: 'Pending', color: 'text-amber-600 bg-amber-50 border-amber-200' },
+    pending: { icon: Clock, label: 'Pending', color: 'text-amber-600 bg-amber-50 border-amber-200' }
   };
 
   return (
@@ -94,20 +94,20 @@ export default function Payments() {
       </div>
 
       {/* Status summary pills */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <span className="text-sm font-semibold text-emerald-700">{paidCount} Paid</span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
-          <Clock className="w-4 h-4 text-amber-600" />
-          <span className="text-sm font-semibold text-amber-700">{pendingCount} Pending</span>
-        </div>
-        <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-red-600" />
-          <span className="text-sm font-semibold text-red-700">{overdueCount} Overdue</span>
-        </div>
-      </div>
+      
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
       <div className="bg-card rounded-xl border border-border">
         <div className="px-5 py-4 border-b border-border flex items-center justify-between">
@@ -126,20 +126,20 @@ export default function Payments() {
         </div>
 
         <div className="divide-y divide-border">
-          {displayRenters.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-muted-foreground">
+          {displayRenters.length === 0 ?
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
               {activeRenters.length === 0 ? 'Add renters first to track payments.' : 'No payments match this filter.'}
-            </p>
-          ) : (
-            displayRenters.map((r, i) => {
-              const status = getPaymentStatus(r);
-              const config = statusConfig[status];
-              const StatusIcon = config.icon;
-              const monthlyAmount = (r.rent_amount || 0) * freqMultiplier(r.frequency);
-              const avatar = getAvatarColor(i);
+            </p> :
 
-              return (
-                <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors">
+          displayRenters.map((r, i) => {
+            const status = getPaymentStatus(r);
+            const config = statusConfig[status];
+            const StatusIcon = config.icon;
+            const monthlyAmount = (r.rent_amount || 0) * freqMultiplier(r.frequency);
+            const avatar = getAvatarColor(i);
+
+            return (
+              <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", avatar.bg, avatar.text)}>
                       {getInitials(r.name)}
@@ -158,20 +158,20 @@ export default function Payments() {
                       </span>
                     </div>
                     <Button
-                      size="sm"
-                      variant={status === 'paid' ? 'outline' : 'default'}
-                      className="h-8 text-xs min-w-[80px]"
-                      onClick={() => togglePayment(r)}
-                    >
+                    size="sm"
+                    variant={status === 'paid' ? 'outline' : 'default'}
+                    className="h-8 text-xs min-w-[80px]"
+                    onClick={() => togglePayment(r)}>
+                    
                       {status === 'paid' ? 'Undo' : 'Mark Paid'}
                     </Button>
                   </div>
-                </div>
-              );
-            })
-          )}
+                </div>);
+
+          })
+          }
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 }
