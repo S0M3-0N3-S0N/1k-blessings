@@ -22,11 +22,11 @@ export default function MasterLedger() {
 
   useEffect(() => {
     Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.TimeEntry.list(),
-      base44.entities.Charge.list(),
-      base44.entities.ServiceEntry.list(),
-    ]).then(([r, t, c, s]) => {
+    base44.entities.Renter.list(),
+    base44.entities.TimeEntry.list(),
+    base44.entities.Charge.list(),
+    base44.entities.ServiceEntry.list()]
+    ).then(([r, t, c, s]) => {
       setRenters(r);
       setTimeEntries(t);
       setCharges(c);
@@ -38,24 +38,24 @@ export default function MasterLedger() {
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
       <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-    </div>
-  );
+    </div>);
+
 
   const weekStart = getWeekStart(weekOffset);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 7);
 
-  const activeRenters = renters.filter(r => r.status === "active");
+  const activeRenters = renters.filter((r) => r.status === "active");
 
   const rows = activeRenters.map((r, i) => {
-    const entries = timeEntries.filter(t => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= weekStart && new Date(t.clock_in) < weekEnd);
+    const entries = timeEntries.filter((t) => t.renter_id === r.id && t.clock_in && new Date(t.clock_in) >= weekStart && new Date(t.clock_in) < weekEnd);
     const hours = entries.reduce((s, t) => s + (t.total_hours || 0), 0);
     const gross = hours * (r.hourly_wage || 0);
     const weeklyRent = (r.rent_amount || 0) * freqMultiplier(r.frequency) / 4.33;
-    const renterCharges = charges.filter(c => c.renter_id === r.id).reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency) / 4.33, 0);
-    const serviceEarnings = serviceEntries
-      .filter(se => se.renter_id === r.id && se.service_date >= weekStart.toISOString().split('T')[0] && se.service_date < weekEnd.toISOString().split('T')[0])
-      .reduce((s, se) => s + (se.renter_earnings || 0), 0);
+    const renterCharges = charges.filter((c) => c.renter_id === r.id).reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency) / 4.33, 0);
+    const serviceEarnings = serviceEntries.
+    filter((se) => se.renter_id === r.id && se.service_date >= weekStart.toISOString().split('T')[0] && se.service_date < weekEnd.toISOString().split('T')[0]).
+    reduce((s, se) => s + (se.renter_earnings || 0), 0);
     const totalDeductions = weeklyRent + renterCharges;
     const net = gross + serviceEarnings - totalDeductions;
     const avatar = getAvatarColor(i);
@@ -66,7 +66,7 @@ export default function MasterLedger() {
     hours: acc.hours + r.hours,
     gross: acc.gross + r.gross,
     deductions: acc.deductions + r.totalDeductions,
-    net: acc.net + r.net,
+    net: acc.net + r.net
   }), { hours: 0, gross: 0, deductions: 0, net: 0 });
 
   return (
@@ -76,7 +76,7 @@ export default function MasterLedger() {
           <h1 className="text-2xl font-bold tracking-tight">Master Ledger</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Full payroll view for all renters</p>
         </div>
-        <Select value={String(weekOffset)} onValueChange={v => setWeekOffset(Number(v))}>
+        <Select value={String(weekOffset)} onValueChange={(v) => setWeekOffset(Number(v))}>
           <SelectTrigger className="h-9 text-xs w-[160px]">
             <SelectValue />
           </SelectTrigger>
@@ -102,17 +102,17 @@ export default function MasterLedger() {
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Wage</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Gross Pay</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Rent</th>
-              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Charges</th>
+              
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Services</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Net Pay</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {rows.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">No active renters.</td></tr>
-            )}
-            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, serviceEarnings, net, avatar }) => (
-              <tr key={renter.id} className="hover:bg-muted/30 transition-colors">
+            {rows.length === 0 &&
+            <tr><td colSpan={7} className="px-5 py-10 text-center text-muted-foreground text-sm">No active renters.</td></tr>
+            }
+            {rows.map(({ renter, hours, gross, weeklyRent, renterCharges, serviceEarnings, net, avatar }) =>
+            <tr key={renter.id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-2.5">
                     <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold", avatar.bg, avatar.text)}>
@@ -128,7 +128,7 @@ export default function MasterLedger() {
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground">{formatCurrency(renter.hourly_wage || 0, currency)}/hr</td>
                 <td className="px-3 py-3 text-right font-mono font-medium">{formatCurrency(gross, currency)}</td>
                 <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(weeklyRent, currency)}</td>
-                <td className="px-3 py-3 text-right font-mono text-muted-foreground hidden md:table-cell">-{formatCurrency(renterCharges, currency)}</td>
+                
                 <td className="px-3 py-3 text-right font-mono text-emerald-600 hidden md:table-cell">+{formatCurrency(serviceEarnings, currency)}</td>
                 <td className="px-3 py-3 text-right">
                   <span className={cn("font-mono font-bold text-sm", net >= 0 ? "text-emerald-600" : "text-red-500")}>
@@ -137,7 +137,7 @@ export default function MasterLedger() {
                   <p className="text-[10px] text-muted-foreground">{net >= 0 ? "net pay" : "balance due"}</p>
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
           <tfoot>
             <tr className="bg-muted/50 border-t border-border">
@@ -154,6 +154,6 @@ export default function MasterLedger() {
           </tfoot>
         </table>
       </div>
-    </div>
-  );
+    </div>);
+
 }
