@@ -8,13 +8,11 @@ import { cn } from "@/lib/utils";
 
 const ADMIN_NAV = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/master-ledger", label: "Master Ledger", icon: BookOpen },
-  { path: "/renters", label: "Renters", icon: Users },
+  { path: "/renters", label: "Renters & Payroll", icon: Users },
   { path: "/payments", label: "Payments", icon: CreditCard },
   { path: "/services", label: "Services", icon: Scissors },
   { path: "/messages", label: "Messages", icon: MessageSquare },
   { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/user-management", label: "User Mgmt", icon: UserCog },
   { path: "/account", label: "Account", icon: Settings },
 ];
 

@@ -10,8 +10,8 @@ import Layout from './components/Layout';
 import AccountSettings from './pages/AccountSettings';
 import AdminDashboard from './pages/AdminDashboard';
 import RenterDashboard from './pages/RenterDashboard';
-import MasterLedger from './pages/MasterLedger';
-import UserManagement from './pages/UserManagement';
+
+
 import Paystub from './pages/Paystub';
 import TeamCalendar from './pages/TeamCalendar';
 import Renters from './pages/Renters';
@@ -62,11 +62,11 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
-        <Route path="/master-ledger" element={<MasterLedger />} />
+
         <Route path="/renters" element={<Renters />} />
         <Route path="/payments" element={<Payments />} />
         <Route path="/calendar" element={<TeamCalendar />} />
-        <Route path="/user-management" element={<UserManagement />} />
+
         <Route path="/paystub" element={<Paystub />} />
         <Route path="/services" element={<ServiceTracker />} />
         <Route path="/messages" element={<Messages />} />
