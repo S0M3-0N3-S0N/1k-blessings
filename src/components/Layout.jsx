@@ -109,9 +109,9 @@ export default function Layout() {
           <img src={LOGO_URL} alt="1k Blessings" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/40" />
           <div>
             <span className="font-semibold text-sm tracking-tight text-foreground">1K Blessings</span>
-            <p className="text-[10px] text-primary/80 tracking-wide uppercase font-medium">
-              {isAdmin ? "Admin View" : "My Dashboard"}
-            </p>
+            
+
+            
           </div>
         </div>
         <nav className="flex-1 px-3 pt-2 space-y-1">
