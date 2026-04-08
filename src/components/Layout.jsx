@@ -9,23 +9,23 @@ import { cn } from "@/lib/utils";
 const LOGO_URL = "https://media.base44.com/images/public/69d2051a39e024cf4a317ed3/246a2953f_1k.jpeg";
 
 const ADMIN_NAV = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/renters", label: "Renters & Payroll", icon: Users },
-  { path: "/payments", label: "Payments", icon: CreditCard },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/account", label: "Account", icon: Settings },
-];
+{ path: "/", label: "Dashboard", icon: LayoutDashboard },
+{ path: "/renters", label: "Renters & Payroll", icon: Users },
+{ path: "/payments", label: "Payments", icon: CreditCard },
+{ path: "/services", label: "Services", icon: Scissors },
+{ path: "/messages", label: "Messages", icon: MessageSquare },
+{ path: "/calendar", label: "Calendar", icon: Calendar },
+{ path: "/account", label: "Account", icon: Settings }];
+
 
 const RENTER_NAV = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/paystub", label: "Paystub", icon: FileText },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/account", label: "Account", icon: Settings },
-];
+{ path: "/", label: "Dashboard", icon: LayoutDashboard },
+{ path: "/paystub", label: "Paystub", icon: FileText },
+{ path: "/services", label: "Services", icon: Scissors },
+{ path: "/messages", label: "Messages", icon: MessageSquare },
+{ path: "/calendar", label: "Calendar", icon: Calendar },
+{ path: "/account", label: "Account", icon: Settings }];
+
 
 const PRIMARY_ROUTES = ["/", "/renters", "/payments", "/account", "/calendar", "/paystub", "/services", "/messages"];
 
@@ -42,8 +42,8 @@ function NavLink({ item }) {
       )}>
       <Icon className="w-[18px] h-[18px]" />
       <span>{item.label}</span>
-    </Link>
-  );
+    </Link>);
+
 }
 
 function BottomNavItem({ item }) {
@@ -63,8 +63,8 @@ function BottomNavItem({ item }) {
       )}>
       <Icon className="w-5 h-5" />
       <span className="text-[10px] font-medium">{item.label}</span>
-    </Link>
-  );
+    </Link>);
+
 }
 
 export default function Layout() {
@@ -81,19 +81,19 @@ export default function Layout() {
       <header
         className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border flex items-center px-4 gap-3"
         style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(56px + env(safe-area-inset-top))" }}>
-        {isSecondaryRoute ? (
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sm font-medium text-muted-foreground p-1.5 rounded-lg hover:bg-accent transition-colors">
+        {isSecondaryRoute ?
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 text-sm font-medium text-muted-foreground p-1.5 rounded-lg hover:bg-accent transition-colors">
             <ChevronLeft className="w-5 h-5" />
             Back
-          </button>
-        ) : (
-          <div className="flex items-center gap-2.5">
+          </button> :
+
+        <div className="flex items-center gap-2.5">
             <img src={LOGO_URL} alt="1k Blessings" className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/40" />
             <span className="font-semibold text-sm tracking-tight">1k Blessings</span>
           </div>
-        )}
+        }
       </header>
 
       {/* Bottom Navigation */}
@@ -108,7 +108,7 @@ export default function Layout() {
         <div className="flex items-center gap-2.5 px-5 h-16">
           <img src={LOGO_URL} alt="1k Blessings" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/40" />
           <div>
-            <span className="font-semibold text-sm tracking-tight text-foreground">1k Blessings</span>
+            <span className="font-semibold text-sm tracking-tight text-foreground">1K Blessings</span>
             <p className="text-[10px] text-primary/80 tracking-wide uppercase font-medium">
               {isAdmin ? "Admin View" : "My Dashboard"}
             </p>
@@ -133,13 +133,13 @@ export default function Layout() {
               initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.18, ease: "easeInOut" }}
-            >
+              transition={{ duration: 0.18, ease: "easeInOut" }}>
+              
               <Outlet />
             </motion.div>
           </AnimatePresence>
         </div>
       </main>
-    </div>
-  );
+    </div>);
+
 }
