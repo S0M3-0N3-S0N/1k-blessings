@@ -37,6 +37,17 @@
       "type": "number",
       "title": "Owner Earnings ($)",
       "default": 0
+    },
+    "category": {
+      "type": "string",
+      "title": "Service Category",
+      "enum": [
+        "hair",
+        "nails",
+        "aesthetics",
+        "other"
+      ],
+      "default": "hair"
     }
   },
   "required": [

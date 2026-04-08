@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, AlertCircle, Scissors } from "lucide-react";
+import { Loader2, Plus, Trash2, AlertCircle, Scissors, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +10,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const currency = "$";
 
-const emptyForm = { client_name: "", description: "", amount: "", service_date: new Date().toISOString().split("T")[0], renter_id: "" };
+const SERVICE_CATEGORIES = [
+  { value: "hair", label: "Hair", color: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+  { value: "nails", label: "Nails", color: "bg-pink-500/15 text-pink-400 border-pink-500/30" },
+  { value: "aesthetics", label: "Aesthetics", color: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" },
+  { value: "other", label: "Other", color: "bg-muted text-muted-foreground border-border" },
+];
+
+const getCategoryStyle = (cat) => SERVICE_CATEGORIES.find(c => c.value === cat)?.color || SERVICE_CATEGORIES[3].color;
+const getCategoryLabel = (cat) => SERVICE_CATEGORIES.find(c => c.value === cat)?.label || cat || "Other";
+
+const emptyForm = {
+  client_name: "",
+  description: "",
+  amount: "",
+  service_date: new Date().toISOString().split("T")[0],
+  renter_id: "",
+  category: "hair",
+};
 
 export default function ServiceTracker() {
   const { user } = useAuth();
@@ -23,6 +40,8 @@ export default function ServiceTracker() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [filterRenter, setFilterRenter] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [clientHistory, setClientHistory] = useState([]);
 
   const loadData = useCallback(async () => {
     const [r, e] = await Promise.all([
@@ -39,6 +58,16 @@ export default function ServiceTracker() {
   }, [user, isAdmin]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Load client history when client name changes
+  useEffect(() => {
+    if (!form.client_name || form.client_name.length < 2) { setClientHistory([]); return; }
+    const matches = entries.filter(e =>
+      e.client_name?.toLowerCase().includes(form.client_name.toLowerCase()) &&
+      e.client_name !== form.client_name
+    ).slice(0, 3);
+    setClientHistory(matches);
+  }, [form.client_name, entries]);
 
   const openAdd = () => {
     setForm({ ...emptyForm, renter_id: isAdmin ? "" : (myRenter?.id || "") });
@@ -61,6 +90,7 @@ export default function ServiceTracker() {
       renter_pct: renterPct,
       renter_earnings: parseFloat(((amt * renterPct) / 100).toFixed(2)),
       owner_earnings: parseFloat(((amt * ownerPct) / 100).toFixed(2)),
+      category: form.category,
     });
     setShowAdd(false);
     setSaving(false);
@@ -74,7 +104,7 @@ export default function ServiceTracker() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
-      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
     </div>
   );
 
@@ -85,9 +115,11 @@ export default function ServiceTracker() {
     </div>
   );
 
-  const visibleEntries = isAdmin
+  let visibleEntries = isAdmin
     ? (filterRenter === "all" ? entries : entries.filter(e => e.renter_id === filterRenter))
     : entries.filter(e => e.renter_id === myRenter?.id);
+
+  if (filterCategory !== "all") visibleEntries = visibleEntries.filter(e => (e.category || "other") === filterCategory);
 
   const totalRenter = visibleEntries.reduce((s, e) => s + (e.renter_earnings || 0), 0);
   const totalOwner = visibleEntries.reduce((s, e) => s + (e.owner_earnings || 0), 0);
@@ -102,6 +134,7 @@ export default function ServiceTracker() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
+          <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">Services</p>
           <h1 className="text-2xl font-bold tracking-tight">Service Tracker</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Log services and see commission splits</p>
         </div>
@@ -113,42 +146,48 @@ export default function ServiceTracker() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Total Services", value: formatCurrency(totalAmt, currency), color: "text-foreground" },
-          { label: isAdmin ? "Total Renter Earnings" : "Your Earnings", value: formatCurrency(totalRenter, currency), color: "text-emerald-600" },
-          { label: "Owner Earnings", value: formatCurrency(totalOwner, currency), color: "text-indigo-600" },
+          { label: "Total Services", value: formatCurrency(totalAmt, currency), color: "text-foreground", bg: "bg-muted/30" },
+          { label: isAdmin ? "Renter Earnings" : "Your Earnings", value: formatCurrency(totalRenter, currency), color: "text-emerald-400", bg: "bg-emerald-500/10" },
+          { label: "Owner Earnings", value: formatCurrency(totalOwner, currency), color: "text-primary", bg: "bg-primary/10" },
         ].map(s => (
-          <div key={s.label} className="bg-card rounded-xl border border-border p-4">
+          <div key={s.label} className={cn("rounded-xl border border-border p-4", s.bg)}>
             <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{s.label}</p>
             <p className={cn("text-xl font-bold font-mono mt-1", s.color)}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Filter (admin only) */}
-      {isAdmin && (
-        <div className="flex items-center gap-3">
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-2">
+        {isAdmin && (
           <Select value={filterRenter} onValueChange={setFilterRenter}>
-            <SelectTrigger className="h-9 w-[200px] text-xs"><SelectValue placeholder="Filter by renter" /></SelectTrigger>
+            <SelectTrigger className="h-8 w-[160px] text-xs"><SelectValue placeholder="Filter by renter" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Renters</SelectItem>
               {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
             </SelectContent>
           </Select>
-        </div>
-      )}
+        )}
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="h-8 w-[150px] text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {SERVICE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Entries Table */}
       <div className="bg-card rounded-xl border border-border overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
+            <tr className="bg-muted/30 border-b border-border">
               <th className="px-5 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
               {isAdmin && <th className="px-3 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Renter</th>}
               <th className="px-3 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Client</th>
-              <th className="px-3 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Service</th>
+              <th className="px-3 py-3 text-left text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Category</th>
               <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Total</th>
-              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Renter</th>
-              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Owner</th>
+              <th className="px-3 py-3 text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Split</th>
               <th className="w-10"></th>
             </tr>
           </thead>
@@ -158,24 +197,35 @@ export default function ServiceTracker() {
             )}
             {visibleEntries.map(entry => {
               const renter = renters.find(r => r.id === entry.renter_id);
+              const ownerPct = entry.owner_earnings && entry.amount ? Math.round((entry.owner_earnings / entry.amount) * 100) : 0;
+              const renterPct = entry.renter_pct || 0;
               return (
-                <tr key={entry.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={entry.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-5 py-3 text-sm text-muted-foreground">
                     {entry.service_date ? new Date(entry.service_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                   </td>
-                  {isAdmin && (
-                    <td className="px-3 py-3 font-medium">{renter?.name || "—"}</td>
-                  )}
-                  <td className="px-3 py-3 hidden sm:table-cell text-muted-foreground">{entry.client_name || "—"}</td>
-                  <td className="px-3 py-3 hidden md:table-cell text-muted-foreground text-xs max-w-[140px] truncate">{entry.description || "—"}</td>
-                  <td className="px-3 py-3 text-right font-mono font-medium">{formatCurrency(entry.amount || 0, currency)}</td>
-                  <td className="px-3 py-3 text-right font-mono text-emerald-600 font-semibold">
-                    +{formatCurrency(entry.renter_earnings || 0, currency)}
-                    <span className="text-[10px] text-muted-foreground ml-1">({entry.renter_pct || 0}%)</span>
+                  {isAdmin && <td className="px-3 py-3 font-medium">{renter?.name || "—"}</td>}
+                  <td className="px-3 py-3 hidden sm:table-cell">
+                    <div>
+                      <p className="text-muted-foreground">{entry.client_name || "—"}</p>
+                      {entry.description && <p className="text-[10px] text-muted-foreground/60 truncate max-w-[120px]">{entry.description}</p>}
+                    </div>
                   </td>
-                  <td className="px-3 py-3 text-right font-mono text-indigo-600 font-semibold">
-                    +{formatCurrency(entry.owner_earnings || 0, currency)}
-                    <span className="text-[10px] text-muted-foreground ml-1">({entry.owner_earnings && entry.amount ? Math.round((entry.owner_earnings / entry.amount) * 100) : 0}%)</span>
+                  <td className="px-3 py-3">
+                    <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border", getCategoryStyle(entry.category || "other"))}>
+                      {getCategoryLabel(entry.category)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-right font-mono font-semibold">{formatCurrency(entry.amount || 0, currency)}</td>
+                  <td className="px-3 py-3 hidden md:table-cell">
+                    {/* Mini split bar */}
+                    <div className="flex items-center gap-1.5 justify-end">
+                      <div className="w-16 h-2.5 rounded-full overflow-hidden bg-muted flex">
+                        <div className="bg-primary h-full transition-all" style={{ width: `${ownerPct}%` }} />
+                        <div className="bg-emerald-500 h-full transition-all" style={{ width: `${renterPct}%` }} />
+                      </div>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{ownerPct}%/{renterPct}%</span>
+                    </div>
                   </td>
                   <td className="px-3 py-3">
                     <button onClick={() => handleDelete(entry.id)} className="text-muted-foreground hover:text-destructive transition-colors">
@@ -188,11 +238,14 @@ export default function ServiceTracker() {
           </tbody>
           {visibleEntries.length > 0 && (
             <tfoot>
-              <tr className="bg-muted/50 border-t border-border">
+              <tr className="bg-muted/30 border-t border-border">
                 <td colSpan={isAdmin ? 4 : 3} className="px-5 py-3 text-xs font-semibold text-muted-foreground uppercase">Totals</td>
                 <td className="px-3 py-3 text-right font-mono font-bold">{formatCurrency(totalAmt, currency)}</td>
-                <td className="px-3 py-3 text-right font-mono font-bold text-emerald-600">{formatCurrency(totalRenter, currency)}</td>
-                <td className="px-3 py-3 text-right font-mono font-bold text-indigo-600">{formatCurrency(totalOwner, currency)}</td>
+                <td className="px-3 py-3 hidden md:table-cell text-right">
+                  <span className="text-xs text-primary font-mono font-bold">{formatCurrency(totalOwner, currency)}</span>
+                  <span className="text-xs text-muted-foreground mx-1">/</span>
+                  <span className="text-xs text-emerald-400 font-mono font-bold">{formatCurrency(totalRenter, currency)}</span>
+                </td>
                 <td></td>
               </tr>
             </tfoot>
@@ -213,36 +266,52 @@ export default function ServiceTracker() {
                 </SelectContent>
               </Select>
             )}
-            <Input placeholder="Client name (optional)" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="h-9" />
+            <Select value={form.category} onValueChange={v => setForm({ ...form, category: v })}>
+              <SelectTrigger className="h-9"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                {SERVICE_CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <div className="relative">
+              <Input placeholder="Client name (optional)" value={form.client_name} onChange={e => setForm({ ...form, client_name: e.target.value })} className="h-9" />
+              {clientHistory.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
+                  <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/50">Previous services for this client</p>
+                  {clientHistory.map(h => (
+                    <button key={h.id} onClick={() => setClientHistory([])}
+                      className="w-full flex justify-between px-3 py-2 text-xs hover:bg-accent transition-colors text-left">
+                      <span className="text-foreground">{h.client_name} — {h.description || "service"}</span>
+                      <span className="text-primary font-mono">{formatCurrency(h.amount, currency)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <Input placeholder="Service description (optional)" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="h-9" />
             <Input type="number" placeholder="Service amount ($)" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} className="h-9 font-mono" min="0" step="0.01" />
             <Input type="date" value={form.service_date} onChange={e => setForm({ ...form, service_date: e.target.value })} className="h-9" />
 
-            {/* Live Commission Preview */}
-            {form.amount && parseFloat(form.amount) > 0 && selectedRenter && (
-              <div className="rounded-lg bg-muted/60 border border-border p-3 space-y-1.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission Split Preview</p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{selectedRenter.name} ({previewRenterPct}%)</span>
-                  <span className="font-mono font-semibold text-emerald-600">+{formatCurrency((previewAmt * previewRenterPct) / 100, currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Owner ({previewOwnerPct}%)</span>
-                  <span className="font-mono font-semibold text-indigo-600">+{formatCurrency((previewAmt * previewOwnerPct) / 100, currency)}</span>
-                </div>
-              </div>
-            )}
-            {form.amount && parseFloat(form.amount) > 0 && !isAdmin && myRenter && (
-              <div className="rounded-lg bg-muted/60 border border-border p-3 space-y-1.5">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission Split Preview</p>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Your Cut ({100 - (myRenter.commission_owner ?? 100)}%)</span>
-                  <span className="font-mono font-semibold text-emerald-600">+{formatCurrency((previewAmt * (100 - (myRenter.commission_owner ?? 100))) / 100, currency)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Owner ({myRenter.commission_owner ?? 100}%)</span>
-                  <span className="font-mono font-semibold text-indigo-600">+{formatCurrency((previewAmt * (myRenter.commission_owner ?? 100)) / 100, currency)}</span>
-                </div>
+            {/* Commission Preview */}
+            {form.amount && parseFloat(form.amount) > 0 && (selectedRenter || (!isAdmin && myRenter)) && (
+              <div className="rounded-lg bg-muted/40 border border-border p-3 space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commission Split</p>
+                {(() => {
+                  const r = selectedRenter || myRenter;
+                  const oPct = r.commission_owner ?? 100;
+                  const rPct = 100 - oPct;
+                  return (
+                    <>
+                      <div className="w-full h-2.5 rounded-full overflow-hidden flex">
+                        <div className="bg-primary h-full" style={{ width: `${oPct}%` }} />
+                        <div className="bg-emerald-500 h-full" style={{ width: `${rPct}%` }} />
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary inline-block" />Owner {oPct}% — <span className="font-mono text-primary">{formatCurrency((previewAmt * oPct) / 100, currency)}</span></span>
+                        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{r.name?.split(" ")[0]} {rPct}% — <span className="font-mono text-emerald-400">{formatCurrency((previewAmt * rPct) / 100, currency)}</span></span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
 

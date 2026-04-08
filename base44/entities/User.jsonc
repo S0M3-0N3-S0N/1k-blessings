@@ -1,0 +1,51 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "title": "Role",
+      "enum": [
+        "admin",
+        "user"
+      ],
+      "default": "user"
+    },
+    "profile_picture": {
+      "type": "string",
+      "title": "Profile Picture URL"
+    },
+    "theme_preference": {
+      "type": "string",
+      "title": "Theme Preference",
+      "enum": [
+        "dark",
+        "light",
+        "system"
+      ],
+      "default": "dark"
+    },
+    "notifications": {
+      "type": "object",
+      "title": "Notification Preferences",
+      "properties": {
+        "new_message": {
+          "type": "boolean",
+          "default": true
+        },
+        "paystub_ready": {
+          "type": "boolean",
+          "default": true
+        },
+        "payment_due": {
+          "type": "boolean",
+          "default": true
+        },
+        "schedule_change": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  }
+}

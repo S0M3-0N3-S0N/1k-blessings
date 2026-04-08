@@ -106,12 +106,16 @@ export default function Layout() {
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-[240px] flex-col bg-card border-r border-border z-40">
         <div className="flex items-center gap-2.5 px-5 h-16">
-          <img src={LOGO_URL} alt="1k Blessings" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/40" />
+          {user?.profile_picture ? (
+            <img src={user.profile_picture} alt="Profile" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/40" />
+          ) : (
+            <img src={LOGO_URL} alt="1k Blessings" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/40" />
+          )}
           <div>
-            <span className="font-semibold text-sm tracking-tight text-foreground">1K Blessings</span>
-            
-
-            
+            <span className="font-semibold text-sm tracking-tight text-foreground">{user?.full_name || "1k Blessings"}</span>
+            <p className="text-[10px] text-primary/80 tracking-wide uppercase font-medium">
+              {isAdmin ? "Admin View" : "My Dashboard"}
+            </p>
           </div>
         </div>
         <nav className="flex-1 px-3 pt-2 space-y-1">

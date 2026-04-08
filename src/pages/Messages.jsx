@@ -1,17 +1,24 @@
 import { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { Loader2, Send, MessageCircle } from "lucide-react";
+import { Loader2, Send, MessageCircle, Pin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
+const CANNED_REPLIES = [
+  "I'm running 5 mins late ⏱️",
+  "Supply order received ✅",
+  "Appointment confirmed 📅",
+  "Can we reschedule?",
+];
 
 export default function Messages() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const [renters, setRenters] = useState([]);
   const [myRenter, setMyRenter] = useState(null);
-  const [activeConvo, setActiveConvo] = useState(null); // renter object or "admin"
+  const [activeConvo, setActiveConvo] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -37,7 +44,6 @@ export default function Messages() {
     if (!activeConvo) return;
     const cid = isAdmin ? convoId(activeConvo.user_email) : convoId(user.email);
     base44.entities.Message.filter({ conversation_id: cid }).then(setMessages);
-
     const unsub = base44.entities.Message.subscribe((event) => {
       if (event.data?.conversation_id === cid) {
         base44.entities.Message.filter({ conversation_id: cid }).then(setMessages);
@@ -50,8 +56,9 @@ export default function Messages() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const send = async () => {
-    if (!input.trim()) return;
+  const send = async (text) => {
+    const msg = text || input;
+    if (!msg.trim()) return;
     setSending(true);
     const cid = isAdmin ? convoId(activeConvo.user_email) : convoId(user.email);
     const receiverEmail = isAdmin ? activeConvo.user_email : "admin";
@@ -60,7 +67,7 @@ export default function Messages() {
       sender_email: user.email,
       sender_name: user.full_name || user.email,
       receiver_email: receiverEmail,
-      content: input.trim(),
+      content: msg.trim(),
       is_read: false,
     });
     setInput("");
@@ -73,7 +80,7 @@ export default function Messages() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
-      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
     </div>
   );
 
@@ -88,20 +95,21 @@ export default function Messages() {
   return (
     <div className="space-y-4">
       <div>
+        <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">Inbox</p>
         <h1 className="text-2xl font-bold tracking-tight">Messages</h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           {isAdmin ? "Direct messages with your renters" : "Chat with your admin"}
         </p>
       </div>
 
-      <div className="flex gap-4 h-[65vh] bg-card rounded-xl border border-border overflow-hidden">
+      <div className="flex gap-0 h-[70vh] bg-card rounded-xl border border-border overflow-hidden">
         {/* Sidebar — admin only */}
         {isAdmin && (
-          <div className="w-52 shrink-0 border-r border-border flex flex-col">
-            <div className="px-4 py-3 border-b border-border">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Renters</p>
+          <div className="w-56 shrink-0 border-r border-border flex flex-col bg-card">
+            <div className="px-4 py-3.5 border-b border-border">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Conversations</p>
             </div>
-            <div className="flex-1 overflow-y-auto divide-y divide-border">
+            <div className="flex-1 overflow-y-auto">
               {linkedRenters.length === 0 && (
                 <p className="px-4 py-6 text-xs text-muted-foreground text-center">No linked renter accounts yet.</p>
               )}
@@ -110,12 +118,19 @@ export default function Messages() {
                   key={r.id}
                   onClick={() => setActiveConvo(r)}
                   className={cn(
-                    "w-full text-left px-4 py-3 text-sm transition-colors hover:bg-muted/40",
-                    activeConvo?.id === r.id ? "bg-primary/10 font-semibold text-primary" : "text-foreground"
+                    "w-full text-left px-4 py-3.5 text-sm transition-colors border-b border-border/50 hover:bg-accent/50",
+                    activeConvo?.id === r.id ? "bg-primary/10 border-l-2 border-l-primary" : ""
                   )}
                 >
-                  <p className="font-medium truncate">{r.name}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{r.user_email}</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                      {r.name?.[0]?.toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium truncate text-sm">{r.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{r.role || "Renter"}</p>
+                    </div>
+                  </div>
                 </button>
               ))}
             </div>
@@ -125,14 +140,26 @@ export default function Messages() {
         {/* Chat area */}
         <div className="flex-1 flex flex-col min-w-0">
           {!activeConvo ? (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-              Select a renter to start a conversation
+            <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3">
+              <MessageCircle className="w-10 h-10 opacity-30" />
+              <p className="text-sm">Select a renter to start a conversation</p>
             </div>
           ) : (
             <>
               {/* Header */}
-              <div className="px-5 py-3 border-b border-border shrink-0">
-                <p className="text-sm font-semibold">{isAdmin ? activeConvo.name : "Admin / Owner"}</p>
+              <div className="px-5 py-3.5 border-b border-border shrink-0 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
+                  {isAdmin ? activeConvo.name?.[0]?.toUpperCase() : "A"}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{isAdmin ? activeConvo.name : "Admin / Owner"}</p>
+                  {isAdmin && <p className="text-[10px] text-muted-foreground">{activeConvo.user_email}</p>}
+                </div>
+                {!isAdmin && (
+                  <div className="ml-auto flex items-center gap-1 text-[10px] text-primary font-semibold">
+                    <Pin className="w-3 h-3" /> Pinned
+                  </div>
+                )}
               </div>
 
               {/* Messages */}
@@ -147,12 +174,14 @@ export default function Messages() {
                     return (
                       <div key={msg.id} className={cn("flex", isMine ? "justify-end" : "justify-start")}>
                         <div className={cn(
-                          "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm",
-                          isMine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
+                          "max-w-[78%] rounded-2xl px-4 py-2.5 text-sm shadow-sm",
+                          isMine
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted/60 border border-border text-foreground rounded-bl-sm"
                         )}>
-                          {!isMine && <p className="text-[10px] font-semibold mb-0.5 opacity-70">{msg.sender_name || msg.sender_email}</p>}
+                          {!isMine && <p className="text-[10px] font-semibold mb-0.5 opacity-60">{msg.sender_name || msg.sender_email}</p>}
                           <p className="leading-relaxed">{msg.content}</p>
-                          <p className={cn("text-[10px] mt-1 opacity-60", isMine ? "text-right" : "")}>
+                          <p className={cn("text-[10px] mt-1 opacity-50", isMine ? "text-right" : "")}>
                             {new Date(msg.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
@@ -160,6 +189,18 @@ export default function Messages() {
                     );
                   })}
                 <div ref={bottomRef} />
+              </div>
+
+              {/* Canned Replies */}
+              <div className="px-4 pb-2 flex gap-2 overflow-x-auto shrink-0">
+                {CANNED_REPLIES.map((reply) => (
+                  <button
+                    key={reply}
+                    onClick={() => send(reply)}
+                    className="shrink-0 text-xs px-3 py-1.5 rounded-full border border-border bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/10 transition-all whitespace-nowrap">
+                    {reply}
+                  </button>
+                ))}
               </div>
 
               {/* Input */}
@@ -171,7 +212,7 @@ export default function Messages() {
                   placeholder="Type a message..."
                   className="h-9 text-sm"
                 />
-                <Button size="sm" className="h-9 px-3" onClick={send} disabled={sending || !input.trim()}>
+                <Button size="sm" className="h-9 px-3" onClick={() => send()} disabled={sending || !input.trim()}>
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
