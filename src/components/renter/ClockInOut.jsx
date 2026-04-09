@@ -48,7 +48,7 @@ export default function ClockInOut({ renter, timeEntries, onUpdate }) {
   };
 
   return (
-    <div className="bg-[#1f1f1f] p-5 rounded-xl border border-emerald-200">
+    <div className="bg-[hsl(var(--popover))] p-5 rounded-xl border border-emerald-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={cn("w-10 h-10 rounded-full flex items-center justify-center", isClockedIn ? "bg-emerald-500" : "bg-muted")}>
