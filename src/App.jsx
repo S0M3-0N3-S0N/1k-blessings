@@ -16,7 +16,7 @@ import Paystub from './pages/Paystub';
 import TeamCalendar from './pages/TeamCalendar';
 import Renters from './pages/Renters';
 import Messages from './pages/Messages';
-import ServiceTracker from './pages/ServiceTracker';
+import ServiceTracker from './pages/ServiceTracker.jsx';
 import Payments from './pages/Payments';
 import Expenses from './pages/Expenses';
 import MonthlyReports from './pages/MonthlyReports';
