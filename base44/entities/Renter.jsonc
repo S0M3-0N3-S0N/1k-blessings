@@ -9,7 +9,7 @@
     "role": {
       "type": "string",
       "title": "Role",
-      "default": "Chair"
+      "default": "Stylist"
     },
     "rent_amount": {
       "type": "number",
@@ -24,7 +24,7 @@
         "biweekly",
         "monthly"
       ],
-      "default": "monthly"
+      "default": "weekly"
     },
     "status": {
       "type": "string",
@@ -35,25 +35,16 @@
       ],
       "default": "active"
     },
-    "avatar_color": {
-      "type": "string",
-      "title": "Avatar Color"
+    "commission_owner": {
+      "type": "number",
+      "title": "Owner Commission %",
+      "default": 40,
+      "minimum": 0,
+      "maximum": 100
     },
     "notes": {
       "type": "string",
       "title": "Notes"
-    },
-    "commission_owner": {
-      "type": "number",
-      "title": "Owner Commission %",
-      "default": 100,
-      "minimum": 0,
-      "maximum": 100
-    },
-    "hourly_wage": {
-      "type": "number",
-      "title": "Hourly Wage ($)",
-      "default": 0
     },
     "user_email": {
       "type": "string",

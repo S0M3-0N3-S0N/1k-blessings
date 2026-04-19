@@ -12,7 +12,7 @@
     },
     "period": {
       "type": "string",
-      "title": "Period"
+      "title": "Period (YYYY-MM-DD week start)"
     },
     "status": {
       "type": "string",

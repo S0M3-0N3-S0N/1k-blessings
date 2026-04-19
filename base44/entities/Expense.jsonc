@@ -1,0 +1,41 @@
+{
+  "name": "Expense",
+  "type": "object",
+  "properties": {
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount",
+      "default": 0
+    },
+    "category": {
+      "type": "string",
+      "title": "Category",
+      "enum": [
+        "supplies",
+        "cleaning",
+        "software",
+        "utilities",
+        "marketing",
+        "other"
+      ],
+      "default": "other"
+    },
+    "expense_date": {
+      "type": "string",
+      "title": "Expense Date (YYYY-MM-DD)"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "description",
+    "amount",
+    "expense_date"
+  ]
+}
