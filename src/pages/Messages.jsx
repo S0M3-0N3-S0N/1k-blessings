@@ -4,7 +4,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { Loader2, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import GoldButton from "@/components/ui/GoldButton";
+import GoldButton from "@/components/ui/GoldButton.jsx";
 import { cn, getInitials, getAvatarColor } from "@/lib/utils";
 import PullToRefresh from "@/components/PullToRefresh";
 

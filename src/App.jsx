@@ -8,29 +8,23 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout.jsx';
 
-// Pages
-import AccountSettings from './pages/AccountSettings';
-import AdminDashboard from './pages/AdminDashboard';
-import RenterDashboard from './pages/RenterDashboard';
-import Paystub from './pages/Paystub';
-import TeamCalendar from './pages/TeamCalendar';
-import Renters from './pages/Renters';
-import Messages from './pages/Messages';
-import ServiceTracker from './pages/ServiceTracker';
-import Payments from './pages/Payments';
-import Expenses from './pages/Expenses';
-import MonthlyReports from './pages/MonthlyReports';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import RenterDashboard from './pages/RenterDashboard.jsx';
+import Paystub from './pages/Paystub.jsx';
+import TeamCalendar from './pages/TeamCalendar.jsx';
+import Renters from './pages/Renters.jsx';
+import Messages from './pages/Messages.jsx';
+import ServiceTracker from './pages/ServiceTracker.jsx';
+import Payments from './pages/Payments.jsx';
+import Expenses from './pages/Expenses.jsx';
+import MonthlyReports from './pages/MonthlyReports.jsx';
+import AccountSettings from './pages/AccountSettings.jsx';
 
 const ThemeProvider = ({ children }) => {
   useEffect(() => {
-    // Apply saved theme or default to dark
     const savedTheme = localStorage.getItem("1kb-theme") || "dark";
     if (savedTheme === "light") document.documentElement.classList.remove("dark");
-    else if (savedTheme === "dark") document.documentElement.classList.add("dark");
-    else {
-      const mq = window.matchMedia("(prefers-color-scheme: dark)");
-      document.documentElement.classList.toggle("dark", mq.matches);
-    }
+    else document.documentElement.classList.add("dark");
   }, []);
   return children;
 };

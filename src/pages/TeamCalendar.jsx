@@ -4,7 +4,7 @@ import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import GoldButton from "@/components/ui/GoldButton";
+import GoldButton from "@/components/ui/GoldButton.jsx";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import PullToRefresh from "@/components/PullToRefresh";

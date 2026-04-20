@@ -11,6 +11,15 @@
       "title": "Role",
       "default": "Stylist"
     },
+    "payment_model": {
+      "type": "string",
+      "title": "Payment Model",
+      "enum": [
+        "rent",
+        "commission"
+      ],
+      "default": "rent"
+    },
     "rent_amount": {
       "type": "number",
       "title": "Rent Amount",
@@ -26,6 +35,13 @@
       ],
       "default": "weekly"
     },
+    "commission_owner": {
+      "type": "number",
+      "title": "Owner Commission %",
+      "default": 40,
+      "minimum": 0,
+      "maximum": 100
+    },
     "status": {
       "type": "string",
       "title": "Status",
@@ -34,13 +50,6 @@
         "inactive"
       ],
       "default": "active"
-    },
-    "commission_owner": {
-      "type": "number",
-      "title": "Owner Commission %",
-      "default": 40,
-      "minimum": 0,
-      "maximum": 100
     },
     "notes": {
       "type": "string",
@@ -53,7 +62,6 @@
   },
   "required": [
     "name",
-    "rent_amount",
-    "frequency"
+    "payment_model"
   ]
 }

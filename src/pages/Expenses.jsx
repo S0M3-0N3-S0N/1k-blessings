@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import GoldButton from "@/components/ui/GoldButton";
-import KpiCard from "@/components/ui/KpiCard";
+import GoldButton from "@/components/ui/GoldButton.jsx";
+import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 
 const CATS = ["supplies", "cleaning", "software", "utilities", "marketing", "other"];

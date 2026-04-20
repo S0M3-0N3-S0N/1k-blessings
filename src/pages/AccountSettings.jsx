@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import GoldButton from "@/components/ui/GoldButton";
+import GoldButton from "@/components/ui/GoldButton.jsx";
 import { Loader2, Moon, Sun } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 

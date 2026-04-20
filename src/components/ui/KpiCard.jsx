@@ -2,15 +2,9 @@ import { cn } from "@/lib/utils";
 
 export default function KpiCard({ label, value, sub, icon: Icon, accent = false, className }) {
   return (
-    <div className={cn(
-      "bg-card rounded-xl border border-border p-5 flex flex-col gap-3",
-      className
-    )}>
+    <div className={cn("bg-card rounded-xl border border-border p-5 flex flex-col gap-3", className)}>
       {Icon && (
-        <div className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center",
-          accent ? "bg-primary/20" : "bg-muted"
-        )}>
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", accent ? "bg-primary/20" : "bg-muted")}>
           <Icon className={cn("w-4 h-4", accent ? "text-primary" : "text-muted-foreground")} />
         </div>
       )}
