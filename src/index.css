@@ -46,6 +46,11 @@
   .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 93%;
+    --sidebar-bg: 0 0% 7%;
+    --sidebar-fg: 0 0% 80%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-active-bg: 43 72% 42%;
+    --sidebar-active-fg: 0 0% 100%;
     --card: 0 0% 7%;
     --card-foreground: 0 0% 93%;
     --popover: 0 0% 9%;
