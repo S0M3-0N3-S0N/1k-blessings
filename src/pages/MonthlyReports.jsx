@@ -77,7 +77,7 @@ export default function MonthlyReports() {
         <div className="space-y-3">
           {allMonths.map((m, idx) => {
             const data = getMonthData(m);
-            const { rentIncome, commissionIncome, totalIncome, totalExpenses, netProfit, monthSvcs, monthExp, yr, mo } = data;
+            const { rentIncome, commissionIncome, totalIncome, totalExpenses, netProfit, monthSvcs, monthPmts, monthExp, yr, mo } = data;
             const label = new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
             const isOpen = expanded[m] !== false && idx === 0 ? true : !!expanded[m];
 
