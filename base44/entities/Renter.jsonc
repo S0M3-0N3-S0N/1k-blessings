@@ -16,7 +16,8 @@
       "title": "Payment Model",
       "enum": [
         "rent",
-        "commission"
+        "commission",
+        "hourly"
       ],
       "default": "rent"
     },
@@ -41,6 +42,11 @@
       "default": 40,
       "minimum": 0,
       "maximum": 100
+    },
+    "hourly_wage": {
+      "type": "number",
+      "title": "Hourly Wage ($/hr)",
+      "default": 0
     },
     "status": {
       "type": "string",

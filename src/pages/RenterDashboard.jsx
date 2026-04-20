@@ -1,17 +1,21 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/i18n";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, cn } from "@/lib/utils";
-import { Loader2, Scissors, DollarSign, TrendingUp } from "lucide-react";
+import { Loader2, Scissors, DollarSign, TrendingUp, Clock } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
+import ClockInOut from "@/components/renter/ClockInOut";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 export default function RenterDashboard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [renter, setRenter] = useState(null);
   const [services, setServices] = useState([]);
+  const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
@@ -22,14 +26,20 @@ export default function RenterDashboard() {
     ]);
     const r = renters[0] || null;
     setRenter(r);
-    if (r) setServices(allServices.filter(s => s.renter_id === r.id));
+    if (r) {
+      setServices(allServices.filter(s => s.renter_id === r.id));
+      if (r.payment_model === "hourly") {
+        const entries = await base44.entities.TimeEntry.filter({ renter_id: r.id });
+        setTimeEntries(entries);
+      }
+    }
     setLoading(false);
   }, [user?.email]);
   useEffect(() => { loadData(); }, [loadData]);
 
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? t("goodMorning") : hour < 17 ? t("goodAfternoon") : t("goodEvening");
 
   const ws = getWeekStart();
   const we = getWeekEnd(ws);
@@ -37,13 +47,30 @@ export default function RenterDashboard() {
   const weStr = we.toISOString().split("T")[0];
   const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
 
+  const weekTimeEntries = timeEntries.filter(e => {
+    const d = e.clock_in?.split("T")[0];
+    return d >= wsStr && d <= weStr;
+  });
+
   const weekGross = weekServices.reduce((s, e) => s + (e.amount || 0), 0);
   const weekEarnings = weekServices.reduce((s, e) => s + (e.renter_earnings || 0), 0);
   const weekTips = weekServices.reduce((s, e) => s + (e.tip_amount || 0), 0);
-  const weeklyRent = renter?.payment_model === "rent" ? toWeekly(renter.rent_amount || 0, renter.frequency) : 0;
-  const netPay = renter?.payment_model === "rent" ? weekGross - weeklyRent : weekEarnings + weekTips;
+  const weeklyRent = (renter?.payment_model === "rent" || renter?.payment_model === "hourly")
+    ? toWeekly(renter.rent_amount || 0, renter.frequency)
+    : 0;
 
-  // Chart data — last 4 weeks or daily this week
+  // Hourly
+  const totalHours = weekTimeEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
+  const grossPay = totalHours * (renter?.hourly_wage || 0);
+  const hourlyNetPay = grossPay - weeklyRent;
+
+  const netPay = renter?.payment_model === "rent"
+    ? weekGross - weeklyRent
+    : renter?.payment_model === "hourly"
+      ? hourlyNetPay
+      : weekEarnings + weekTips;
+
+  // Chart
   const chartData = weekServices.reduce((acc, s) => {
     const day = new Date(s.service_date + "T12:00:00").toLocaleDateString("en-US", { weekday: "short" });
     const existing = acc.find(x => x.day === day);
@@ -66,50 +93,67 @@ export default function RenterDashboard() {
     </div>
   );
 
+  const heroLabel = renter.payment_model === "rent"
+    ? t("thisWeekNetRevenue")
+    : renter.payment_model === "hourly"
+      ? t("thisWeekNetPay")
+      : t("thisWeekEarnings");
+
+  const heroSub = renter.payment_model === "rent"
+    ? `${formatCurrency(weekGross)} gross − ${formatCurrency(weeklyRent)} rent`
+    : renter.payment_model === "hourly"
+      ? `${totalHours.toFixed(2)}h × ${formatCurrency(renter.hourly_wage)}/hr − ${formatCurrency(weeklyRent)} rent`
+      : `${formatCurrency(weekEarnings)} commission + ${formatCurrency(weekTips)} tips`;
+
+  const kpiThird = renter.payment_model === "rent"
+    ? { label: "Weekly Rent", value: formatCurrency(weeklyRent) }
+    : renter.payment_model === "hourly"
+      ? { label: t("hoursThisWeek"), value: `${totalHours.toFixed(1)}h` }
+      : { label: "Your Rate", value: `${100 - (renter.commission_owner || 40)}%` };
+
   return (
     <PullToRefresh onRefresh={loadData}>
       <div className="space-y-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">My Studio</p>
-          <h1 className="font-serif text-3xl font-light tracking-wide">Hi {user?.full_name?.split(" ")[0] || "there"} ✦</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("myStudio")}</p>
+          <h1 className="font-serif text-3xl font-light tracking-wide">{greeting}, {user?.full_name?.split(" ")[0] || "there"} ✦</h1>
           <p className="text-sm text-muted-foreground mt-1">{now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</p>
         </div>
 
         {/* Hero */}
         <div className="bg-card rounded-2xl border border-border p-6 relative overflow-hidden shadow-[0_0_30px_rgba(201,152,74,0.08)]">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary relative">
-            {renter.payment_model === "rent" ? "This Week's Net Revenue" : "This Week's Total Earnings"}
-          </p>
-          <p className="font-mono text-5xl font-semibold tracking-tight mt-2 relative">{formatCurrency(netPay)}</p>
-          <p className="text-xs text-muted-foreground mt-2 relative">
-            {renter.payment_model === "rent"
-              ? `${formatCurrency(weekGross)} gross − ${formatCurrency(weeklyRent)} rent`
-              : `${formatCurrency(weekEarnings)} commission + ${formatCurrency(weekTips)} tips`}
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary relative">{heroLabel}</p>
+          <p className={cn("font-mono text-5xl font-semibold tracking-tight mt-2 relative", netPay < 0 && "text-destructive")}>{formatCurrency(netPay)}</p>
+          <p className="text-xs text-muted-foreground mt-2 relative">{heroSub}</p>
           <p className="text-xs text-muted-foreground mt-0.5 relative">{formatDateRange(ws)}</p>
         </div>
 
+        {/* Hourly: Clock In/Out */}
+        {renter.payment_model === "hourly" && (
+          <ClockInOut renterId={renter.id} onRefresh={loadData} />
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <KpiCard label="Services" value={weekServices.length} icon={Scissors} />
+          <KpiCard label={t("services")} value={weekServices.length} icon={Scissors} />
           <KpiCard label="Revenue" value={formatCurrency(weekGross)} icon={TrendingUp} />
-          <KpiCard label={renter.payment_model === "rent" ? "Weekly Rent" : "Your Rate"} value={renter.payment_model === "rent" ? formatCurrency(weeklyRent) : `${100 - (renter.commission_owner || 40)}%`} icon={DollarSign} />
+          <KpiCard label={kpiThird.label} value={kpiThird.value} icon={renter.payment_model === "hourly" ? Clock : DollarSign} />
         </div>
 
         {/* Services this week */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">This Week</p>
-              <p className="font-serif text-base font-medium mt-0.5">My Services</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("thisWeek")}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("myServices")}</p>
             </div>
-            <Link to="/services" className="text-xs text-primary hover:underline">Log a Service →</Link>
+            <Link to="/services" className="text-xs text-primary hover:underline">{t("logService")} →</Link>
           </div>
           {weekServices.length === 0 ? (
             <div className="text-center py-10 space-y-2">
-              <p className="text-sm text-muted-foreground">No services this week yet.</p>
-              <Link to="/services" className="text-xs text-primary hover:underline">Log your first →</Link>
+              <p className="text-sm text-muted-foreground">{t("noServicesThisWeek")}</p>
+              <Link to="/services" className="text-xs text-primary hover:underline">{t("logFirst")}</Link>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -133,7 +177,7 @@ export default function RenterDashboard() {
               })}
               {weekTips > 0 && (
                 <div className="flex items-center justify-between px-5 py-3 bg-primary/5 min-h-[44px]">
-                  <p className="text-sm text-muted-foreground font-medium">Tips this week</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("tips")} this week</p>
                   <p className="font-mono text-sm font-semibold text-primary">+{formatCurrency(weekTips)}</p>
                 </div>
               )}
@@ -159,9 +203,9 @@ export default function RenterDashboard() {
 
         {/* Quick Links */}
         <div className="flex gap-2">
-          <Link to="/paystub" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">Paystub</Link>
-          <Link to="/services" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">Log a Service</Link>
-          <Link to="/messages" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">Messages</Link>
+          <Link to="/paystub" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">{t("paystub")}</Link>
+          <Link to="/services" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">{t("logService")}</Link>
+          <Link to="/messages" className="flex-1 py-3 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[52px] flex items-center justify-center">{t("messages")}</Link>
         </div>
       </div>
     </PullToRefresh>
