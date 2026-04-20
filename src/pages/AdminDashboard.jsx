@@ -118,7 +118,6 @@ export default function AdminDashboard() {
             </div>
           </div>
           {commissionRenters.length === 0 ? (
-
             <div className="px-5 py-10 text-center">
               <p className="text-sm text-muted-foreground">No commission-model stylists yet.</p>
               <Link to="/renters" className="text-xs text-primary hover:underline mt-1 inline-block">Add a stylist →</Link>
