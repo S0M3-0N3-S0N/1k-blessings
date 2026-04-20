@@ -129,7 +129,7 @@ export default function Expenses() {
             const label = new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
             return (
               <div key={m} className="bg-card rounded-xl border border-border overflow-hidden">
-                <button className="w-full flex flex-col md:flex-row md:items-center md:justify-between px-5 py-4 hover:bg-muted/20 transition-colors min-h-[56px] gap-2" onClick={() => toggle(m)}>
+                <button className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/20 transition-colors min-h-[56px]" onClick={() => toggle(m)}>
                   <div className="flex items-center gap-3">
                     <p className="font-serif text-base font-medium">{label}</p>
                     <span className="text-xs text-muted-foreground">{items.length} item{items.length !== 1 ? "s" : ""}</span>
@@ -142,28 +142,28 @@ export default function Expenses() {
                 {isOpen && (
                   <div className="border-t border-border divide-y divide-border">
                     {items.map(e => (
-                       <div key={e.id} className="flex flex-col md:flex-row md:items-center md:justify-between px-5 py-3 hover:bg-muted/20 min-h-[52px] gap-2">
-                         <div className="flex items-center gap-3 min-w-0">
-                           <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[e.category] || CAT_COLORS.other)}>
-                             {e.category}
-                           </span>
-                           <div className="min-w-0">
-                             <p className="text-sm font-medium truncate">{e.description}</p>
-                             <p className="text-xs text-muted-foreground truncate">
-                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
-                               {e.notes && ` · ${e.notes}`}
-                               {e.paid_by === "owner" && ` · ${t("paidByOwner") || "paid by owner"}`}
-                             </p>
-                           </div>
-                         </div>
-                         <div className="flex items-center gap-3 justify-between md:justify-normal">
-                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
-                           <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0">
-                             <Trash2 className="w-3.5 h-3.5" />
-                           </button>
-                         </div>
-                       </div>
-                     ))}
+                      <div key={e.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 min-h-[52px]">
+                        <div className="flex items-center gap-3">
+                          <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[e.category] || CAT_COLORS.other)}>
+                            {e.category}
+                          </span>
+                          <div>
+                            <p className="text-sm font-medium">{e.description}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                              {e.notes && ` · ${e.notes}`}
+                              {e.paid_by === "owner" && ` · ${t("paidByOwner") || "paid by owner"}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
+                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
