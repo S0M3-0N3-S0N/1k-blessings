@@ -69,8 +69,8 @@ export default function Layout() {
   const canGoBack = window.history.length > 1 && location.pathname !== "/";
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // Pages not in bottom tabs — shown in "More" drawer
-  const morePages = nav.filter(n => !bottomTabs.some(t => t.path === n.path));
+  // Pages not in bottom tabs — shown in "More" drawer (exclude /renters)
+  const morePages = nav.filter(n => !bottomTabs.some(t => t.path === n.path) && n.path !== "/renters");
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
