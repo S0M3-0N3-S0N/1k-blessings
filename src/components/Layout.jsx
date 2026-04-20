@@ -69,14 +69,14 @@ export default function Layout() {
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      <div className="px-5 py-5 border-b border-white/5">
+      <div className="px-5 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
           </div>
           <div>
-            <p className="font-serif text-base font-medium text-white leading-none">1k Blessings</p>
-            <p className="text-[9px] text-white/25 mt-0.5 uppercase tracking-widest">Salon Management</p>
+            <p className="font-serif text-base font-medium text-sidebar-foreground leading-none">1k Blessings</p>
+            <p className="text-[9px] text-sidebar-foreground/30 mt-0.5 uppercase tracking-widest">Salon Management</p>
           </div>
         </div>
       </div>
@@ -91,8 +91,8 @@ export default function Layout() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px]",
                 active
-                  ? "bg-primary text-white shadow-sm"
-                  : "text-white/45 hover:text-white/80 hover:bg-white/5"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-foreground/8"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -102,19 +102,19 @@ export default function Layout() {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-white/5">
+      <div className="px-4 py-4 border-t border-sidebar-border">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[11px] font-bold text-primary shrink-0">
             {user?.full_name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?"}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-white/80 truncate">{user?.full_name || "User"}</p>
-            <p className="text-[10px] text-white/30 capitalize">{user?.role || "user"}</p>
+            <p className="text-xs font-medium text-sidebar-foreground/80 truncate">{user?.full_name || "User"}</p>
+            <p className="text-[10px] text-sidebar-foreground/40 capitalize">{user?.role || "user"}</p>
           </div>
         </div>
         <button
           onClick={() => base44.auth.logout()}
-          className="flex items-center gap-2 text-[11px] text-white/30 hover:text-white/60 transition-colors min-h-[44px]"
+          className="flex items-center gap-2 text-[11px] text-sidebar-foreground/40 hover:text-sidebar-foreground/70 transition-colors min-h-[44px]"
         >
           <LogOut className="w-3 h-3" /> {t("signOut")}
         </button>
@@ -125,19 +125,19 @@ export default function Layout() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-56 shrink-0 bg-[#0d0d0d] border-r border-white/5 z-20">
+      <aside className="hidden md:flex flex-col w-56 shrink-0 bg-sidebar border-r border-sidebar-border z-20">
         <SidebarContent />
       </aside>
 
       {/* Mobile top header */}
       <div
-        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#0d0d0d] border-b border-white/5 flex items-center px-4 gap-3"
+        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-sidebar border-b border-sidebar-border flex items-center px-4 gap-3"
         style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(52px + env(safe-area-inset-top))" }}
       >
         {canGoBack ? (
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-white/60 hover:text-white transition-colors min-h-[44px] mr-1"
+            className="flex items-center gap-1 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors min-h-[44px] mr-1"
           >
             <ChevronLeft className="w-5 h-5" />
             <span className="text-sm">Back</span>
@@ -145,7 +145,7 @@ export default function Layout() {
         ) : (
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-serif text-sm font-medium text-white">1k Blessings</span>
+            <span className="font-serif text-sm font-medium text-sidebar-foreground">1k Blessings</span>
           </div>
         )}
       </div>
@@ -171,7 +171,7 @@ export default function Layout() {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-white/5 flex"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border flex"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {bottomTabs.map(({ path, label, icon: Icon }) => {
@@ -182,7 +182,7 @@ export default function Layout() {
               to={path}
               className={cn(
                 "flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-colors relative",
-                active ? "text-primary" : "text-white/35 hover:text-white/60"
+                active ? "text-primary" : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
               )}
             >
               <Icon className="w-5 h-5" />
