@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import {
-  LayoutDashboard, Users, CreditCard, Scissors, BarChart2,
-  Receipt, Calendar, MessageSquare, Settings, LogOut, Menu, X, Sparkles
+  LayoutDashboard, Users, CreditCard, MessageSquare,
+  Scissors, BarChart2, Receipt, Calendar, Settings, LogOut, Sparkles, ChevronLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
+import { AnimatePresence, motion } from "framer-motion";
 
 const adminNav = [
   { path: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -29,12 +29,35 @@ const renterNav = [
   { path: "/account", label: "Account", icon: Settings },
 ];
 
+// Bottom tab items (mobile only) — 4 items for admin, 4 for renter
+const adminBottomTabs = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/renters", label: "Stylists", icon: Users },
+  { path: "/payments", label: "Payments", icon: CreditCard },
+  { path: "/messages", label: "Messages", icon: MessageSquare },
+];
+
+const renterBottomTabs = [
+  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/services", label: "Services", icon: Scissors },
+  { path: "/messages", label: "Messages", icon: MessageSquare },
+  { path: "/account", label: "Account", icon: Settings },
+];
+
+const slideVariants = {
+  initial: { opacity: 0, x: 16 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -16 },
+};
+
 export default function Layout() {
   const { user } = useAuth();
   const location = useLocation();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const nav = isAdmin ? adminNav : renterNav;
+  const bottomTabs = isAdmin ? adminBottomTabs : renterBottomTabs;
+  const canGoBack = window.history.length > 1 && location.pathname !== "/";
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
@@ -57,9 +80,8 @@ export default function Layout() {
             <Link
               key={path}
               to={path}
-              onClick={() => setMobileOpen(false)}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all min-h-[44px]",
                 active
                   ? "bg-primary text-white"
                   : "text-white/50 hover:text-white/80 hover:bg-white/5"
@@ -84,7 +106,7 @@ export default function Layout() {
         </div>
         <button
           onClick={() => base44.auth.logout()}
-          className="flex items-center gap-2 text-[11px] text-white/30 hover:text-white/60 transition-colors"
+          className="flex items-center gap-2 text-[11px] text-white/30 hover:text-white/60 transition-colors min-h-[44px]"
         >
           <LogOut className="w-3 h-3" /> Sign out
         </button>
@@ -94,36 +116,80 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
+      {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-56 shrink-0 bg-[#0d0d0d] border-r border-white/5">
         <NavContent />
       </aside>
 
-      {/* Mobile header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#0d0d0d] border-b border-white/5 flex items-center justify-between px-4 h-14">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <span className="font-serif text-sm font-medium text-white">1k Blessings</span>
+      {/* Mobile top header */}
+      <div
+        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-[#0d0d0d] border-b border-white/5 flex items-center justify-between px-4"
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          height: "calc(56px + env(safe-area-inset-top))",
+        }}
+      >
+        <div className="flex items-center gap-2 h-14">
+          {canGoBack ? (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-white/60 hover:text-white transition-colors min-h-[44px] pr-2"
+            >
+              <ChevronLeft className="w-5 h-5" />
+              <span className="text-sm">Back</span>
+            </button>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="font-serif text-sm font-medium text-white">1k Blessings</span>
+            </>
+          )}
         </div>
-        <button onClick={() => setMobileOpen(o => !o)} className="text-white/50 hover:text-white">
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
       </div>
 
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-30" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0 bg-black/60" />
-          <aside className="bg-[#0d0d0d] absolute left-0 top-0 bottom-0 w-56 flex flex-col border-r border-white/5" onClick={e => e.stopPropagation()}>
-            <NavContent />
-          </aside>
-        </div>
-      )}
-
+      {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        <div className="md:hidden h-14" />
-        <div className="p-5 md:p-7 max-w-6xl mx-auto">
-          <Outlet />
+        {/* Spacer for mobile top header */}
+        <div className="md:hidden" style={{ height: "calc(56px + env(safe-area-inset-top))" }} />
+
+        <div className="p-5 md:p-7 max-w-6xl mx-auto pb-24 md:pb-7">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              variants={slideVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.18, ease: "easeOut" }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0d0d0d] border-t border-white/5 flex"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        {bottomTabs.map(({ path, label, icon: Icon }) => {
+          const active = location.pathname === path;
+          return (
+            <Link
+              key={path}
+              to={path}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center gap-1 min-h-[56px] transition-colors",
+                active ? "text-primary" : "text-white/40 hover:text-white/70"
+              )}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }
