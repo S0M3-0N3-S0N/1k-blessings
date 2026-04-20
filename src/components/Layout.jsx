@@ -151,7 +151,7 @@ export default function Layout() {
       </div>
 
       {/* Main scroll area */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="md:hidden" style={{ height: "calc(52px + env(safe-area-inset-top))" }} />
         <div className="p-5 md:p-7 max-w-5xl mx-auto pb-28 md:pb-8">
           <AnimatePresence mode="wait">
