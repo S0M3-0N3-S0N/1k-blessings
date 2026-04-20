@@ -81,7 +81,7 @@ export default function Layout() {
         </div>
       </div>
 
-      <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
         {nav.map(({ path, label, icon: Icon }) => {
           const active = location.pathname === path;
           return (

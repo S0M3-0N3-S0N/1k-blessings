@@ -92,6 +92,15 @@
   background: linear-gradient(135deg, hsl(43 72% 52%), hsl(43 72% 40%));
 }
 
+/* Hide scrollbars globally */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
+}
+
 /* Sidebar always dark */
 .sidebar-dark {
   background-color: hsl(var(--sidebar-bg));
