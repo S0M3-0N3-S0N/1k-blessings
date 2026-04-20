@@ -82,7 +82,7 @@ export default function AccountSettings() {
               <span className="text-2xl">{l.flag}</span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold leading-tight">{l.native}</p>
-                <p className="text-[10px] text-muted-foreground">{l.english}</p>
+
               </div>
               {lang === l.code && (
                 <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />
