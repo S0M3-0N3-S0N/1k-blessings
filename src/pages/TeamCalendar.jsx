@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import PullToRefresh from "@/components/PullToRefresh";
+import { useLanguage } from "@/lib/i18n";
 
 const TYPE_COLORS = {
   callout: "bg-red-500/20 text-red-500 border-red-500/30",
@@ -26,6 +27,7 @@ export default function TeamCalendar() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [monthOffset, setMonthOffset] = useState(0);
+  const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     const [e, r] = await Promise.all([base44.entities.CalendarEvent.list("-date"), base44.entities.Renter.list()]);
@@ -65,10 +67,10 @@ export default function TeamCalendar() {
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Scheduling</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Team Calendar</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("scheduling") || "Scheduling"}</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("calendar")}</h1>
           </div>
-          <GoldButton onClick={() => setShowAdd(true)}><Plus className="w-4 h-4" />Add Event</GoldButton>
+          <GoldButton onClick={() => setShowAdd(true)}><Plus className="w-4 h-4" />{t("addEvent") || "Add Event"}</GoldButton>
         </div>
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -78,7 +80,7 @@ export default function TeamCalendar() {
             <button onClick={() => setMonthOffset(o => o + 1)} className="p-1.5 hover:bg-muted rounded-lg"><ChevronRight className="w-4 h-4" /></button>
           </div>
           <div className="grid grid-cols-7 border-b border-border">
-            {["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => (
+            {(t("weekDaysShort") ? t("weekDaysShort").split(",") : ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]).map(d => (
               <div key={d} className="px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{d}</div>
             ))}
           </div>
@@ -106,7 +108,7 @@ export default function TeamCalendar() {
         {/* Event list */}
         {monthEvents.length > 0 && (
           <div className="space-y-2">
-            <h3 className="font-serif text-sm font-medium text-muted-foreground">This Month's Events</h3>
+            <h3 className="font-serif text-sm font-medium text-muted-foreground">{t("thisMonthEvents") || "This Month's Events"}</h3>
             {monthEvents.sort((a,b) => a.date.localeCompare(b.date)).map(e => (
               <div key={e.id} className="bg-card rounded-xl border border-border flex items-center justify-between px-4 py-3">
                 <div className="flex items-center gap-3">
@@ -127,30 +129,30 @@ export default function TeamCalendar() {
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Add Calendar Event</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("addEvent") || "Add Calendar Event"}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
-            <Input placeholder="Title *" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} autoFocus />
+            <Input placeholder={`${t("title") || "Title"} *`} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} autoFocus />
             <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="callout">Callout</SelectItem>
-                <SelectItem value="day_off">Day Off</SelectItem>
-                <SelectItem value="shop_event">Shop Event</SelectItem>
+                <SelectItem value="callout">{t("callout") || "Callout"}</SelectItem>
+                <SelectItem value="day_off">{t("dayOff") || "Day Off"}</SelectItem>
+                <SelectItem value="shop_event">{t("shopEvent") || "Shop Event"}</SelectItem>
               </SelectContent>
             </Select>
             <Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
             <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
-              <SelectTrigger><SelectValue placeholder="Stylist (optional)" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={`${t("stylists")} (${t("optional") || "optional"})`} /></SelectTrigger>
               <SelectContent>
-                <SelectItem value={null}>All / Shop</SelectItem>
+                <SelectItem value={null}>{t("allStylists") || "All / Shop"}</SelectItem>
                 {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Input placeholder="Description (optional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+            <Input placeholder={`${t("description") || "Description"} (${t("optional") || "optional"})`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.title || !form.date}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
           </div>
