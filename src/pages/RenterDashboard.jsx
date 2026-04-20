@@ -187,17 +187,21 @@ export default function RenterDashboard() {
 
         {/* Chart */}
         {chartData.length > 0 && (
-          <div className="bg-card rounded-xl border border-border p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-4">Earnings This Week</p>
-            <ResponsiveContainer width="100%" height={140}>
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: -30, bottom: 0 }}>
-                <XAxis dataKey="day" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                <Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="earnings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Your Earnings" />
-                {renter.payment_model === "commission" && <Bar dataKey="owner" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="Owner's Cut" />}
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="bg-card rounded-xl border border-border p-3 md:p-5">
+            <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-4">{t("earningsThisWeek") || "Earnings This Week"}</p>
+            <div className="-mx-3 md:mx-0 overflow-x-auto scrollbar-none">
+              <div className="min-w-[320px] md:min-w-auto">
+                <ResponsiveContainer width="100%" height={120}>
+                  <BarChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                    <Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
+                    <Bar dataKey="earnings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name={t("yourEarnings") || "Your Earnings"} />
+                    {renter.payment_model === "commission" && <Bar dataKey="owner" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name={t("ownersCut") || "Owner's Cut"} />}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         )}
 
