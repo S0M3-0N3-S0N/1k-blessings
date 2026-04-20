@@ -178,7 +178,6 @@ export default function Layout() {
                   />
                 )}
                 <Icon className="w-[18px] h-[18px] relative z-10" />
-                <span className="text-[9px] font-semibold tracking-wide relative z-10">{label}</span>
               </Link>
             );
           })}
@@ -198,7 +197,6 @@ export default function Layout() {
                 />
               )}
               <MoreHorizontal className="w-[18px] h-[18px] relative z-10" />
-              <span className="text-[9px] font-semibold tracking-wide relative z-10">More</span>
             </button>
           )}
         </div>
