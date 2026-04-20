@@ -144,11 +144,10 @@ export default function ServiceTracker() {
             ))}
           </div>
           {/* Dropdown filters */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center gap-2">
             {isAdmin && (
               <Select value={filterRenter} onValueChange={setFilterRenter}>
-                <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("allStylists") || "All Stylists"}</SelectItem>
                   {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
@@ -156,7 +155,7 @@ export default function ServiceTracker() {
               </Select>
             )}
             <Select value={filterCat} onValueChange={setFilterCat}>
-              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("allCategories") || "All Categories"}</SelectItem>
                 <SelectItem value="hair">{t("hair")}</SelectItem>
@@ -166,7 +165,7 @@ export default function ServiceTracker() {
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
-              <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("allMethods") || "All Methods"}</SelectItem>
                 {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
