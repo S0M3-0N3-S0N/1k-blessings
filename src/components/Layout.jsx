@@ -129,30 +129,9 @@ export default function Layout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile top header */}
-      <div
-        className="md:hidden fixed top-0 left-0 right-0 z-40 bg-sidebar border-b border-sidebar-border flex items-center px-4 gap-3"
-        style={{ paddingTop: "env(safe-area-inset-top)", height: "calc(52px + env(safe-area-inset-top))" }}
-      >
-        {canGoBack ? (
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1 text-sidebar-foreground/60 hover:text-sidebar-foreground transition-colors min-h-[44px] mr-1"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="text-sm">Back</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="font-serif text-sm font-medium text-sidebar-foreground">1k Blessings</span>
-          </div>
-        )}
-      </div>
-
       {/* Main scroll area */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="md:hidden" style={{ height: "calc(52px + env(safe-area-inset-top))" }} />
+        <div className="md:hidden" style={{ height: "env(safe-area-inset-top)" }} />
         <div className="p-5 md:p-7 max-w-5xl mx-auto pb-28 md:pb-8">
           <AnimatePresence mode="wait">
             <motion.div
