@@ -207,12 +207,14 @@ export default function Renters() {
         </div>
 
         <Tabs defaultValue="stylists">
-          <TabsList className="mb-5 h-auto flex-wrap">
-            <TabsTrigger value="stylists" className="min-h-[36px]">{t("stylists")}</TabsTrigger>
-            <TabsTrigger value="splits" className="min-h-[36px]">{t("commissionSplits")}</TabsTrigger>
-            <TabsTrigger value="payroll" className="min-h-[36px]">{t("hourlyPayroll")}</TabsTrigger>
-            <TabsTrigger value="users" className="min-h-[36px]">{t("userMgmt") || "Users"}</TabsTrigger>
-          </TabsList>
+          <div className="mb-5 overflow-x-auto scrollbar-none">
+            <TabsList className="h-auto md:flex-wrap inline-flex gap-2 bg-transparent border-b border-border rounded-none">
+              <TabsTrigger value="stylists" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("stylists")}</TabsTrigger>
+              <TabsTrigger value="splits" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("commissionSplits")}</TabsTrigger>
+              <TabsTrigger value="payroll" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("hourlyPayroll")}</TabsTrigger>
+              <TabsTrigger value="users" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("userMgmt") || "Users"}</TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Tab 1 — Stylists */}
           <TabsContent value="stylists">
