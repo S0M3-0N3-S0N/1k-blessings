@@ -134,44 +134,48 @@ export default function ServiceTracker() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-          {isAdmin && (
-            <Select value={filterRenter} onValueChange={setFilterRenter}>
-              <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("allStylists") || "All Stylists"}</SelectItem>
-                {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          )}
-          <Select value={filterCat} onValueChange={setFilterCat}>
-            <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allCategories") || "All Categories"}</SelectItem>
-              <SelectItem value="hair">{t("hair")}</SelectItem>
-              <SelectItem value="nails">{t("nails")}</SelectItem>
-              <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
-              <SelectItem value="other">{t("other")}</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterMethod} onValueChange={setFilterMethod}>
-            <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("allMethods") || "All Methods"}</SelectItem>
-              {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
-            </SelectContent>
-          </Select>
-          <div className="flex gap-1 ml-auto">
+        <div className="space-y-2">
+          {/* Date filter pills — scrollable on mobile */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {DATE_FILTER_KEYS.map(f => (
-              <button key={f.value} onClick={() => setFilterDate(f.value)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors", filterDate === f.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
+              <button key={f.value} onClick={() => setFilterDate(f.value)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0", filterDate === f.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
                 {t(f.key)}
               </button>
             ))}
           </div>
+          {/* Dropdown filters */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <Filter className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            {isAdmin && (
+              <Select value={filterRenter} onValueChange={setFilterRenter}>
+                <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("allStylists") || "All Stylists"}</SelectItem>
+                  {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+            <Select value={filterCat} onValueChange={setFilterCat}>
+              <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allCategories") || "All Categories"}</SelectItem>
+                <SelectItem value="hair">{t("hair")}</SelectItem>
+                <SelectItem value="nails">{t("nails")}</SelectItem>
+                <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
+                <SelectItem value="other">{t("other")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterMethod} onValueChange={setFilterMethod}>
+              <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("allMethods") || "All Methods"}</SelectItem>
+                {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* Table */}
+        {/* Services list */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           {filtered.length === 0 ? (
             <div className="text-center py-12 space-y-2">
@@ -179,75 +183,126 @@ export default function ServiceTracker() {
               <button onClick={() => setShowAdd(true)} className="text-xs text-primary hover:underline">Log your first service →</button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border">
-                    <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("date")}</th>
-                    {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylists")}</th>}
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("clientName")}</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("category")}</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("paymentMethod")}</th>
-                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("amount")}</th>
-                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("tips")}</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("commission")}</th>
-                    <th className="px-2 py-2.5" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filtered.map(s => {
-                    const cat = categoryBadge(s.category);
-                    const r = renterMap[s.renter_id];
-                    const isComm = r?.payment_model === "commission";
-                    return (
-                      <tr key={s.id} className="hover:bg-muted/20">
-                        <td className="px-5 py-3 text-muted-foreground text-xs whitespace-nowrap">
-                          {s.service_date ? new Date(s.service_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
-                        </td>
-                        {isAdmin && <td className="px-4 py-3 font-medium whitespace-nowrap">{r?.name || "—"}</td>}
-                        <td className="px-4 py-3">
-                          <p className="font-medium">{s.description || "—"}</p>
-                          {s.client_name && <p className="text-xs text-muted-foreground">{s.client_name}</p>}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border whitespace-nowrap", cat.className)}>{cat.label}</span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{PAYMENT_METHOD_LABELS[s.payment_method] || "—"}</td>
-                        <td className="px-4 py-3 text-right font-mono whitespace-nowrap">{formatCurrency(s.amount)}</td>
-                        <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs whitespace-nowrap">
-                          {(s.tip_amount || 0) > 0 ? `+${formatCurrency(s.tip_amount)}` : "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {isComm ? (
-                            <div className="flex items-center gap-2 w-24">
-                              <SplitBar ownerPct={r.commission_owner || 40} />
-                              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{r.commission_owner || 40}%</span>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-primary/30 text-primary bg-primary/5">Rent</span>
-                          )}
-                        </td>
-                        <td className="px-2 py-3">
-                          <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-muted/30 border-t border-border font-semibold">
-                    <td colSpan={isAdmin ? 5 : 4} className="px-5 py-3 text-sm">{t("totals") || "Totals"}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(totalAmount)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs">{formatCurrency(totalTips)}</td>
-                    <td colSpan={2} className="px-4 py-3 text-xs text-muted-foreground">
-                      Stylists: {formatCurrency(totalStylist)} · Ours: {formatCurrency(totalOwner)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+            <>
+              {/* Mobile card list */}
+              <div className="md:hidden divide-y divide-border">
+                {filtered.map(s => {
+                  const cat = categoryBadge(s.category);
+                  const r = renterMap[s.renter_id];
+                  const isComm = r?.payment_model === "commission";
+                  const dateStr = s.service_date ? new Date(s.service_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
+                  return (
+                    <div key={s.id} className="px-4 py-3.5 flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", cat.className)}>{cat.label}</span>
+                          {isAdmin && r?.name && <span className="text-xs font-medium text-foreground truncate">{r.name}</span>}
+                        </div>
+                        <p className="text-sm font-medium leading-snug">{s.description || (s.client_name ? s.client_name : "—")}</p>
+                        {s.description && s.client_name && <p className="text-xs text-muted-foreground">{s.client_name}</p>}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{dateStr}</span>
+                          <span>·</span>
+                          <span>{PAYMENT_METHOD_LABELS[s.payment_method] || "—"}</span>
+                          {isComm && <><span>·</span><span>{r.commission_owner || 40}% ours</span></>}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className="font-mono font-semibold text-sm">{formatCurrency(s.amount)}</span>
+                        {(s.tip_amount || 0) > 0 && (
+                          <span className="font-mono text-xs text-muted-foreground">+{formatCurrency(s.tip_amount)} tip</span>
+                        )}
+                        <button
+                          onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })}
+                          className="text-muted-foreground hover:text-destructive min-h-[36px] min-w-[36px] flex items-center justify-center mt-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Mobile totals */}
+                <div className="bg-muted/30 px-4 py-3 flex justify-between items-center border-t border-border">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("totals")}</span>
+                  <div className="text-right space-y-0.5">
+                    <p className="font-mono font-semibold text-sm">{formatCurrency(totalAmount)}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{t("tips")}: {formatCurrency(totalTips)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-muted/30 border-b border-border">
+                      <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("date")}</th>
+                      {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylists")}</th>}
+                      <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("clientName")}</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("category")}</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("paymentMethod")}</th>
+                      <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("amount")}</th>
+                      <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("tips")}</th>
+                      <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("commission")}</th>
+                      <th className="px-2 py-2.5" />
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filtered.map(s => {
+                      const cat = categoryBadge(s.category);
+                      const r = renterMap[s.renter_id];
+                      const isComm = r?.payment_model === "commission";
+                      return (
+                        <tr key={s.id} className="hover:bg-muted/20">
+                          <td className="px-5 py-3 text-muted-foreground text-xs whitespace-nowrap">
+                            {s.service_date ? new Date(s.service_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                          </td>
+                          {isAdmin && <td className="px-4 py-3 font-medium whitespace-nowrap">{r?.name || "—"}</td>}
+                          <td className="px-4 py-3">
+                            <p className="font-medium">{s.description || "—"}</p>
+                            {s.client_name && <p className="text-xs text-muted-foreground">{s.client_name}</p>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border whitespace-nowrap", cat.className)}>{cat.label}</span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{PAYMENT_METHOD_LABELS[s.payment_method] || "—"}</td>
+                          <td className="px-4 py-3 text-right font-mono whitespace-nowrap">{formatCurrency(s.amount)}</td>
+                          <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs whitespace-nowrap">
+                            {(s.tip_amount || 0) > 0 ? `+${formatCurrency(s.tip_amount)}` : "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            {isComm ? (
+                              <div className="flex items-center gap-2 w-24">
+                                <SplitBar ownerPct={r.commission_owner || 40} />
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{r.commission_owner || 40}%</span>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-primary/30 text-primary bg-primary/5">Rent</span>
+                            )}
+                          </td>
+                          <td className="px-2 py-3">
+                            <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-muted/30 border-t border-border font-semibold">
+                      <td colSpan={isAdmin ? 5 : 4} className="px-5 py-3 text-sm">{t("totals") || "Totals"}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(totalAmount)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs">{formatCurrency(totalTips)}</td>
+                      <td colSpan={2} className="px-4 py-3 text-xs text-muted-foreground">
+                        Stylists: {formatCurrency(totalStylist)} · Ours: {formatCurrency(totalOwner)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
