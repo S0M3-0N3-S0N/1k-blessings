@@ -10,12 +10,13 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 const CAT_CONFIG = {
-  general:  { label: "General",  className: "bg-muted text-muted-foreground border-border" },
-  reminder: { label: "Reminder", className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
-  policy:   { label: "Policy",   className: "bg-stone-500/15 text-stone-600 dark:text-stone-400 border-stone-500/30" },
-  goal:     { label: "Goal",     className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+general:  { className: "bg-muted text-muted-foreground border-border" },
+reminder: { className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
+policy:   { className: "bg-stone-500/15 text-stone-600 dark:text-stone-400 border-stone-500/30" },
+goal:     { className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
 };
 
 const emptyForm = { content: "", category: "general", pinned: false };
@@ -29,6 +30,7 @@ export default function Notes() {
   const [saving, setSaving] = useState(false);
   const [filterCat, setFilterCat] = useState("all");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     const n = await base44.entities.SalonNote.list("-created_date");
@@ -44,17 +46,17 @@ export default function Notes() {
     setSaving(true);
     if (editNote) {
       await base44.entities.SalonNote.update(editNote.id, form);
-      toast({ title: "Note updated" });
+      toast({ title: t("edit") });
     } else {
       await base44.entities.SalonNote.create(form);
-      toast({ title: "Note added" });
+      toast({ title: t("addNote") });
     }
     setShowDialog(false); setSaving(false); loadData();
   };
 
   const handleDelete = async (id) => {
     await base44.entities.SalonNote.delete(id);
-    toast({ title: "Note deleted" }); loadData();
+    toast({ title: t("delete") }); loadData();
   };
 
   const togglePin = async (note) => {
@@ -74,25 +76,24 @@ export default function Notes() {
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Owner</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Salon Notes</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Reminders, policies, goals</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("salonNotes")}</h1>
           </div>
-          <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />Add Note</GoldButton>
+          <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />{t("addNote")}</GoldButton>
         </div>
 
         {/* Category Filter */}
         <div className="flex gap-1.5 flex-wrap">
           {["all", "general", "reminder", "policy", "goal"].map(f => (
             <button key={f} onClick={() => setFilterCat(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", filterCat === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
-              {f === "all" ? "All" : CAT_CONFIG[f]?.label || f}
+              {f === "all" ? t("all") || "All" : t(f)}
             </button>
           ))}
         </div>
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 space-y-2">
-            <p className="text-sm text-muted-foreground">No notes yet. Add reminders, policies, or goals here.</p>
-            <button onClick={openAdd} className="text-xs text-primary hover:underline">Add your first note →</button>
+            <p className="text-sm text-muted-foreground">{t("noNotes") || "No notes yet. Add reminders, policies, or goals here."}</p>
+            <button onClick={openAdd} className="text-xs text-primary hover:underline">{t("addNote")} →</button>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -102,7 +103,7 @@ export default function Notes() {
                 <div key={n.id} className={cn("bg-card rounded-xl border border-border p-4 flex flex-col gap-3 relative", n.pinned && "ring-1 ring-primary/30")}>
                   <div className="flex items-start justify-between gap-2">
                     <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border", cat.className)}>
-                      {n.pinned && "📌 "}{cat.label}
+                      {n.pinned && "📌 "}{t(n.category)}
                     </span>
                     <div className="flex items-center gap-1">
                       <button onClick={() => togglePin(n)} className={cn("p-1.5 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors", n.pinned && "text-primary")}>
@@ -129,12 +130,12 @@ export default function Notes() {
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editNote ? "Edit Note" : "Add Note"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editNote ? t("edit") : t("addNote")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
               <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {Object.entries(CAT_CONFIG).map(([v, c]) => <SelectItem key={v} value={v}>{c.label}</SelectItem>)}
+                {Object.keys(CAT_CONFIG).map(v => <SelectItem key={v} value={v}>{t(v)}</SelectItem>)}
               </SelectContent>
             </Select>
             <textarea
@@ -146,12 +147,12 @@ export default function Notes() {
             />
             <div className="flex items-center gap-3">
               <Switch checked={form.pinned} onCheckedChange={v => setForm(f => ({ ...f, pinned: v }))} id="pin-toggle" />
-              <label htmlFor="pin-toggle" className="text-sm text-muted-foreground cursor-pointer">Pin this note</label>
+              <label htmlFor="pin-toggle" className="text-sm text-muted-foreground cursor-pointer">{t("pinned")}</label>
             </div>
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>Cancel</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.content.trim()}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
           </div>

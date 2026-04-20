@@ -1,5 +1,6 @@
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
+import { useLanguage } from "@/lib/i18n";
 import {
   LayoutDashboard, Users, CreditCard, MessageSquare,
   Scissors, BarChart2, Receipt, Calendar, Settings, LogOut,
@@ -9,43 +10,7 @@ import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 import { AnimatePresence, motion } from "framer-motion";
 
-const adminNav = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/renters", label: "Stylists & Payroll", icon: Users },
-  { path: "/payments", label: "Payments", icon: CreditCard },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/reports", label: "Monthly Reports", icon: BarChart2 },
-  { path: "/expenses", label: "Expenses", icon: Receipt },
-  { path: "/notes", label: "Notes", icon: StickyNote },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/account", label: "Account", icon: Settings },
-];
 
-const renterNav = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/paystub", label: "Paystub", icon: Receipt },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/calendar", label: "Calendar", icon: Calendar },
-  { path: "/account", label: "Account", icon: Settings },
-];
-
-const adminBottomTabs = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/renters", label: "Stylists", icon: Users },
-  { path: "/payments", label: "Payments", icon: CreditCard },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-];
-
-const renterBottomTabs = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/services", label: "Services", icon: Scissors },
-  { path: "/paystub", label: "Paystub", icon: Receipt },
-  { path: "/messages", label: "Messages", icon: MessageSquare },
-  { path: "/account", label: "Account", icon: Settings },
-];
 
 const slideVariants = {
   initial: { opacity: 0, y: 8 },
@@ -55,9 +20,49 @@ const slideVariants = {
 
 export default function Layout() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
+
+  const adminNav = [
+    { path: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { path: "/renters", label: t("stylists"), icon: Users },
+    { path: "/payments", label: t("payments"), icon: CreditCard },
+    { path: "/services", label: t("services"), icon: Scissors },
+    { path: "/reports", label: t("reports"), icon: BarChart2 },
+    { path: "/expenses", label: t("expenses"), icon: Receipt },
+    { path: "/notes", label: t("notes"), icon: StickyNote },
+    { path: "/messages", label: t("messages"), icon: MessageSquare },
+    { path: "/calendar", label: t("calendar"), icon: Calendar },
+    { path: "/account", label: t("account"), icon: Settings },
+  ];
+
+  const renterNav = [
+    { path: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { path: "/paystub", label: t("paystub"), icon: Receipt },
+    { path: "/services", label: t("services"), icon: Scissors },
+    { path: "/messages", label: t("messages"), icon: MessageSquare },
+    { path: "/calendar", label: t("calendar"), icon: Calendar },
+    { path: "/account", label: t("account"), icon: Settings },
+  ];
+
+  const adminBottomTabs = [
+    { path: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { path: "/renters", label: t("stylists"), icon: Users },
+    { path: "/payments", label: t("payments"), icon: CreditCard },
+    { path: "/services", label: t("services"), icon: Scissors },
+    { path: "/messages", label: t("messages"), icon: MessageSquare },
+  ];
+
+  const renterBottomTabs = [
+    { path: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { path: "/services", label: t("services"), icon: Scissors },
+    { path: "/paystub", label: t("paystub"), icon: Receipt },
+    { path: "/messages", label: t("messages"), icon: MessageSquare },
+    { path: "/account", label: t("account"), icon: Settings },
+  ];
+
   const nav = isAdmin ? adminNav : renterNav;
   const bottomTabs = isAdmin ? adminBottomTabs : renterBottomTabs;
   const canGoBack = window.history.length > 1 && location.pathname !== "/";
@@ -111,7 +116,7 @@ export default function Layout() {
           onClick={() => base44.auth.logout()}
           className="flex items-center gap-2 text-[11px] text-white/30 hover:text-white/60 transition-colors min-h-[44px]"
         >
-          <LogOut className="w-3 h-3" /> Sign out
+          <LogOut className="w-3 h-3" /> {t("signOut")}
         </button>
       </div>
     </div>

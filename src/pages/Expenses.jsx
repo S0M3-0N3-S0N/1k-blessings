@@ -10,6 +10,7 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/i18n";
 
 const CATS = ["supplies", "cleaning", "software", "utilities", "marketing", "equipment", "other"];
 const CAT_COLORS = {
@@ -33,6 +34,7 @@ export default function Expenses() {
   const [expanded, setExpanded] = useState({});
   const [monthOffset, setMonthOffset] = useState(0);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     const e = await base44.entities.Expense.list("-expense_date");
@@ -45,7 +47,7 @@ export default function Expenses() {
     setSaving(true);
     await base44.entities.Expense.create({ ...form, amount: parseFloat(form.amount) || 0 });
     setShowAdd(false); setForm(emptyForm); setSaving(false);
-    toast({ title: "Expense added" }); loadData();
+    toast({ title: t("addExpense") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -83,8 +85,7 @@ export default function Expenses() {
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Finance</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Expenses</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Track your salon operating costs</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("expensesTitle")}</h1>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setMonthOffset(o => o + 1)} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
@@ -95,11 +96,11 @@ export default function Expenses() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:items-end justify-between">
           <div className="grid grid-cols-3 gap-3 flex-1">
-            <KpiCard label="This Month" value={formatCurrency(thisMonth)} accent />
-            <KpiCard label="Last Month" value={formatCurrency(lastMonth)} />
-            <KpiCard label="Year to Date" value={formatCurrency(ytd)} />
+            <KpiCard label={t("thisMonthTotal")} value={formatCurrency(thisMonth)} accent />
+            <KpiCard label={t("lastMonthTotal")} value={formatCurrency(lastMonth)} />
+            <KpiCard label={t("ytd")} value={formatCurrency(ytd)} />
           </div>
-          <GoldButton onClick={() => setShowAdd(true)} className="shrink-0"><Plus className="w-4 h-4" />Add Expense</GoldButton>
+          <GoldButton onClick={() => setShowAdd(true)} className="shrink-0"><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
         </div>
 
         {/* Category Breakdown */}
@@ -119,7 +120,7 @@ export default function Expenses() {
 
         {/* Expense list */}
         <div className="space-y-3">
-          {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No expenses recorded yet.</p>}
+          {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses") || "No expenses recorded yet."}</p>}
           {sortedMonths.map(m => {
             const items = grouped[m];
             const total = items.reduce((s, e) => s + (e.amount || 0), 0);
@@ -151,13 +152,13 @@ export default function Expenses() {
                             <p className="text-xs text-muted-foreground">
                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                               {e.notes && ` · ${e.notes}`}
-                              {e.paid_by === "owner" && " · paid by owner"}
+                              {e.paid_by === "owner" && ` · ${t("paidByOwner") || "paid by owner"}`}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
-                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -173,7 +174,7 @@ export default function Expenses() {
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Add Expense</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("addExpense")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
             <div className="grid grid-cols-2 gap-2">
@@ -188,17 +189,17 @@ export default function Expenses() {
               <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
                 <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="salon">Paid by Salon</SelectItem>
-                  <SelectItem value="owner">Paid by Owner</SelectItem>
+                  <SelectItem value="salon">{t("paidBySalon") || "Paid by Salon"}</SelectItem>
+                  <SelectItem value="owner">{t("paidByOwner2") || "Paid by Owner"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Input placeholder="Receipt note (optional)" value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
             <Input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
           </div>

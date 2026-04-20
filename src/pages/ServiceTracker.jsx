@@ -12,12 +12,13 @@ import KpiCard from "@/components/ui/KpiCard.jsx";
 import SplitBar from "@/components/ui/SplitBar.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/i18n";
 
-const DATE_FILTERS = [
-  { label: "This Week", value: "week" },
-  { label: "This Month", value: "month" },
-  { label: "Last Month", value: "lastmonth" },
-  { label: "All Time", value: "all" },
+const DATE_FILTER_KEYS = [
+  { key: "thisWeek", value: "week" },
+  { key: "thisMonth", value: "month" },
+  { key: "lastMonth", value: "lastmonth" },
+  { key: "allTime", value: "all" },
 ];
 
 function getDateRange(filter) {
@@ -60,6 +61,7 @@ export default function ServiceTracker() {
   const [filterMethod, setFilterMethod] = useState("all");
   const [filterDate, setFilterDate] = useState("month");
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     const [r, s] = await Promise.all([base44.entities.Renter.list(), base44.entities.ServiceEntry.list("-service_date", 300)]);
@@ -88,7 +90,7 @@ export default function ServiceTracker() {
     const earnings = computeEarnings(amt, renter);
     await base44.entities.ServiceEntry.create({ ...form, renter_id: renterId, amount: amt, tip_amount: tip, ...earnings });
     setShowAdd(false); setForm(emptyForm); setSaving(false);
-    toast({ title: "Service logged" }); loadData();
+    toast({ title: t("logService") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -118,17 +120,17 @@ export default function ServiceTracker() {
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Services</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Service Tracker</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("services")}</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("serviceTracker")}</h1>
           </div>
-          <GoldButton onClick={() => setShowAdd(true)}><Plus className="w-4 h-4" />Log Service</GoldButton>
+          <GoldButton onClick={() => setShowAdd(true)}><Plus className="w-4 h-4" />{t("logService")}</GoldButton>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label="Total Revenue" value={formatCurrency(totalAmount)} accent glow />
-          <KpiCard label="Stylists' Earnings" value={formatCurrency(totalStylist)} />
-          <KpiCard label="Our Commission" value={formatCurrency(totalOwner)} sub="commission model" />
-          <KpiCard label="Tips" value={formatCurrency(totalTips)} sub="to stylists" />
+          <KpiCard label={t("totalRevenue")} value={formatCurrency(totalAmount)} accent glow />
+          <KpiCard label={t("stylistsEarnings")} value={formatCurrency(totalStylist)} />
+          <KpiCard label={t("ourCommission")} value={formatCurrency(totalOwner)} />
+          <KpiCard label={t("tips")} value={formatCurrency(totalTips)} />
         </div>
 
         {/* Filters */}
@@ -138,7 +140,7 @@ export default function ServiceTracker() {
             <Select value={filterRenter} onValueChange={setFilterRenter}>
               <SelectTrigger className="w-36 h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Stylists</SelectItem>
+                <SelectItem value="all">{t("allStylists") || "All Stylists"}</SelectItem>
                 {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -146,24 +148,24 @@ export default function ServiceTracker() {
           <Select value={filterCat} onValueChange={setFilterCat}>
             <SelectTrigger className="w-32 h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              <SelectItem value="hair">Hair</SelectItem>
-              <SelectItem value="nails">Nails</SelectItem>
-              <SelectItem value="aesthetics">Aesthetics</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
+              <SelectItem value="all">{t("allCategories") || "All Categories"}</SelectItem>
+              <SelectItem value="hair">{t("hair")}</SelectItem>
+              <SelectItem value="nails">{t("nails")}</SelectItem>
+              <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
+              <SelectItem value="other">{t("other")}</SelectItem>
             </SelectContent>
           </Select>
           <Select value={filterMethod} onValueChange={setFilterMethod}>
             <SelectTrigger className="w-28 h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Methods</SelectItem>
+              <SelectItem value="all">{t("allMethods") || "All Methods"}</SelectItem>
               {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
           <div className="flex gap-1 ml-auto">
-            {DATE_FILTERS.map(f => (
+            {DATE_FILTER_KEYS.map(f => (
               <button key={f.value} onClick={() => setFilterDate(f.value)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors", filterDate === f.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
-                {f.label}
+                {t(f.key)}
               </button>
             ))}
           </div>
@@ -181,14 +183,14 @@ export default function ServiceTracker() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border">
-                    <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Date</th>
-                    {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Stylist</th>}
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Service</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Category</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Method</th>
-                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Total</th>
-                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Tip</th>
-                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Split</th>
+                    <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("date")}</th>
+                    {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylists")}</th>}
+                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("clientName")}</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("category")}</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("paymentMethod")}</th>
+                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("amount")}</th>
+                    <th className="px-4 py-2.5 text-right text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("tips")}</th>
+                    <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("commission")}</th>
                     <th className="px-2 py-2.5" />
                   </tr>
                 </thead>
@@ -236,7 +238,7 @@ export default function ServiceTracker() {
                 </tbody>
                 <tfoot>
                   <tr className="bg-muted/30 border-t border-border font-semibold">
-                    <td colSpan={isAdmin ? 5 : 4} className="px-5 py-3 text-sm">Totals</td>
+                    <td colSpan={isAdmin ? 5 : 4} className="px-5 py-3 text-sm">{t("totals") || "Totals"}</td>
                     <td className="px-4 py-3 text-right font-mono">{formatCurrency(totalAmount)}</td>
                     <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs">{formatCurrency(totalTips)}</td>
                     <td colSpan={2} className="px-4 py-3 text-xs text-muted-foreground">
@@ -253,7 +255,7 @@ export default function ServiceTracker() {
       {/* Log Service Dialog */}
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Log a Service</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("logService")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             {isAdmin && (
               <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
@@ -265,10 +267,10 @@ export default function ServiceTracker() {
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="hair">Hair</SelectItem>
-                  <SelectItem value="nails">Nails</SelectItem>
-                  <SelectItem value="aesthetics">Aesthetics</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="hair">{t("hair")}</SelectItem>
+                  <SelectItem value="nails">{t("nails")}</SelectItem>
+                  <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
+                  <SelectItem value="other">{t("other")}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={form.payment_method} onValueChange={v => setForm(f => ({ ...f, payment_method: v }))}>
@@ -308,9 +310,9 @@ export default function ServiceTracker() {
             )}
 
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.amount || (isAdmin && !form.renter_id)}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
           </div>

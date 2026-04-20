@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLanguage } from "@/lib/i18n";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getWeekStart, getWeekEnd, cn } from "@/lib/utils";
 import { Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from "lucide-react";
@@ -16,6 +17,7 @@ function getMondaysInMonth(year, month) {
 }
 
 export default function MonthlyReports() {
+  const { t } = useLanguage();
   const [services, setServices] = useState([]);
   const [payments, setPayments] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -63,14 +65,13 @@ export default function MonthlyReports() {
     <PullToRefresh onRefresh={loadData}>
       <div className="space-y-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Analytics</p>
-          <h1 className="font-serif text-3xl font-light tracking-wide">Monthly Reports</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Auto-generated from live data</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("reports")}</p>
+          <h1 className="font-serif text-3xl font-light tracking-wide">{t("reports")}</h1>
         </div>
 
         {allMonths.length === 0 && (
           <div className="text-center py-16 space-y-2">
-            <p className="text-sm text-muted-foreground">No data yet. Start logging services and payments.</p>
+            <p className="text-sm text-muted-foreground">{t("noDataYet") || "No data yet. Start logging services and payments."}</p>
           </div>
         )}
 
@@ -98,14 +99,14 @@ export default function MonthlyReports() {
                     {trendPct !== null && (
                       <div className={cn("flex items-center gap-1 text-xs font-medium", trendPct >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500")}>
                         {trendPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        {Math.abs(trendPct)}% vs prior
+                        {Math.abs(trendPct)}% {t("vsPrior") || "vs prior"}
                       </div>
                     )}
                     <div className="text-right">
                       <p className={cn("font-mono font-bold text-lg", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                         {netProfit >= 0 ? "+" : "−"}{formatCurrency(Math.abs(netProfit))}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">net profit</p>
+                      <p className="text-[10px] text-muted-foreground">{t("netProfit") || "net profit"}</p>
                     </div>
                     {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
                   </div>
@@ -116,10 +117,10 @@ export default function MonthlyReports() {
                     {/* Summary Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border border-b border-border">
                       {[
-                        { label: "Rental Income", value: formatCurrency(rentIncome), note: "rent model" },
-                        { label: "Commission Income", value: formatCurrency(commissionIncome), note: "commission model", gold: true },
-                        { label: "Expenses", value: `−${formatCurrency(totalExpenses)}`, note: "total costs", red: true },
-                        { label: "Net Profit", value: `${netProfit >= 0 ? "+" : "−"}${formatCurrency(Math.abs(netProfit))}`, note: "income − expenses", green: netProfit >= 0, red2: netProfit < 0 },
+                        { label: t("rentalIncome") || "Rental Income", value: formatCurrency(rentIncome), note: t("rent") },
+                        { label: t("commissionIncome") || "Commission Income", value: formatCurrency(commissionIncome), note: t("commission"), gold: true },
+                        { label: t("expenses"), value: `−${formatCurrency(totalExpenses)}`, red: true },
+                        { label: t("netProfit") || "Net Profit", value: `${netProfit >= 0 ? "+" : "−"}${formatCurrency(Math.abs(netProfit))}`, green: netProfit >= 0, red2: netProfit < 0 },
                       ].map(stat => (
                         <div key={stat.label} className="px-4 py-3">
                           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1">{stat.label}</p>
@@ -134,8 +135,8 @@ export default function MonthlyReports() {
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="bg-muted/20 border-b border-border">
-                            {["Week of", "Rent", "Commission", "Expenses", "Net"].map(h => (
-                              <th key={h} className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Week of" ? "text-left pl-5" : "text-right"}`}>{h}</th>
+                            {[t("weekOf") || "Week of", t("rent"), t("commission"), t("expenses"), t("netPay")].map((h, i) => (
+                              <th key={i} className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${i === 0 ? "text-left pl-5" : "text-right"}`}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -161,7 +162,7 @@ export default function MonthlyReports() {
                             );
                           })}
                           <tr className="bg-muted/20 border-t border-border font-semibold">
-                            <td className="pl-5 py-2.5 text-xs">Totals</td>
+                            <td className="pl-5 py-2.5 text-xs">{t("totals") || "Totals"}</td>
                             <td className="px-4 py-2.5 text-right font-mono text-xs">{formatCurrency(rentIncome)}</td>
                             <td className="px-4 py-2.5 text-right font-mono text-xs text-primary">{formatCurrency(commissionIncome)}</td>
                             <td className="px-4 py-2.5 text-right font-mono text-xs text-destructive">−{formatCurrency(totalExpenses)}</td>
@@ -188,20 +189,21 @@ export default function MonthlyReports() {
 
 function PerStylistBreakdown({ services, payments, renters, renterMap, monthStr }) {
   const [open, setOpen] = useState(false);
+  const { t } = useLanguage();
   const rentRenters = renters.filter(r => r.payment_model === "rent");
   const commRenters = renters.filter(r => r.payment_model === "commission");
 
   return (
     <div className="border-t border-border">
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-5 py-3 hover:bg-muted/20 text-sm min-h-[44px]">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Per-Stylist Breakdown</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("perStylistBreakdown") || "Per-Stylist Breakdown"}</span>
         {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       {open && (
         <div className="px-5 pb-4 space-y-4">
           {rentRenters.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Rent Stylists</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("rentStylists") || "Rent Stylists"}</p>
               <div className="space-y-1">
                 {rentRenters.map(r => {
                   const p = payments.find(x => x.renter_id === r.id);
@@ -222,7 +224,7 @@ function PerStylistBreakdown({ services, payments, renters, renterMap, monthStr 
           )}
           {commRenters.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Commission Stylists</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("commissionStylists") || "Commission Stylists"}</p>
               <div className="space-y-1">
                 {commRenters.map(r => {
                   const rs = services.filter(s => s.renter_id === r.id);

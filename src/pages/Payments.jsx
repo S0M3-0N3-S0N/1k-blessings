@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Payments() {
   const [renters, setRenters] = useState([]);
@@ -22,6 +23,7 @@ export default function Payments() {
   const [markForm, setMarkForm] = useState({ amount: "", payment_method: "cash", notes: "" });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     const [r, p] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period")]);
@@ -59,13 +61,13 @@ export default function Payments() {
       await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
     }
     setMarkDialog(null); setSaving(false);
-    toast({ title: `${renter.name} marked as paid` }); loadData();
+    toast({ title: `${renter.name} ${t("markPaid")}` }); loadData();
   };
 
   const markPending = async (renter) => {
     const { payment } = getRenterStatus(renter);
     if (payment) await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
-    toast({ title: "Marked as pending" }); loadData();
+    toast({ title: t("pending") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -86,7 +88,7 @@ export default function Payments() {
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Finance</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{monthLabel}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Rent Collection</p>
+            <p className="text-sm text-muted-foreground mt-0.5">{t("rent")}</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setMonthOffset(o => o + 1)} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
@@ -98,22 +100,22 @@ export default function Payments() {
         {/* Banner */}
         <div className="flex items-start gap-2 bg-muted/40 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground">
           <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
-          Commission-model stylists earn through service splits — tracked in Services. Only rent-model stylists appear here.
+          {t("paymentsInfo") || "Commission-model stylists earn through service splits — tracked in Services. Only rent-model stylists appear here."}
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <KpiCard label="Collected" value={formatCurrency(collectedAmt)} accent glow />
-          <KpiCard label="Paid" value={paidCount} />
-          <KpiCard label="Pending" value={pendingCount} />
-          <KpiCard label="Overdue" value={overdueCount} sub={overdueCount > 0 ? "needs attention" : undefined} />
+          <KpiCard label={t("collected")} value={formatCurrency(collectedAmt)} accent glow />
+          <KpiCard label={t("paid")} value={paidCount} />
+          <KpiCard label={t("pending")} value={pendingCount} />
+          <KpiCard label={t("overdue")} value={overdueCount} />
         </div>
 
         {/* Filter */}
         <div className="flex gap-1.5 flex-wrap">
           {["all", "paid", "pending", "overdue"].map(f => (
             <button key={f} onClick={() => setFilter(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", filter === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
-              {f === "all" ? "All" : f}
+              {f === "all" ? (t("all") || "All") : t(f)}
             </button>
           ))}
         </div>
@@ -140,11 +142,11 @@ export default function Payments() {
                     <StatusBadge status={r.status} />
                     {r.status !== "paid" ? (
                       <GoldButton size="sm" onClick={() => openMarkPaid(r)}>
-                        <CheckCircle2 className="w-3.5 h-3.5" />Mark Paid
+                        <CheckCircle2 className="w-3.5 h-3.5" />{t("markPaid")}
                       </GoldButton>
                     ) : (
                       <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => markPending(r)}>
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />Undo
+                        <RotateCcw className="w-3.5 h-3.5 mr-1" />{t("undo") || "Undo"}
                       </Button>
                     )}
                   </div>
@@ -161,14 +163,14 @@ export default function Payments() {
       {/* Mark Paid Dialog */}
       <Dialog open={!!markDialog} onOpenChange={() => setMarkDialog(null)}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Mark as Paid — {markDialog?.renter?.name}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("markPaid")} — {markDialog?.renter?.name}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Amount</label>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("amount")}</label>
               <Input type="number" value={markForm.amount} onChange={e => setMarkForm(f => ({ ...f, amount: e.target.value }))} className="font-mono min-h-[44px]" />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Payment Method</label>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("paymentMethod")}</label>
               <Select value={markForm.payment_method} onValueChange={v => setMarkForm(f => ({ ...f, payment_method: v }))}>
                 <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -178,9 +180,9 @@ export default function Payments() {
             </div>
             <Input placeholder="Note (optional)" value={markForm.notes} onChange={e => setMarkForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setMarkDialog(null)}>Cancel</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setMarkDialog(null)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={confirmMarkPaid} disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Confirm Paid"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("markPaid")}
               </GoldButton>
             </div>
           </div>
@@ -203,14 +205,14 @@ function PaymentHistory({ renters, allPayments, currentMonth }) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="px-5 py-4 border-b border-border">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Payment History</p>
-        <p className="font-serif text-base font-medium mt-0.5">Last 3 Months</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("paymentHistory") || "Payment History"}</p>
+        <p className="font-serif text-base font-medium mt-0.5">{t("last3Months") || "Last 3 Months"}</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/30 border-b border-border">
-              <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Stylist</th>
+              <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylists")}</th>
               {prevMonths.map(m => {
                 const [yr, mo] = m.split("-").map(Number);
                 return <th key={m} className="px-4 py-2.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "short", year: "2-digit" })}</th>;
