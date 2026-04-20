@@ -73,6 +73,8 @@
     font-family: var(--font-sans);
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
   button, a, nav { user-select: none; -webkit-user-select: none; }
 }

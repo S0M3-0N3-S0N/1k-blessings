@@ -93,7 +93,7 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden w-screen max-w-full">
       <aside className="hidden md:flex flex-col w-56 shrink-0 bg-[#0d0d0d] border-r border-white/5">
         <NavContent />
       </aside>
@@ -118,7 +118,7 @@ export default function Layout() {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
         <div className="md:hidden h-14" />
         <div className="p-5 md:p-7 max-w-6xl mx-auto">
           <Outlet />
