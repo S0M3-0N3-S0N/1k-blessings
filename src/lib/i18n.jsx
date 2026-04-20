@@ -198,6 +198,11 @@ const TRANSLATIONS = {
     weekly: "Weekly",
     biweekly: "Biweekly",
     monthly: "Monthly",
+    communication: "Communication",
+    salonOwner: "Salon Owner",
+    selectConversation: "Select a conversation",
+    noMessages: "No messages yet. Start the conversation!",
+    typeMessage: "Type a message…",
   },
   es: {
     dashboard: "Panel",
@@ -345,6 +350,9 @@ const TRANSLATIONS = {
     commissionSplits: "División de Comisiones", hourlyPayroll: "Nómina por Hora",
     netPay: "Pago Neto", email: "Correo", fullName: "Nombre Completo",
     active: "Activo", inactive: "Inactivo", weekly: "Semanal", biweekly: "Quincenal", monthly: "Mensual",
+    communication: "Comunicación", salonOwner: "Dueño del Salón",
+    selectConversation: "Selecciona una conversación", noMessages: "Sin mensajes aún. ¡Inicia la conversación!",
+    typeMessage: "Escribe un mensaje…",
   },
   fr: {
     dashboard: "Tableau de bord",
@@ -492,6 +500,9 @@ const TRANSLATIONS = {
     commissionSplits: "Partages de Commission", hourlyPayroll: "Paie Horaire",
     netPay: "Salaire Net", email: "Email", fullName: "Nom Complet",
     active: "Actif", inactive: "Inactif", weekly: "Hebdomadaire", biweekly: "Bihebdomadaire", monthly: "Mensuel",
+    communication: "Communication", salonOwner: "Propriétaire du Salon",
+    selectConversation: "Sélectionnez une conversation", noMessages: "Pas encore de messages. Commencez la conversation!",
+    typeMessage: "Tapez un message…",
   },
   zh: {
     dashboard: "仪表板",
@@ -639,6 +650,9 @@ const TRANSLATIONS = {
     commissionSplits: "提成分配", hourlyPayroll: "按时薪资",
     netPay: "实发工资", email: "邮箱", fullName: "全名",
     active: "活跃", inactive: "不活跃", weekly: "每周", biweekly: "双周", monthly: "每月",
+    communication: "通讯", salonOwner: "沙龙老板",
+    selectConversation: "选择一个对话", noMessages: "暂无消息。开始对话吧！",
+    typeMessage: "输入消息…",
   },
 };
 

@@ -8,6 +8,7 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import { useToast } from "@/components/ui/use-toast";
 import { cn, getInitials, getAvatarColor } from "@/lib/utils";
 import PullToRefresh from "@/components/PullToRefresh";
+import { useLanguage } from "@/lib/i18n";
 
 export default function Messages() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ export default function Messages() {
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
+  const { t } = useLanguage();
   const isAdmin = user?.role === "admin";
   const convMessages = messages.filter(m => m.conversation_id === selectedConv).sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
 
@@ -42,7 +44,7 @@ export default function Messages() {
 
   const conversations = isAdmin
     ? renters.map((r, i) => ({ id: r.id, label: r.name, sub: r.role || "Stylist", index: i }))
-    : [{ id: "admin", label: "Salon Owner", sub: "Admin", index: 0 }];
+    : [{ id: "admin", label: t("salonOwner") || "Salon Owner", sub: "Admin", index: 0 }];
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
 
@@ -50,8 +52,8 @@ export default function Messages() {
     <PullToRefresh onRefresh={loadData}>
       <div className="space-y-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Communication</p>
-          <h1 className="font-serif text-3xl font-light tracking-wide">Messages</h1>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("communication") || "Communication"}</p>
+          <h1 className="font-serif text-3xl font-light tracking-wide">{t("messages")}</h1>
         </div>
         <div className="flex gap-4 h-[calc(100vh-220px)] min-h-[400px]">
           {/* Sidebar */}
@@ -78,7 +80,7 @@ export default function Messages() {
           {/* Chat */}
           <div className="flex-1 bg-card rounded-xl border border-border flex flex-col overflow-hidden">
             {!selectedConv ? (
-              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">Select a conversation</div>
+              <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">{t("selectConversation") || "Select a conversation"}</div>
             ) : (
               <>
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -93,10 +95,10 @@ export default function Messages() {
                       </div>
                     );
                   })}
-                  {convMessages.length === 0 && <p className="text-xs text-muted-foreground text-center py-8">No messages yet. Start the conversation!</p>}
+                  {convMessages.length === 0 && <p className="text-xs text-muted-foreground text-center py-8">{t("noMessages") || "No messages yet. Start the conversation!"}</p>}
                 </div>
                 <div className="p-3 border-t border-border flex gap-2">
-                  <Input placeholder="Type a message…" value={newMsg} onChange={e => setNewMsg(e.target.value)}
+                  <Input placeholder={t("typeMessage") || "Type a message…"} value={newMsg} onChange={e => setNewMsg(e.target.value)}
                     onKeyDown={e => e.key === "Enter" && sendMessage()} className="flex-1 h-9" />
                   <GoldButton onClick={sendMessage} disabled={sending || !newMsg.trim()} size="sm">
                     {sending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
