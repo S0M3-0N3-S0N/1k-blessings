@@ -101,6 +101,16 @@ function RenterFormFields({ form, setForm }) {
               </Select>
             </div>
           </div>
+          <div>
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("ownerCommissionPct") || "Owner Commission %"} <span className="text-muted-foreground/50 font-normal">(optional)</span></label>
+            <Input type="number" value={form.commission_owner} onChange={e => setForm(f => ({ ...f, commission_owner: e.target.value }))} className="font-mono min-h-[44px]" min="0" max="100" placeholder="0" />
+            {parseFloat(form.commission_owner) > 0 && (
+              <>
+                <SplitBar ownerPct={parseFloat(form.commission_owner)} showLabels className="mt-2" />
+                <p className="text-xs text-muted-foreground mt-1">{t("stylistKeeps") || "Stylist keeps"} {100 - parseFloat(form.commission_owner)}%</p>
+              </>
+            )}
+          </div>
           {form.hourly_wage && <p className="text-xs text-muted-foreground">≈ {formatCurrency(parseFloat(form.hourly_wage || 0) * 40)}/wk gross (40h)</p>}
         </div>
       )}
@@ -157,7 +167,7 @@ export default function Renters() {
     const data = {
       ...form,
       rent_amount: (form.payment_model === "rent" || form.payment_model === "hourly") ? (parseFloat(form.rent_amount) || 0) : 0,
-      commission_owner: form.payment_model === "commission" ? (parseFloat(form.commission_owner) || 40) : 40,
+      commission_owner: (form.payment_model === "commission" || form.payment_model === "hourly") ? (parseFloat(form.commission_owner) || 0) : 0,
       hourly_wage: form.payment_model === "hourly" ? (parseFloat(form.hourly_wage) || 0) : 0,
     };
     if (editRenter) {
@@ -263,6 +273,15 @@ export default function Renters() {
                           <span className="text-muted-foreground">≈ Gross/wk</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.hourly_wage || 0) * 40)}</span>
                         </div>
+                        {r.commission_owner > 0 && (
+                          <>
+                            <div className="flex justify-between mt-1">
+                              <span className="text-muted-foreground">Commission Split</span>
+                              <span className="font-mono">{r.commission_owner}% / {100 - r.commission_owner}%</span>
+                            </div>
+                            <SplitBar ownerPct={r.commission_owner} />
+                          </>
+                        )}
                       </div>
                     )}
 
