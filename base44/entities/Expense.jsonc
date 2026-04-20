@@ -20,6 +20,7 @@
         "software",
         "utilities",
         "marketing",
+        "equipment",
         "other"
       ],
       "default": "other"
@@ -27,6 +28,19 @@
     "expense_date": {
       "type": "string",
       "title": "Expense Date (YYYY-MM-DD)"
+    },
+    "paid_by": {
+      "type": "string",
+      "title": "Paid By",
+      "enum": [
+        "owner",
+        "salon"
+      ],
+      "default": "salon"
+    },
+    "receipt_note": {
+      "type": "string",
+      "title": "Receipt Note"
     },
     "notes": {
       "type": "string",

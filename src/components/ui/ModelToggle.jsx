@@ -1,21 +1,24 @@
 import { cn } from "@/lib/utils";
 
-export default function ModelToggle({ value, onChange }) {
+export default function ModelToggle({ value, onChange, className }) {
   return (
-    <div className="flex rounded-lg border border-border overflow-hidden">
-      {["rent", "commission"].map(m => (
+    <div className={cn("flex rounded-xl border border-border overflow-hidden p-0.5 bg-muted/30 gap-0.5", className)}>
+      {[
+        { v: "rent", label: "Rent" },
+        { v: "commission", label: "Commission" },
+      ].map(({ v, label }) => (
         <button
-          key={m}
+          key={v}
           type="button"
-          onClick={() => onChange(m)}
+          onClick={() => onChange(v)}
           className={cn(
-            "flex-1 py-2 text-sm font-semibold transition-all capitalize",
-            value === m
-              ? "bg-primary text-white"
-              : "bg-transparent text-muted-foreground hover:text-foreground"
+            "flex-1 py-2 text-sm font-semibold rounded-lg transition-all",
+            value === v
+              ? "btn-gold shadow-sm"
+              : "text-muted-foreground hover:text-foreground bg-transparent"
           )}
         >
-          {m === "rent" ? "Rent Model" : "Commission Model"}
+          {label}
         </button>
       ))}
     </div>

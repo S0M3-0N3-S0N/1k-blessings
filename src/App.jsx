@@ -19,6 +19,7 @@ import Payments from './pages/Payments.jsx';
 import Expenses from './pages/Expenses.jsx';
 import MonthlyReports from './pages/MonthlyReports.jsx';
 import AccountSettings from './pages/AccountSettings.jsx';
+import Notes from './pages/Notes.jsx';
 
 const ThemeProvider = ({ children }) => {
   useEffect(() => {
@@ -58,6 +59,7 @@ const AuthenticatedApp = () => {
         <Route path="/expenses" element={<Expenses />} />
         <Route path="/calendar" element={<TeamCalendar />} />
         <Route path="/paystub" element={<Paystub />} />
+        <Route path="/notes" element={<Notes />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/account" element={<AccountSettings />} />
         <Route path="*" element={<PageNotFound />} />

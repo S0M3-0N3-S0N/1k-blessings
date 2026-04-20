@@ -5,6 +5,7 @@ import { Loader2, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import GoldButton from "@/components/ui/GoldButton.jsx";
+import { useToast } from "@/components/ui/use-toast";
 import { cn, getInitials, getAvatarColor } from "@/lib/utils";
 import PullToRefresh from "@/components/PullToRefresh";
 

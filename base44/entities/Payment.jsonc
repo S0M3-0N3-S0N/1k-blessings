@@ -34,6 +34,17 @@
       "title": "Due Date",
       "format": "date-time"
     },
+    "payment_method": {
+      "type": "string",
+      "title": "Payment Method",
+      "enum": [
+        "cash",
+        "card",
+        "zelle",
+        "cashapp",
+        "other"
+      ]
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

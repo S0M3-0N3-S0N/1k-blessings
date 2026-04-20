@@ -48,6 +48,23 @@
         "other"
       ],
       "default": "hair"
+    },
+    "payment_method": {
+      "type": "string",
+      "title": "Payment Method",
+      "enum": [
+        "cash",
+        "card",
+        "zelle",
+        "cashapp",
+        "other"
+      ],
+      "default": "cash"
+    },
+    "tip_amount": {
+      "type": "number",
+      "title": "Tip Amount ($)",
+      "default": 0
     }
   },
   "required": [

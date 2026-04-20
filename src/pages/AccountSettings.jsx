@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -17,7 +18,6 @@ export default function AccountSettings() {
   const { toast } = useToast();
   const [theme, setTheme] = useState(() => localStorage.getItem("1kb-theme") || "dark");
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
   const applyTheme = (t) => {
     setTheme(t);
@@ -33,19 +33,13 @@ export default function AccountSettings() {
   };
 
   const handleDeleteAccount = async () => {
-    setDeleting(true);
-    try {
-      await base44.auth.logout();
-    } catch {
-      toast({ title: "Error", description: "Could not delete account. Please contact support.", variant: "destructive" });
-    }
-    setDeleting(false);
+    await base44.auth.logout();
   };
 
   return (
     <div className="space-y-6 max-w-lg">
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Profile</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Account</p>
         <h1 className="font-serif text-3xl font-light tracking-wide">Account Settings</h1>
       </div>
 
@@ -92,7 +86,7 @@ export default function AccountSettings() {
       {/* Danger zone */}
       <div className="bg-card rounded-xl border border-destructive/30 p-5 space-y-3">
         <h2 className="font-serif text-base font-medium text-destructive">Danger Zone</h2>
-        <p className="text-xs text-muted-foreground">Permanently delete your account. This action cannot be undone.</p>
+        <p className="text-xs text-muted-foreground">Permanently delete your account. This cannot be undone.</p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" className="w-full min-h-[44px] gap-2">
@@ -108,12 +102,8 @@ export default function AccountSettings() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel className="min-h-[44px]">Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDeleteAccount}
-                disabled={deleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]"
-              >
-                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yes, delete my account"}
+              <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 min-h-[44px]">
+                Yes, delete my account
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

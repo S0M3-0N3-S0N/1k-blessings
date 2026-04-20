@@ -51,6 +51,14 @@
       ],
       "default": "active"
     },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "start_date": {
+      "type": "string",
+      "title": "Start Date (YYYY-MM-DD)"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

@@ -1,23 +1,28 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn, toWeekly, getWeekStart, getWeekEnd, formatDateRange } from "@/lib/utils";
+import { Loader2, Plus, Trash2, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import GoldButton from "@/components/ui/GoldButton";
-import StatusBadge from "@/components/ui/StatusBadge";
+import GoldButton from "@/components/ui/GoldButton.jsx";
+import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import ModelBadge from "@/components/ui/ModelBadge.jsx";
 import ModelToggle from "@/components/ui/ModelToggle.jsx";
 import SplitBar from "@/components/ui/SplitBar.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
-import { getWeekStart, getWeekEnd, formatDateRange } from "@/lib/utils";
+import { useToast } from "@/components/ui/use-toast";
 
-const emptyForm = { name: "", role: "Stylist", payment_model: "rent", rent_amount: "", frequency: "weekly", commission_owner: 40, status: "active", notes: "", user_email: "" };
+const emptyForm = {
+  name: "", role: "Stylist", payment_model: "rent", rent_amount: "",
+  frequency: "weekly", commission_owner: 40, status: "active",
+  phone: "", start_date: "", notes: "", user_email: ""
+};
 
-function RenterForm({ form, setForm, onSave, onCancel, saving }) {
+function RenterFormFields({ form, setForm }) {
+  const ownerPct = parseFloat(form.commission_owner) || 40;
   return (
     <div className="space-y-4">
       <div>
@@ -27,24 +32,33 @@ function RenterForm({ form, setForm, onSave, onCancel, saving }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Name *</label>
-          <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name" />
+          <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="Full name" className="min-h-[44px]" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Role</label>
-          <Input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="e.g. Hair Stylist, Nail Tech" />
+          <Input value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} placeholder="Hair Stylist, Nail Tech..." className="min-h-[44px]" />
         </div>
       </div>
-
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Phone</label>
+          <Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="min-h-[44px]" />
+        </div>
+        <div>
+          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Start Date</label>
+          <Input type="date" value={form.start_date} onChange={e => setForm(f => ({ ...f, start_date: e.target.value }))} className="min-h-[44px]" />
+        </div>
+      </div>
       {form.payment_model === "rent" ? (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Rent Amount *</label>
-            <Input type="number" value={form.rent_amount} onChange={e => setForm(f => ({ ...f, rent_amount: e.target.value }))} className="font-mono" min="0" step="0.01" placeholder="0.00" />
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Rent Amount</label>
+            <Input type="number" value={form.rent_amount} onChange={e => setForm(f => ({ ...f, rent_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
           </div>
           <div>
             <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Frequency</label>
             <Select value={form.frequency} onValueChange={v => setForm(f => ({ ...f, frequency: v }))}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="weekly">Weekly</SelectItem>
                 <SelectItem value="biweekly">Bi-weekly</SelectItem>
@@ -56,16 +70,16 @@ function RenterForm({ form, setForm, onSave, onCancel, saving }) {
       ) : (
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Owner Commission %</label>
-          <Input type="number" value={form.commission_owner} onChange={e => setForm(f => ({ ...f, commission_owner: parseFloat(e.target.value) || 0 }))} className="font-mono" min="0" max="100" />
-          <p className="text-xs text-muted-foreground mt-1">Stylist keeps {100 - (parseFloat(form.commission_owner) || 0)}%</p>
+          <Input type="number" value={form.commission_owner} onChange={e => setForm(f => ({ ...f, commission_owner: e.target.value }))} className="font-mono min-h-[44px]" min="0" max="100" />
+          <SplitBar ownerPct={ownerPct} showLabels className="mt-2" />
+          <p className="text-xs text-muted-foreground mt-1">Stylist keeps {100 - ownerPct}% of each service</p>
         </div>
       )}
-
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Status</label>
           <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="active">Active</SelectItem>
               <SelectItem value="inactive">Inactive</SelectItem>
@@ -74,16 +88,10 @@ function RenterForm({ form, setForm, onSave, onCancel, saving }) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Linked Email</label>
-          <Input value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))} placeholder="user@email.com" />
+          <Input value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))} placeholder="user@email.com" className="min-h-[44px]" />
         </div>
       </div>
-      <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes (optional)" />
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" className="flex-1" onClick={onCancel}>Cancel</Button>
-        <GoldButton className="flex-1" onClick={onSave} disabled={saving || !form.name}>
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
-        </GoldButton>
-      </div>
+      <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes (optional)" className="min-h-[44px]" />
     </div>
   );
 }
@@ -93,11 +101,12 @@ export default function Renters() {
   const [charges, setCharges] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const [editRenter, setEditRenter] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [weekOffset, setWeekOffset] = useState(0);
+  const { toast } = useToast();
 
   const loadData = useCallback(async () => {
     const [r, c, s] = await Promise.all([
@@ -109,8 +118,8 @@ export default function Renters() {
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
-  const openAdd = () => { setForm(emptyForm); setEditRenter(null); setShowAdd(true); };
-  const openEdit = (r) => { setForm({ ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40 }); setEditRenter(r); setShowAdd(true); };
+  const openAdd = () => { setForm(emptyForm); setEditRenter(null); setShowDialog(true); };
+  const openEdit = r => { setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40 }); setEditRenter(r); setShowDialog(true); };
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -120,23 +129,33 @@ export default function Renters() {
       rent_amount: form.payment_model === "rent" ? (parseFloat(form.rent_amount) || 0) : 0,
       commission_owner: form.payment_model === "commission" ? (parseFloat(form.commission_owner) || 40) : 40,
     };
-    if (editRenter) await base44.entities.Renter.update(editRenter.id, data);
-    else await base44.entities.Renter.create(data);
-    setShowAdd(false); setSaving(false); loadData();
+    if (editRenter) {
+      await base44.entities.Renter.update(editRenter.id, data);
+      toast({ title: "Stylist updated" });
+    } else {
+      await base44.entities.Renter.create(data);
+      toast({ title: "Stylist added" });
+    }
+    setShowDialog(false); setSaving(false); loadData();
+  };
+
+  const handleDelete = async (id) => {
+    await base44.entities.Renter.delete(id);
+    toast({ title: "Stylist removed" });
+    loadData();
   };
 
   const ws = getWeekStart(new Date(), weekOffset);
   const we = getWeekEnd(ws);
   const wsStr = ws.toISOString().split("T")[0];
   const weStr = we.toISOString().split("T")[0];
+  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
 
   const activeRenters = renters.filter(r => r.status === "active");
   const commissionRenters = activeRenters.filter(r => r.payment_model === "commission");
-  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
-
-  const weekOptions = ["This Week", "Last Week", "2 Weeks Ago", "3 Weeks Ago", "4 Weeks Ago"];
+  const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -147,151 +166,159 @@ export default function Renters() {
         </div>
 
         <Tabs defaultValue="stylists">
-          <TabsList className="mb-5">
-            <TabsTrigger value="stylists">Stylists</TabsTrigger>
-            <TabsTrigger value="splits">Weekly Splits</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsList className="mb-5 h-auto flex-wrap">
+            <TabsTrigger value="stylists" className="min-h-[36px]">Stylists</TabsTrigger>
+            <TabsTrigger value="splits" className="min-h-[36px]">Weekly Splits</TabsTrigger>
+            <TabsTrigger value="payroll" className="min-h-[36px]">Payroll History</TabsTrigger>
+            <TabsTrigger value="users" className="min-h-[36px]">User Mgmt</TabsTrigger>
           </TabsList>
 
-          {/* TAB 1 — Stylists */}
+          {/* Tab 1 — Stylists */}
           <TabsContent value="stylists">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {renters.map((r, i) => {
                 const av = getAvatarColor(i);
                 return (
-                  <div key={r.id} className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 group relative">
+                  <div key={r.id} className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 relative group">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", av.bg, av.text)}>
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
                           {getInitials(r.name)}
                         </div>
                         <div>
-                          <p className="font-medium text-sm">{r.name}</p>
+                          <p className="font-medium">{r.name}</p>
                           <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
+                          {r.start_date && <p className="text-[10px] text-muted-foreground/60 mt-0.5">Since {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
                         <ModelBadge model={r.payment_model} />
                         <StatusBadge status={r.status} />
                       </div>
                     </div>
 
                     {r.payment_model === "rent" ? (
-                      <div className="space-y-1 text-xs">
+                      <div className="space-y-1 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Rent</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.rent_amount)} / {freqLabel(r.frequency)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Monthly equiv.</span>
-                          <span className="font-mono">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
+                          <span className="text-muted-foreground">≈ Monthly</span>
+                          <span className="font-mono text-muted-foreground">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-2 text-xs">
+                      <div className="space-y-2 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Split (owner / stylist)</span>
+                          <span className="text-muted-foreground">Owner / Stylist split</span>
                           <span className="font-mono">{r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}%</span>
                         </div>
                         <SplitBar ownerPct={r.commission_owner || 40} />
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 pt-1 border-t border-border">
-                      <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs" onClick={() => openEdit(r)}>
-                        <Pencil className="w-3 h-3 mr-1" />Edit
+                    <div className="flex items-center gap-2 border-t border-border pt-2">
+                      <Button variant="ghost" size="sm" className="flex-1 min-h-[44px]" onClick={() => openEdit(r)}>
+                        <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => base44.entities.Renter.delete(r.id).then(loadData)}>
-                        <Trash2 className="w-3 h-3" />
+                      <Button variant="ghost" size="sm" className="min-h-[44px] text-destructive hover:text-destructive" onClick={() => handleDelete(r.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
                 );
               })}
 
-              {/* Add card */}
-              <button onClick={openAdd} className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[160px]">
+              <button onClick={openAdd} className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[180px]">
                 <Plus className="w-6 h-6" />
                 <span className="text-sm font-medium">Add Stylist</span>
               </button>
             </div>
           </TabsContent>
 
-          {/* TAB 2 — Weekly Splits */}
+          {/* Tab 2 — Weekly Splits */}
           <TabsContent value="splits">
             <div className="space-y-4">
               <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-xs text-amber-600 dark:text-amber-400">
-                Showing commission-model stylists only. Rent-model stylists are tracked in Payments.
+                Commission-model stylists only. Rent stylists are tracked in Payments.
               </div>
               <div className="flex items-center justify-between flex-wrap gap-3">
-                <p className="text-sm font-medium">{formatDateRange(ws)}</p>
+                <p className="text-sm font-medium text-muted-foreground">{formatDateRange(ws)}</p>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => setWeekOffset(o => o + 1)} className="p-1.5 rounded-lg border border-border hover:bg-muted"><ChevronLeft className="w-4 h-4" /></button>
-                  <select className="text-xs bg-muted border border-border rounded-lg px-2 py-1.5" value={weekOffset} onChange={e => setWeekOffset(Number(e.target.value))}>
-                    {weekOptions.map((label, i) => <option key={i} value={i}>{label}</option>)}
-                  </select>
-                  <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-1.5 rounded-lg border border-border hover:bg-muted disabled:opacity-30"><ChevronRight className="w-4 h-4" /></button>
+                  <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px]"><ChevronLeft className="w-4 h-4" /></button>
+                  <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px]"><ChevronRight className="w-4 h-4" /></button>
                 </div>
               </div>
               {commissionRenters.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-10">No commission-model stylists yet.</p>
               ) : (
-                <div className="bg-card rounded-xl border border-border overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-muted/20 border-b border-border">
-                          {["Stylist","Role","Services","Total Earned","Their % → $","Our % → $","Split"].map(h => (
-                            <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" || h === "Role" ? "text-left" : "text-right"}`}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {commissionRenters.map(r => {
-                          const rs = weekServices.filter(s => s.renter_id === r.id);
-                          const gross = rs.reduce((s,e) => s+(e.amount||0), 0);
-                          const ownerCut = rs.reduce((s,e) => s+(e.owner_earnings||0), 0);
-                          const stylistCut = rs.reduce((s,e) => s+(e.renter_earnings||0), 0);
-                          const ownerPct = r.commission_owner || 40;
-                          return (
-                            <tr key={r.id} className="hover:bg-muted/20">
-                              <td className="px-4 py-3 font-medium">{r.name}</td>
-                              <td className="px-4 py-3 text-muted-foreground text-xs">{r.role}</td>
-                              <td className="px-4 py-3 text-right">{rs.length}</td>
-                              <td className="px-4 py-3 text-right font-mono">{formatCurrency(gross)}</td>
-                              <td className="px-4 py-3 text-right font-mono">{100-ownerPct}% → {formatCurrency(stylistCut)}</td>
-                              <td className="px-4 py-3 text-right font-mono text-primary">{ownerPct}% → {formatCurrency(ownerCut)}</td>
-                              <td className="px-4 py-3 w-24"><SplitBar ownerPct={ownerPct} /></td>
-                            </tr>
-                          );
-                        })}
-                        <tr className="bg-muted/20 border-t border-border font-semibold">
-                          <td className="px-4 py-3" colSpan={2}>Totals</td>
-                          <td className="px-4 py-3 text-right">{commissionRenters.reduce((s,r) => { const rs=weekServices.filter(x=>x.renter_id===r.id); return s+rs.length; }, 0)}</td>
-                          <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s,r) => s+weekServices.filter(x=>x.renter_id===r.id).reduce((a,e)=>a+(e.amount||0),0), 0))}</td>
-                          <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s,r) => s+weekServices.filter(x=>x.renter_id===r.id).reduce((a,e)=>a+(e.renter_earnings||0),0), 0))}</td>
-                          <td className="px-4 py-3 text-right font-mono text-primary">{formatCurrency(commissionRenters.reduce((s,r) => s+weekServices.filter(x=>x.renter_id===r.id).reduce((a,e)=>a+(e.owner_earnings||0),0), 0))}</td>
-                          <td className="px-4 py-3" />
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                <div className="bg-card rounded-xl border border-border overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-muted/30 border-b border-border">
+                        {["Stylist", "Services", "Total", "Stylist Earns", "Owner Earns ✦", "Split"].map(h => (
+                          <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {commissionRenters.map((r, i) => {
+                        const rs = weekServices.filter(s => s.renter_id === r.id);
+                        const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
+                        const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+                        const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+                        const av = getAvatarColor(i);
+                        return (
+                          <tr key={r.id} className={cn("hover:bg-muted/20", gross === 0 && "opacity-50")}>
+                            <td className="pl-5 pr-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold", av.bg, av.text)}>{getInitials(r.name)}</div>
+                                <div>
+                                  <p className="font-medium text-sm">{r.name}</p>
+                                  <p className="text-xs text-muted-foreground">{r.role}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">{rs.length}</td>
+                            <td className="px-4 py-3 text-right font-mono">{formatCurrency(gross)}</td>
+                            <td className="px-4 py-3 text-right font-mono">{formatCurrency(stylistCut)}<span className="text-xs text-muted-foreground ml-1">{100 - (r.commission_owner || 40)}%</span></td>
+                            <td className="px-4 py-3 text-right font-mono text-primary font-semibold">{formatCurrency(ownerCut)}<span className="text-xs text-primary/60 ml-1">{r.commission_owner || 40}%</span></td>
+                            <td className="px-4 py-3 w-24"><SplitBar ownerPct={r.commission_owner || 40} /></td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="bg-muted/30 border-t border-border font-semibold">
+                        <td className="pl-5 py-3">Totals</td>
+                        <td className="px-4 py-3 text-right">{commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).length, 0)}</td>
+                        <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.amount || 0), 0), 0))}</td>
+                        <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.renter_earnings || 0), 0), 0))}</td>
+                        <td className="px-4 py-3 text-right font-mono text-primary">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.owner_earnings || 0), 0), 0))}</td>
+                        <td className="px-4 py-3" />
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
           </TabsContent>
 
-          {/* TAB 3 — User Management */}
+          {/* Tab 3 — Payroll History */}
+          <TabsContent value="payroll">
+            <PayrollHistory renters={renters} services={services} />
+          </TabsContent>
+
+          {/* Tab 4 — User Management */}
           <TabsContent value="users">
-            <div className="space-y-4">
-              <div className="bg-muted/30 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground">
-                Tip: Enter the stylist's registered app email in the "Linked Email" field to connect their account.
+            <div className="space-y-3">
+              <div className="bg-muted/30 rounded-lg px-4 py-3 text-xs text-muted-foreground border border-border">
+                Link a stylist's email to let them log in and see their private dashboard.
               </div>
-              <div className="bg-card rounded-xl border border-border overflow-hidden">
+              <div className="bg-card rounded-xl border border-border overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-muted/20 border-b border-border">
-                      {["Stylist","Model","Linked Email","Rate","Status",""].map(h => (
+                    <tr className="bg-muted/30 border-b border-border">
+                      {["Stylist", "Model", "Rate", "Linked Email", "Status", ""].map(h => (
                         <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
                       ))}
                     </tr>
@@ -301,13 +328,15 @@ export default function Renters() {
                       <tr key={r.id} className="hover:bg-muted/20">
                         <td className="px-4 py-3 font-medium">{r.name}</td>
                         <td className="px-4 py-3"><ModelBadge model={r.payment_model} /></td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{r.user_email || <span className="italic opacity-50">not linked</span>}</td>
                         <td className="px-4 py-3 font-mono text-xs">
-                          {r.payment_model === "rent" ? formatCurrency(r.rent_amount) + "/" + freqLabel(r.frequency) : `${r.commission_owner||40}% owner`}
+                          {r.payment_model === "rent" ? `${formatCurrency(r.rent_amount)}/${freqLabel(r.frequency)}` : `${r.commission_owner || 40}% owner`}
                         </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{r.user_email || <span className="italic opacity-50">not linked</span>}</td>
                         <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                         <td className="px-4 py-3">
-                          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(r)}><Pencil className="w-3 h-3 mr-1" />Edit</Button>
+                          <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => openEdit(r)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -319,54 +348,146 @@ export default function Renters() {
         </Tabs>
 
         {/* Charges Ledger */}
-        <ChargesSection charges={charges} renters={renters} onRefresh={loadData} />
+        <ChargesSection charges={charges} renters={renters} renterMap={renterMap} onRefresh={loadData} />
       </div>
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-md">
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editRenter ? "Edit Stylist" : "Add Stylist"}</DialogTitle></DialogHeader>
-          <RenterForm form={form} setForm={setForm} onSave={handleSave} onCancel={() => setShowAdd(false)} saving={saving} />
+          <RenterFormFields form={form} setForm={setForm} />
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>Cancel</Button>
+            <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.name}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Stylist"}
+            </GoldButton>
+          </div>
         </DialogContent>
       </Dialog>
     </PullToRefresh>
   );
 }
 
-function ChargesSection({ charges, renters, onRefresh }) {
+function PayrollHistory({ renters, services }) {
+  const now = new Date();
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const [selectedMonth, setSelectedMonth] = useState(months[0]);
+  const monthServices = services.filter(s => s.service_date?.startsWith(selectedMonth));
+
+  const rentRenters = renters.filter(r => r.payment_model === "rent");
+  const commRenters = renters.filter(r => r.payment_model === "commission");
+
+  return (
+    <div className="space-y-4">
+      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <SelectTrigger className="w-48 min-h-[44px]"><SelectValue /></SelectTrigger>
+        <SelectContent>
+          {months.map(m => {
+            const [yr, mo] = m.split("-").map(Number);
+            return <SelectItem key={m} value={m}>{new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</SelectItem>;
+          })}
+        </SelectContent>
+      </Select>
+
+      {rentRenters.length > 0 && (
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="px-5 py-3 border-b border-border bg-muted/20">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rent Stylists</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border">
+              {["Stylist", "Rent Amount", "Service Revenue"].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-border">
+              {rentRenters.map(r => {
+                const rs = monthServices.filter(s => s.renter_id === r.id);
+                const rev = rs.reduce((s, e) => s + (e.amount || 0), 0);
+                return (
+                  <tr key={r.id} className="hover:bg-muted/20">
+                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(rev)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {commRenters.length > 0 && (
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="px-5 py-3 border-b border-border bg-muted/20">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Commission Stylists</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border">
+              {["Stylist", "Services", "Total $", "Their Earnings", "Our Earnings ✦"].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-border">
+              {commRenters.map(r => {
+                const rs = monthServices.filter(s => s.renter_id === r.id);
+                const total = rs.reduce((s, e) => s + (e.amount || 0), 0);
+                const their = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+                const ours = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+                return (
+                  <tr key={r.id} className="hover:bg-muted/20">
+                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-right">{rs.length}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(total)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(their)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-primary font-semibold">{formatCurrency(ours)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ description: "", renter_id: "", amount: "", frequency: "monthly" });
+  const { toast } = useToast();
 
   const handleAdd = async () => {
     if (!form.description || !form.amount) return;
     await base44.entities.Charge.create({ ...form, amount: parseFloat(form.amount) || 0 });
-    setForm({ description: "", renter_id: "", amount: "", frequency: "monthly" }); setShowAdd(false); onRefresh();
+    setForm({ description: "", renter_id: "", amount: "", frequency: "monthly" });
+    setShowAdd(false); toast({ title: "Charge added" }); onRefresh();
   };
-
-  const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
 
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <h2 className="font-serif text-base font-medium">Charges Ledger</h2>
-        <Button variant="outline" size="sm" onClick={() => setShowAdd(s => !s)}><Plus className="w-3.5 h-3.5 mr-1" />Add Charge</Button>
+        <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd(s => !s)}>
+          <Plus className="w-3.5 h-3.5 mr-1" />Add Charge
+        </Button>
       </div>
       {showAdd && (
         <div className="px-5 py-4 border-b border-border bg-muted/20 flex flex-wrap gap-2 items-end">
-          <Input placeholder="Description *" value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value}))} className="flex-1 min-w-[140px] h-8 text-sm" />
-          <Select value={form.renter_id} onValueChange={v => setForm(f=>({...f,renter_id:v}))}>
-            <SelectTrigger className="w-36 h-8 text-sm"><SelectValue placeholder="Stylist" /></SelectTrigger>
-            <SelectContent>{renters.map(r=><SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+          <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="flex-1 min-w-[140px] min-h-[44px]" />
+          <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
+            <SelectTrigger className="w-36 min-h-[44px]"><SelectValue placeholder="Stylist" /></SelectTrigger>
+            <SelectContent>{renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
-          <Input type="number" placeholder="$" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} className="w-24 h-8 text-sm font-mono" />
-          <Select value={form.frequency} onValueChange={v=>setForm(f=>({...f,frequency:v}))}>
-            <SelectTrigger className="w-28 h-8 text-sm"><SelectValue /></SelectTrigger>
+          <Input type="number" placeholder="$" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="w-24 font-mono min-h-[44px]" />
+          <Select value={form.frequency} onValueChange={v => setForm(f => ({ ...f, frequency: v }))}>
+            <SelectTrigger className="w-28 min-h-[44px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="weekly">Weekly</SelectItem>
               <SelectItem value="biweekly">Bi-weekly</SelectItem>
               <SelectItem value="monthly">Monthly</SelectItem>
             </SelectContent>
           </Select>
-          <GoldButton size="sm" onClick={handleAdd}>Add</GoldButton>
+          <GoldButton onClick={handleAdd}>Add</GoldButton>
         </div>
       )}
       {charges.length === 0 ? (
@@ -374,14 +495,16 @@ function ChargesSection({ charges, renters, onRefresh }) {
       ) : (
         <div className="divide-y divide-border">
           {charges.map(c => (
-            <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20">
+            <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 min-h-[44px]">
               <div>
                 <p className="text-sm font-medium">{c.description}</p>
                 <p className="text-xs text-muted-foreground">{c.renter_id ? renterMap[c.renter_id]?.name || "—" : "All"} · {freqLabel(c.frequency)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-mono text-sm">{formatCurrency(c.amount)}</span>
-                <button onClick={() => base44.entities.Charge.delete(c.id).then(onRefresh)} className="text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                <button onClick={() => base44.entities.Charge.delete(c.id).then(onRefresh)} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           ))}
@@ -390,6 +513,3 @@ function ChargesSection({ charges, renters, onRefresh }) {
     </div>
   );
 }
-
-function ChevronLeft({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>; }
-function ChevronRight({ className }) { return <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>; }

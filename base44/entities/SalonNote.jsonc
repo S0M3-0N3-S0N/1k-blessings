@@ -5,7 +5,25 @@
     "content": {
       "type": "string",
       "title": "Content"
+    },
+    "pinned": {
+      "type": "boolean",
+      "title": "Pinned",
+      "default": false
+    },
+    "category": {
+      "type": "string",
+      "title": "Category",
+      "enum": [
+        "general",
+        "reminder",
+        "policy",
+        "goal"
+      ],
+      "default": "general"
     }
   },
-  "required": []
+  "required": [
+    "content"
+  ]
 }

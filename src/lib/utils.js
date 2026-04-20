@@ -63,14 +63,17 @@ const AVATAR_COLORS = [
 export function getAvatarColor(index) { return AVATAR_COLORS[index % AVATAR_COLORS.length]; }
 
 export const CATEGORY_CONFIG = {
-  hair:       { label: "Hair",       className: "bg-amber-500/15 text-amber-500 border-amber-500/30" },
-  nails:      { label: "Nails",      className: "bg-pink-500/15 text-pink-500 border-pink-500/30" },
-  aesthetics: { label: "Aesthetics", className: "bg-violet-500/15 text-violet-500 border-violet-500/30" },
+  hair:       { label: "Hair",       className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
+  nails:      { label: "Nails",      className: "bg-pink-500/15 text-pink-600 dark:text-pink-400 border-pink-500/30" },
+  aesthetics: { label: "Aesthetics", className: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30" },
   other:      { label: "Other",      className: "bg-muted text-muted-foreground border-border" },
 };
 export function categoryBadge(cat) { return CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.other; }
 
-// Compute earnings based on payment model
+export const PAYMENT_METHOD_LABELS = {
+  cash: "Cash", card: "Card", zelle: "Zelle", cashapp: "CashApp", other: "Other"
+};
+
 export function computeEarnings(amount, renter) {
   if (!renter) return { renter_earnings: amount, owner_earnings: 0, renter_pct: 100 };
   if (renter.payment_model === "commission") {
@@ -82,6 +85,15 @@ export function computeEarnings(amount, renter) {
       owner_earnings: parseFloat(((amount * ownerPct) / 100).toFixed(2)),
     };
   }
-  // rent model — owner earns via rent, not services
   return { renter_pct: 100, renter_earnings: amount, owner_earnings: 0 };
+}
+
+export function getMonthsInRange(count = 12) {
+  const months = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return months;
 }

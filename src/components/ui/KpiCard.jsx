@@ -1,17 +1,22 @@
 import { cn } from "@/lib/utils";
 
-export default function KpiCard({ label, value, sub, icon: Icon, accent = false, className }) {
+export default function KpiCard({ label, value, sub, icon: Icon, accent = false, className, glow = false }) {
   return (
-    <div className={cn("bg-card rounded-xl border border-border p-5 flex flex-col gap-3", className)}>
+    <div className={cn(
+      "bg-card rounded-xl border border-border p-4 flex flex-col gap-2 relative overflow-hidden",
+      glow && "shadow-[0_0_20px_rgba(201,152,74,0.12)]",
+      className
+    )}>
+      {glow && <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />}
       {Icon && (
-        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", accent ? "bg-primary/20" : "bg-muted")}>
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0", accent ? "bg-primary/15" : "bg-muted")}>
           <Icon className={cn("w-4 h-4", accent ? "text-primary" : "text-muted-foreground")} />
         </div>
       )}
-      <div>
-        <p className="font-mono text-2xl font-medium tracking-tight text-foreground">{value}</p>
-        <p className="text-xs font-semibold text-muted-foreground mt-0.5 uppercase tracking-wider">{label}</p>
-        {sub && <p className="text-[11px] text-muted-foreground/60 mt-0.5">{sub}</p>}
+      <div className="relative">
+        <p className={cn("font-mono text-2xl font-medium tracking-tight", accent && "text-primary")}>{value}</p>
+        <p className="text-[11px] font-semibold text-muted-foreground mt-0.5 uppercase tracking-wider">{label}</p>
+        {sub && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{sub}</p>}
       </div>
     </div>
   );
