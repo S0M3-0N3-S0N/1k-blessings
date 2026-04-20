@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
 import {
   LayoutDashboard, Users, CreditCard, MessageSquare,
   Scissors, BarChart2, Receipt, Calendar, Settings, LogOut,
-  Sparkles, ChevronLeft, StickyNote
+  Sparkles, StickyNote, MoreHorizontal, X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
@@ -66,6 +67,10 @@ export default function Layout() {
   const nav = isAdmin ? adminNav : renterNav;
   const bottomTabs = isAdmin ? adminBottomTabs : renterBottomTabs;
   const canGoBack = window.history.length > 1 && location.pathname !== "/";
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // Pages not in bottom tabs — shown in "More" drawer
+  const morePages = nav.filter(n => !bottomTabs.some(t => t.path === n.path));
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -170,7 +175,67 @@ export default function Layout() {
             </Link>
           );
         })}
+        {/* More button */}
+        {morePages.length > 0 && (
+          <button
+            onClick={() => setMoreOpen(true)}
+            className={cn(
+              "flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-colors",
+              moreOpen ? "text-primary" : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+            )}
+          >
+            <MoreHorizontal className="w-5 h-5" />
+            <span className="text-[9px] font-medium">More</span>
+          </button>
+        )}
       </nav>
+
+      {/* More drawer */}
+      <AnimatePresence>
+        {moreOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="md:hidden fixed inset-0 z-50 bg-black/50"
+              onClick={() => setMoreOpen(false)}
+            />
+            <motion.div
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar rounded-t-2xl border-t border-sidebar-border"
+              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+            >
+              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-sidebar-border">
+                <p className="font-serif text-base font-medium text-sidebar-foreground">More</p>
+                <button onClick={() => setMoreOpen(false)} className="p-2 rounded-lg hover:bg-sidebar-foreground/10">
+                  <X className="w-4 h-4 text-sidebar-foreground/60" />
+                </button>
+              </div>
+              <div className="px-3 py-3 grid grid-cols-3 gap-2">
+                {morePages.map(({ path, label, icon: Icon }) => {
+                  const active = location.pathname === path;
+                  return (
+                    <Link
+                      key={path}
+                      to={path}
+                      onClick={() => setMoreOpen(false)}
+                      className={cn(
+                        "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
+                        active
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "border-sidebar-border text-sidebar-foreground/60 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground"
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="text-[10px] font-medium text-center leading-tight">{label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
