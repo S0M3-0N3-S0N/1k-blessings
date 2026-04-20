@@ -155,39 +155,53 @@ export default function Layout() {
 
       {/* Mobile bottom tab bar */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-sidebar border-t border-sidebar-border flex"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {bottomTabs.map(({ path, label, icon: Icon }) => {
-          const active = location.pathname === path;
-          return (
-            <Link
-              key={path}
-              to={path}
+        <div className="relative flex w-full mx-3 mb-3 bg-sidebar/90 backdrop-blur-xl border border-sidebar-border rounded-2xl shadow-lg overflow-hidden">
+          {bottomTabs.map(({ path, label, icon: Icon }) => {
+            const active = location.pathname === path;
+            return (
+              <Link
+                key={path}
+                to={path}
+                className={cn(
+                  "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-all relative",
+                  active ? "text-primary" : "text-sidebar-foreground/35 hover:text-sidebar-foreground/70"
+                )}
+              >
+                {active && (
+                  <motion.div
+                    layoutId="tab-pill"
+                    className="absolute inset-x-1 inset-y-1 bg-primary/12 rounded-xl"
+                    transition={{ type: "spring", damping: 28, stiffness: 320 }}
+                  />
+                )}
+                <Icon className="w-[18px] h-[18px] relative z-10" />
+                <span className="text-[9px] font-semibold tracking-wide relative z-10">{label}</span>
+              </Link>
+            );
+          })}
+          {morePages.length > 0 && (
+            <button
+              onClick={() => setMoreOpen(true)}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-colors relative",
-                active ? "text-primary" : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
+                "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 transition-all relative",
+                moreOpen ? "text-primary" : "text-sidebar-foreground/35 hover:text-sidebar-foreground/70"
               )}
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-[9px] font-medium">{label}</span>
-              {active && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-primary rounded-full" />}
-            </Link>
-          );
-        })}
-        {/* More button */}
-        {morePages.length > 0 && (
-          <button
-            onClick={() => setMoreOpen(true)}
-            className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-2 min-h-[52px] transition-colors",
-              moreOpen ? "text-primary" : "text-sidebar-foreground/40 hover:text-sidebar-foreground/70"
-            )}
-          >
-            <MoreHorizontal className="w-5 h-5" />
-            <span className="text-[9px] font-medium">More</span>
-          </button>
-        )}
+              {moreOpen && (
+                <motion.div
+                  layoutId="tab-pill"
+                  className="absolute inset-x-1 inset-y-1 bg-primary/12 rounded-xl"
+                  transition={{ type: "spring", damping: 28, stiffness: 320 }}
+                />
+              )}
+              <MoreHorizontal className="w-[18px] h-[18px] relative z-10" />
+              <span className="text-[9px] font-semibold tracking-wide relative z-10">More</span>
+            </button>
+          )}
+        </div>
       </nav>
 
       {/* More drawer */}
@@ -196,22 +210,26 @@ export default function Layout() {
           <>
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-50 bg-black/50"
+              className="md:hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
               onClick={() => setMoreOpen(false)}
             />
             <motion.div
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar rounded-t-2xl border-t border-sidebar-border"
-              style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+              transition={{ type: "spring", damping: 32, stiffness: 320 }}
+              className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar rounded-t-3xl border-t border-sidebar-border shadow-2xl"
+              style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.5rem)" }}
             >
-              <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-sidebar-border">
-                <p className="font-serif text-base font-medium text-sidebar-foreground">More</p>
-                <button onClick={() => setMoreOpen(false)} className="p-2 rounded-lg hover:bg-sidebar-foreground/10">
-                  <X className="w-4 h-4 text-sidebar-foreground/60" />
+              {/* drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-9 h-1 rounded-full bg-sidebar-foreground/20" />
+              </div>
+              <div className="flex items-center justify-between px-5 pb-3">
+                <p className="font-serif text-lg font-medium text-sidebar-foreground">More</p>
+                <button onClick={() => setMoreOpen(false)} className="p-2 rounded-xl hover:bg-sidebar-foreground/8 transition-colors">
+                  <X className="w-4 h-4 text-sidebar-foreground/50" />
                 </button>
               </div>
-              <div className="px-3 py-3 grid grid-cols-3 gap-2">
+              <div className="px-4 pb-4 grid grid-cols-3 gap-2.5">
                 {morePages.map(({ path, label, icon: Icon }) => {
                   const active = location.pathname === path;
                   return (
@@ -220,14 +238,19 @@ export default function Layout() {
                       to={path}
                       onClick={() => setMoreOpen(false)}
                       className={cn(
-                        "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
+                        "flex flex-col items-center gap-2.5 py-4 px-2 rounded-2xl border transition-all",
                         active
-                          ? "bg-primary/10 border-primary/30 text-primary"
-                          : "border-sidebar-border text-sidebar-foreground/60 hover:bg-sidebar-foreground/8 hover:text-sidebar-foreground"
+                          ? "bg-primary/12 border-primary/30 text-primary"
+                          : "border-sidebar-border/60 text-sidebar-foreground/55 hover:bg-sidebar-foreground/6 hover:text-sidebar-foreground"
                       )}
                     >
-                      <Icon className="w-5 h-5" />
-                      <span className="text-[10px] font-medium text-center leading-tight">{label}</span>
+                      <div className={cn(
+                        "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                        active ? "bg-primary/15" : "bg-sidebar-foreground/6"
+                      )}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-semibold text-center leading-tight">{label}</span>
                     </Link>
                   );
                 })}
