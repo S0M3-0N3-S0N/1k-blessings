@@ -193,6 +193,7 @@ export default function Payments() {
 }
 
 function PaymentHistory({ renters, allPayments, currentMonth }) {
+  const { t } = useLanguage();
   const now = new Date();
   const prevMonths = [1, 2, 3].map(offset => {
     const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
