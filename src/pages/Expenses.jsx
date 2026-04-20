@@ -140,14 +140,14 @@ export default function Expenses() {
                   </div>
                 </button>
                 {isOpen && (
-                  <div className="border-t border-border divide-y divide-border md:divide-y">
+                  <div className="border-t border-border divide-y divide-border">
                     {items.map(e => (
-                      <div key={e.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 px-4 md:px-5 py-3 hover:bg-muted/20 min-h-[52px]">
-                        <div className="flex items-start gap-3 min-w-0">
+                      <div key={e.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 min-h-[52px]">
+                        <div className="flex items-center gap-3">
                           <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[e.category] || CAT_COLORS.other)}>
                             {e.category}
                           </span>
-                          <div className="min-w-0">
+                          <div>
                             <p className="text-sm font-medium">{e.description}</p>
                             <p className="text-xs text-muted-foreground">
                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
@@ -156,7 +156,7 @@ export default function Expenses() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3 justify-between md:justify-end">
+                        <div className="flex items-center gap-3">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
                           <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
