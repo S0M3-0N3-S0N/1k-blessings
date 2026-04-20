@@ -8,8 +8,10 @@ import SplitBar from "@/components/ui/SplitBar.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
+import { useLanguage } from "@/lib/i18n";
 
 export default function AdminDashboard() {
+  const { t } = useLanguage();
   const [renters, setRenters] = useState([]);
   const [services, setServices] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -33,7 +35,7 @@ export default function AdminDashboard() {
 
   const now = new Date();
   const hour = now.getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? t("goodMorning") : hour < 17 ? t("goodAfternoon") : t("goodEvening");
   const todayStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
@@ -105,25 +107,25 @@ export default function AdminDashboard() {
       <div className="space-y-7">
         {/* Header */}
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Admin Dashboard</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("adminDashboard")}</p>
           <h1 className="font-serif text-3xl md:text-4xl font-light tracking-wide">{greeting} ✦</h1>
           <p className="text-sm text-muted-foreground mt-1">{todayStr}</p>
         </div>
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label="Monthly Rent" value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub="projected · rent model" />
-          <KpiCard label="Collected" value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub="this month" />
-          <KpiCard label="Our Commission" value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub="this week · commission" />
-          <KpiCard label="Active Stylists" value={activeRenters.length} icon={Users} sub={`${rentRenters.length} rent · ${commissionRenters.length} comm · ${hourlyRenters.length} hourly`} />
+          <KpiCard label={t("monthlyRent")} value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub="projected · rent model" />
+          <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub="this month" />
+          <KpiCard label={t("ourCommission")} value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub="this week · commission" />
+          <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} rent · ${commissionRenters.length} comm · ${hourlyRenters.length} hourly`} />
         </div>
 
         {/* Commission Splits */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-2 flex-wrap">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Commission Splits</p>
-              <p className="font-serif text-base font-medium mt-0.5">Week of {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("commissionSplits")}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("weekOf")} {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
             </div>
             <div className="flex items-center gap-1.5">
               <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
@@ -137,15 +139,15 @@ export default function AdminDashboard() {
           </div>
           {commissionRenters.length === 0 ? (
             <div className="px-5 py-10 text-center space-y-2">
-              <p className="text-sm text-muted-foreground">No commission-model stylists yet.</p>
-              <Link to="/renters" className="text-xs text-primary hover:underline">Add a stylist →</Link>
+              <p className="text-sm text-muted-foreground">{t("commissionOnlyNote")}</p>
+              <Link to="/renters" className="text-xs text-primary hover:underline">{t("addStylist")} →</Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border">
-                    {["Stylist", "Services", "Total Earned", "Their Cut", "Our Cut ✦", "Split"].map(h => (
+                    {[t("stylists"), t("services"), t("totalRevenue"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, "Split"].map(h => (
                       <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right last:text-left"}`}>{h}</th>
                     ))}
                   </tr>
@@ -184,7 +186,7 @@ export default function AdminDashboard() {
                   })}
                   {/* Totals */}
                   <tr className="bg-muted/30 border-t border-border font-semibold">
-                    <td className="pl-5 pr-4 py-3 text-sm">Totals</td>
+                    <td className="pl-5 pr-4 py-3 text-sm">{t("totals")}</td>
                     <td className="px-4 py-3 text-right">{commRows.reduce((s, r) => s + r.rs.length, 0)}</td>
                     <td className="px-4 py-3 text-right font-mono">{formatCurrency(commRows.reduce((s, r) => s + r.gross, 0))}</td>
                     <td className="px-4 py-3 text-right font-mono">{formatCurrency(commRows.reduce((s, r) => s + r.stylistCut, 0))}</td>
@@ -201,14 +203,14 @@ export default function AdminDashboard() {
         {hourlyRenters.length > 0 && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Hourly Payroll</p>
-              <p className="font-serif text-base font-medium mt-0.5">This Week · Hourly Stylists</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("hourlyStylists")}</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border">
-                    {["Stylist", "Status", "Hours", "Rate", "Gross", "Deduction", "Net"].map(h => (
+                    {[t("stylists"), t("status"), "Hours", "Rate", "Gross", "Deduction", t("netPay")].map(h => (
                       <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>
                     ))}
                   </tr>
@@ -255,8 +257,8 @@ export default function AdminDashboard() {
         {rentRows.length > 0 && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Rent Due</p>
-              <p className="font-serif text-base font-medium mt-0.5">This Week · Rent Stylists</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("rentDue")}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("rentStylists")}</p>
             </div>
             <div className="divide-y divide-border">
               {rentRows.map(r => (
@@ -271,7 +273,7 @@ export default function AdminDashboard() {
                     {!r.paid && (
                       <GoldButton size="sm" onClick={() => markPaid(r)} disabled={markingId === r.id}>
                         {markingId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
-                        Mark Paid
+                        {t("markPaid")}
                       </GoldButton>
                     )}
                   </div>
@@ -285,13 +287,13 @@ export default function AdminDashboard() {
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Recent Activity</p>
-              <p className="font-serif text-base font-medium mt-0.5">Recent Services</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("recentActivity")}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("recentServices")}</p>
             </div>
-            <Link to="/services" className="text-xs text-primary hover:underline">View all →</Link>
+            <Link to="/services" className="text-xs text-primary hover:underline">{t("viewAll")}</Link>
           </div>
           {recentServices.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No services logged yet. <Link to="/services" className="text-primary hover:underline">Log one →</Link></p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t("noServicesLogged")} <Link to="/services" className="text-primary hover:underline">Log one →</Link></p>
           ) : (
             <div className="divide-y divide-border">
               {recentServices.map(s => {
@@ -319,12 +321,12 @@ export default function AdminDashboard() {
 
         {/* Quick Links */}
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-3">Quick Access</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-3">{t("quickAccess")}</p>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: "Payments", to: "/payments" }, { label: "Services", to: "/services" },
-              { label: "Stylists", to: "/renters" }, { label: "Reports", to: "/reports" },
-              { label: "Expenses", to: "/expenses" }, { label: "Messages", to: "/messages" },
+              { label: t("payments"), to: "/payments" }, { label: t("services"), to: "/services" },
+              { label: t("stylists"), to: "/renters" }, { label: t("reports"), to: "/reports" },
+              { label: t("expenses"), to: "/expenses" }, { label: t("messages"), to: "/messages" },
             ].map(l => (
               <Link key={l.to} to={l.to} className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted/50 hover:border-primary/40 transition-all min-h-[44px] flex items-center">
                 {l.label}
