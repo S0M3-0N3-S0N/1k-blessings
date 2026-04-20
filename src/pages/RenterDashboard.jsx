@@ -8,7 +8,8 @@ import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import ClockInOut from "@/components/renter/ClockInOut";
 import { Link } from "react-router-dom";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
+import { useEffect as useEffectChart } from "react";
 
 export default function RenterDashboard() {
   const { user } = useAuth();
@@ -185,22 +186,36 @@ export default function RenterDashboard() {
           )}
         </div>
 
-        {/* Chart */}
+        {/* Live Earnings Chart */}
         {chartData.length > 0 && (
-          <div className="bg-card rounded-xl border border-border p-3 md:p-5">
-            <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-4">{t("earningsThisWeek") || "Earnings This Week"}</p>
-            <div className="-mx-3 md:mx-0 overflow-x-auto scrollbar-none">
-              <div className="min-w-[320px] md:min-w-auto">
-                <ResponsiveContainer width="100%" height={120}>
-                  <BarChart data={chartData} margin={{ top: 0, right: 10, left: -20, bottom: 0 }}>
-                    <XAxis dataKey="day" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-                    <Tooltip formatter={(v) => formatCurrency(v)} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 11 }} />
-                    <Bar dataKey="earnings" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name={t("yourEarnings") || "Your Earnings"} />
-                    {renter.payment_model === "commission" && <Bar dataKey="owner" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name={t("ownersCut") || "Owner's Cut"} />}
-                  </BarChart>
-                </ResponsiveContainer>
+          <div className="bg-card rounded-2xl border border-border p-4 md:p-6 relative overflow-hidden shadow-[0_0_20px_rgba(201,152,74,0.08)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("earningsThisWeek") || "Earnings Trend"}</p>
+                  <p className="font-serif text-lg font-medium mt-1 text-foreground">{t("dailyBreakdown") || "Daily Breakdown"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-muted-foreground">{t("thisWeek")}</p>
+                  <p className="font-mono text-lg font-semibold text-primary mt-1">{formatCurrency(weekEarnings)}</p>
+                </div>
               </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
+                  <Tooltip 
+                    formatter={(v) => formatCurrency(v)} 
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} 
+                    cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1 }}
+                  />
+                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
+                  <Line type="monotone" dataKey="earnings" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 5 }} activeDot={{ r: 7 }} name={t("yourEarnings") || "Your Earnings"} isAnimationActive={true} animationDuration={500} />
+                  {renter.payment_model === "commission" && <Line type="monotone" dataKey="owner" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ fill: "hsl(var(--muted-foreground))", r: 4 }} activeDot={{ r: 6 }} name={t("ownersCut") || "Owner's Cut"} strokeDasharray="5 5" isAnimationActive={true} animationDuration={500} />}
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}
