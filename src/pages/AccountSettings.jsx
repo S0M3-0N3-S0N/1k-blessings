@@ -39,7 +39,7 @@ export default function AccountSettings() {
   };
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <div className="space-y-6 max-w-lg mx-auto">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("account")}</p>
         <h1 className="font-serif text-3xl font-light tracking-wide">{t("accountSettings")}</h1>
