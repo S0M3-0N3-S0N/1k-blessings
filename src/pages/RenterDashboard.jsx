@@ -19,6 +19,24 @@ export default function RenterDashboard() {
   const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Handle invite link auto-linking
+  useEffect(() => {
+    if (!user?.email) return;
+    const params = new URLSearchParams(window.location.search);
+    const linkRenterId = params.get("link_renter");
+    if (!linkRenterId) return;
+    base44.entities.Renter.filter({ id: linkRenterId }).then(async (results) => {
+      const target = results[0];
+      if (target && !target.user_email) {
+        await base44.entities.Renter.update(target.id, { user_email: user.email });
+      }
+      // Remove param from URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("link_renter");
+      window.history.replaceState({}, "", url.toString());
+    });
+  }, [user?.email]);
+
   const loadData = useCallback(async () => {
     if (!user?.email) return;
     const [renters, allServices] = await Promise.all([

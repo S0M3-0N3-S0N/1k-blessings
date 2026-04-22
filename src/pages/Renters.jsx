@@ -15,6 +15,7 @@ import SplitBar from "@/components/ui/SplitBar.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
+import UserLinker from "@/components/renters/UserLinker";
 
 const emptyForm = {
   name: "", role: "Stylist", payment_model: "rent", rent_amount: "",
@@ -114,21 +115,15 @@ function RenterFormFields({ form, setForm }) {
           {form.hourly_wage && <p className="text-xs text-muted-foreground">≈ {formatCurrency(parseFloat(form.hourly_wage || 0) * 40)}/wk gross (40h)</p>}
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("status")}</label>
-          <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
-            <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">{t("active")}</SelectItem>
-              <SelectItem value="inactive">{t("inactive")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("email")}</label>
-          <Input value={form.user_email} onChange={e => setForm(f => ({ ...f, user_email: e.target.value }))} placeholder="user@email.com" className="min-h-[44px]" />
-        </div>
+      <div>
+        <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("status")}</label>
+        <Select value={form.status} onValueChange={v => setForm(f => ({ ...f, status: v }))}>
+          <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="active">{t("active")}</SelectItem>
+            <SelectItem value="inactive">{t("inactive")}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Notes (optional)" className="min-h-[44px]" />
     </div>
@@ -379,42 +374,33 @@ export default function Renters() {
 
           {/* Tab 4 — User Management */}
           <TabsContent value="users">
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="bg-muted/30 rounded-lg px-4 py-3 text-xs text-muted-foreground border border-border">
-                {t("linkEmailNote") || "Link a stylist's email to let them log in and see their private dashboard."}
+                Link each stylist to a user account so they can log in and see their private dashboard. Search for an existing user or send them an invite link.
               </div>
-              <div className="bg-card rounded-xl border border-border overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-muted/30 border-b border-border">
-                      {[t("stylists"), t("paymentModel") || "Model", t("amount"), t("email"), t("status"), ""].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {renters.map(r => (
-                      <tr key={r.id} className="hover:bg-muted/20">
-                        <td className="px-4 py-3 font-medium">{r.name}</td>
-                        <td className="px-4 py-3"><ModelBadge model={r.payment_model} /></td>
-                        <td className="px-4 py-3 font-mono text-xs">
-                          {r.payment_model === "rent"
-                            ? `${formatCurrency(r.rent_amount)}/${freqLabel(r.frequency)}`
-                            : r.payment_model === "hourly"
-                              ? `${formatCurrency(r.hourly_wage)}/hr`
-                              : `${r.commission_owner || 40}% owner`}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{r.user_email || <span className="italic opacity-50">not linked</span>}</td>
-                        <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
-                        <td className="px-4 py-3">
-                          <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => openEdit(r)}>
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {renters.map((r, i) => {
+                  const av = getAvatarColor(i);
+                  return (
+                    <div key={r.id} className="bg-card rounded-xl border border-border p-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
+                          {getInitials(r.name)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{r.name}</p>
+                          <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
+                        </div>
+                      </div>
+                      <UserLinker
+                        renter={r}
+                        onLinked={(email) => {
+                          setRenters(prev => prev.map(x => x.id === r.id ? { ...x, user_email: email } : x));
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
