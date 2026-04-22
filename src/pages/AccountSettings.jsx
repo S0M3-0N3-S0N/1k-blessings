@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
@@ -10,7 +10,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Loader2, Moon, Sun, Trash2, LogOut } from "lucide-react";
+import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +20,32 @@ export default function AccountSettings() {
   const { toast } = useToast();
   const [theme, setTheme] = useState(() => localStorage.getItem("1kb-theme") || "dark");
   const [saving, setSaving] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    // Check if already installed
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true);
+    }
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === "accepted") {
+      setIsInstalled(true);
+      setInstallPrompt(null);
+      toast({ title: "App added to home screen!" });
+    }
+  };
 
   const applyTheme = (newTheme) => {
     setTheme(newTheme);
@@ -115,6 +141,37 @@ export default function AccountSettings() {
             <Moon className="w-4 h-4" /> {t("dark")}
           </button>
         </div>
+      </div>
+
+      {/* Install App */}
+      <div className="bg-card rounded-xl border border-border p-5 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-serif text-base font-medium">Add to Home Screen</h2>
+            <p className="text-xs text-muted-foreground">Install the app for quick access from your phone or desktop.</p>
+          </div>
+        </div>
+        {isInstalled ? (
+          <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">
+            ✓ App is already installed on this device
+          </div>
+        ) : installPrompt ? (
+          <Button
+            onClick={handleInstall}
+            className="w-full min-h-[44px] gap-2"
+            variant="outline"
+          >
+            <Download className="w-4 h-4" /> Install App
+          </Button>
+        ) : (
+          <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2.5 leading-relaxed">
+            <strong>iOS:</strong> Tap the Share button in Safari, then "Add to Home Screen".<br />
+            <strong>Android/Desktop:</strong> Look for the install icon in your browser's address bar.
+          </div>
+        )}
       </div>
 
       <GoldButton onClick={handleSave} disabled={saving} className="w-full min-h-[44px]">
