@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, Info, X } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Info, X, Search, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -132,22 +132,38 @@ function RenterFormFields({ form, setForm }) {
 
 export default function Renters() {
   const [renters, setRenters] = useState([]);
+  const [services, setServices] = useState([]);
   const [charges, setCharges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [editRenter, setEditRenter] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [tipDismissed, setTipDismissed] = useState(() => localStorage.getItem("renters-tip-dismissed") === "1");
+  const [search, setSearch] = useState("");
+  const [modelFilter, setModelFilter] = useState("all");
+  const [showInactive, setShowInactive] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
-    const [r, c] = await Promise.all([
-    base44.entities.Renter.list(),
-    base44.entities.Charge.list()]
-    );
-    setRenters(r);setCharges(c);setLoading(false);
+    try {
+      setError(null);
+      const [r, c, s] = await Promise.all([
+        base44.entities.Renter.list(),
+        base44.entities.Charge.list(),
+        base44.entities.ServiceEntry.list("-service_date", 500)
+      ]);
+      setRenters(r);
+      setCharges(c);
+      setServices(s);
+      setLoading(false);
+    } catch (err) {
+      console.error('Load error:', err);
+      setError('Failed to load data. Pull down to retry.');
+      setLoading(false);
+    }
   }, []);
   useEffect(() => {loadData();}, [loadData]);
 
@@ -157,31 +173,59 @@ export default function Renters() {
   const handleSave = async () => {
     if (!form.name) return;
     setSaving(true);
-    const data = {
-      ...form,
-      rent_amount: form.payment_model === "rent" || form.payment_model === "hourly" ? parseFloat(form.rent_amount) || 0 : 0,
-      commission_owner: form.payment_model === "commission" || form.payment_model === "hourly" ? parseFloat(form.commission_owner) || 0 : 0,
-      hourly_wage: form.payment_model === "hourly" ? parseFloat(form.hourly_wage) || 0 : 0
-    };
-    if (editRenter) {
-      await base44.entities.Renter.update(editRenter.id, data);
-      toast({ title: t("edit") });
-    } else {
-      await base44.entities.Renter.create(data);
-      toast({ title: t("add") });
+    try {
+      const data = {
+        ...form,
+        rent_amount: form.payment_model === "rent" || form.payment_model === "hourly" ? parseFloat(form.rent_amount) || 0 : 0,
+        commission_owner: form.payment_model === "commission" || form.payment_model === "hourly" ? parseFloat(form.commission_owner) || 0 : 0,
+        hourly_wage: form.payment_model === "hourly" ? parseFloat(form.hourly_wage) || 0 : 0
+      };
+      if (editRenter) {
+        await base44.entities.Renter.update(editRenter.id, data);
+        toast({ title: t("edit") });
+      } else {
+        await base44.entities.Renter.create(data);
+        toast({ title: t("add") });
+      }
+      setShowDialog(false);
+      loadData();
+    } catch (err) {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    setShowDialog(false);setSaving(false);loadData();
   };
 
   const handleDelete = async (id) => {
-    await base44.entities.Renter.delete(id);
-    toast({ title: t("delete") });
-    loadData();
+    if (!confirm('Delete this stylist? This action cannot be undone.')) return;
+    try {
+      await base44.entities.Renter.delete(id);
+      toast({ title: t("delete") });
+      loadData();
+    } catch (err) {
+      toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+  
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <p className="text-sm text-destructive text-center">{error}</p>
+      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+    </div>
+  );
 
   const renterMap = Object.fromEntries(renters.map((r) => [r.id, r]));
+  
+  // Filter renters by search and model
+  const filtered = renters.filter(r => {
+    const q = search.toLowerCase();
+    const nameMatch = r.name?.toLowerCase().includes(q) || r.role?.toLowerCase().includes(q) || false;
+    const modelMatch = modelFilter === "all" || r.payment_model === modelFilter;
+    const statusMatch = showInactive || r.status === "active";
+    return nameMatch && modelMatch && statusMatch;
+  });
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -214,8 +258,45 @@ export default function Renters() {
 
           {/* Tab 1 — Stylists */}
           <TabsContent value="stylists">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {renters.map((r, i) => {
+            <div className="space-y-4">
+              {/* Search & Filter Bar */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Search by name or role..."
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    className="pl-9 min-h-[44px]"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {["all", "rent", "commission", "hourly"].map(f => (
+                    <button
+                      key={f}
+                      onClick={() => setModelFilter(f)}
+                      className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", modelFilter === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}
+                    >
+                      {f === "all" ? "All Models" : f}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setShowInactive(!showInactive)}
+                    className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[44px]", showInactive ? "bg-muted/60 text-foreground" : "bg-muted text-muted-foreground")}
+                  >
+                    {showInactive ? "✓ Show Inactive" : "Hide Inactive"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Renter Cards */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {filtered.length === 0 ? (
+                  <div className="col-span-full text-center py-12 text-muted-foreground">
+                    <p className="text-sm">No stylists match your filters.</p>
+                  </div>
+                ) : (
+                  filtered.map((r, i) => {
                 const av = getAvatarColor(i);
                 return (
                   <div key={r.id} className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 relative group">
@@ -283,22 +364,28 @@ export default function Renters() {
                       </div>
                     }
 
+                    {r.notes && (
+                      <div className="text-xs bg-muted/30 rounded-lg p-2 border border-border/50 leading-relaxed text-muted-foreground">
+                        <p className="font-medium text-foreground mb-0.5">Note</p>
+                        {r.notes}
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 border-t border-border pt-2">
                       <Button variant="ghost" size="sm" className="flex-1 min-h-[44px]" onClick={() => openEdit(r)}>
                         <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="min-h-[44px] text-destructive hover:text-destructive" onClick={() => handleDelete(r.id)}>
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      <RenterCardActions renter={r} services={services} onDelete={handleDelete} />
                     </div>
                   </div>);
+                  })
+                )}
 
-              })}
-
-              <button onClick={openAdd} className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[180px]">
-                <Plus className="w-6 h-6" />
-                <span className="text-sm font-medium">{t("addStylist") || "Add Stylist"}</span>
-              </button>
+                <button onClick={openAdd} className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[180px]">
+                  <Plus className="w-6 h-6" />
+                  <span className="text-sm font-medium">{t("addStylist") || "Add Stylist"}</span>
+                </button>
+              </div>
             </div>
           </TabsContent>
 
@@ -356,6 +443,48 @@ export default function Renters() {
 
 }
 
+
+function RenterCardActions({ renter, services, onDelete }) {
+  const [copied, setCopied] = useState(false);
+  const inviteLink = `${window.location.origin}?link_renter=${renter.id}`;
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Get renter stats
+  const thisMonthServices = services.filter(s => s.renter_id === renter.id && s.service_date?.startsWith(new Date().toISOString().slice(0, 7)));
+  const thisMonthRevenue = thisMonthServices.reduce((s, e) => s + (e.amount || 0), 0);
+  const thisWeekServices = services.filter(s => {
+    const ws = new Date();
+    ws.setDate(ws.getDate() - ws.getDay());
+    const we = new Date(ws);
+    we.setDate(we.getDate() + 7);
+    return s.renter_id === renter.id && s.service_date >= ws.toISOString().slice(0, 10) && s.service_date < we.toISOString().slice(0, 10);
+  }).length;
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        onClick={handleCopy}
+        title="Copy invite link"
+        className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Copy invite link"
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+      </button>
+      <button
+        onClick={() => onDelete(renter.id)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+        aria-label="Delete stylist"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
 
 function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   const [showAdd, setShowAdd] = useState(false);
