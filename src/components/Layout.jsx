@@ -44,7 +44,6 @@ export default function Layout() {
   const adminNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
     { path: "/renters", label: t("stylists"), icon: Users },
-    { path: "/clients", label: "Clients", icon: Users },
     { path: "/payments", label: t("payments"), icon: CreditCard },
     { path: "/services", label: t("services"), icon: Scissors },
     { path: "/reports", label: t("reports"), icon: BarChart2 },
@@ -57,6 +56,7 @@ export default function Layout() {
 
   const renterNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
+    { path: "/clients", label: "Clients", icon: Users },
     { path: "/paystub", label: t("paystub"), icon: Receipt },
     { path: "/services", label: t("services"), icon: Scissors },
     { path: "/messages", label: t("messages"), icon: MessageSquare },

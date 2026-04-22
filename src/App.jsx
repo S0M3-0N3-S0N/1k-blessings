@@ -57,7 +57,7 @@ const AuthenticatedApp = () => {
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
         <Route path="/renters" element={isAdmin ? <Renters /> : <AdminRoute>{null}</AdminRoute>} />
-        <Route path="/clients" element={isAdmin ? <Clients /> : <AdminRoute>{null}</AdminRoute>} />
+        <Route path="/clients" element={!isAdmin ? <Clients /> : <AdminRoute>{null}</AdminRoute>} />
         <Route path="/payments" element={isAdmin ? <Payments /> : <AdminRoute>{null}</AdminRoute>} />
         <Route path="/reports" element={isAdmin ? <MonthlyReports /> : <AdminRoute>{null}</AdminRoute>} />
         <Route path="/expenses" element={isAdmin ? <Expenses /> : <AdminRoute>{null}</AdminRoute>} />
