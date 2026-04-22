@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn, toWeekly, getWeekStart, getWeekEnd, formatDateRange, computeEarnings } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
+import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -133,23 +133,20 @@ function RenterFormFields({ form, setForm }) {
 export default function Renters() {
   const [renters, setRenters] = useState([]);
   const [charges, setCharges] = useState([]);
-  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editRenter, setEditRenter] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [weekOffset, setWeekOffset] = useState(0);
   const { toast } = useToast();
   const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
-    const [r, c, s] = await Promise.all([
+    const [r, c] = await Promise.all([
       base44.entities.Renter.list(),
       base44.entities.Charge.list(),
-      base44.entities.ServiceEntry.list(),
     ]);
-    setRenters(r); setCharges(c); setServices(s); setLoading(false);
+    setRenters(r); setCharges(c); setLoading(false);
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -181,16 +178,8 @@ export default function Renters() {
     loadData();
   };
 
-  const ws = getWeekStart(new Date(), weekOffset);
-  const we = getWeekEnd(ws);
-  const wsStr = ws.toISOString().split("T")[0];
-  const weStr = we.toISOString().split("T")[0];
-  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
-
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
 
-  const activeRenters = renters.filter(r => r.status === "active");
-  const commissionRenters = activeRenters.filter(r => r.payment_model === "commission");
   const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
 
   return (
@@ -205,8 +194,6 @@ export default function Renters() {
           <div className="mb-5 overflow-x-auto scrollbar-none">
             <TabsList className="h-auto md:flex-wrap inline-flex gap-2 bg-transparent border-b border-border rounded-none">
               <TabsTrigger value="stylists" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("stylists")}</TabsTrigger>
-              <TabsTrigger value="splits" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("commissionSplits")}</TabsTrigger>
-              <TabsTrigger value="payroll" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("hourlyPayroll")}</TabsTrigger>
               <TabsTrigger value="users" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("userMgmt") || "Users"}</TabsTrigger>
             </TabsList>
           </div>
@@ -301,78 +288,7 @@ export default function Renters() {
             </div>
           </TabsContent>
 
-          {/* Tab 2 — Weekly Splits */}
-          <TabsContent value="splits">
-            <div className="space-y-4">
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-xs text-amber-600 dark:text-amber-400">
-                {t("commissionOnlyNote") || "Commission-model stylists only. Rent stylists are tracked in Payments."}
-              </div>
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <p className="text-sm font-medium text-muted-foreground">{formatDateRange(ws)}</p>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px]"><ChevronLeft className="w-4 h-4" /></button>
-                  <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px]"><ChevronRight className="w-4 h-4" /></button>
-                </div>
-              </div>
-              {commissionRenters.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-10">No commission-model stylists yet.</p>
-              ) : (
-                <div className="bg-card rounded-xl border border-border overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-muted/30 border-b border-border">
-                        {[t("stylists"), t("services"), t("amount"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, t("commission")].map(h => (
-                          <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {commissionRenters.map((r, i) => {
-                        const rs = weekServices.filter(s => s.renter_id === r.id);
-                        const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
-                        const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
-                        const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
-                        const av = getAvatarColor(i);
-                        return (
-                          <tr key={r.id} className={cn("hover:bg-muted/20", gross === 0 && "opacity-50")}>
-                            <td className="pl-5 pr-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className={cn("w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold", av.bg, av.text)}>{getInitials(r.name)}</div>
-                                <div>
-                                  <p className="font-medium text-sm">{r.name}</p>
-                                  <p className="text-xs text-muted-foreground">{r.role}</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-right">{rs.length}</td>
-                            <td className="px-4 py-3 text-right font-mono">{formatCurrency(gross)}</td>
-                            <td className="px-4 py-3 text-right font-mono">{formatCurrency(stylistCut)}<span className="text-xs text-muted-foreground ml-1">{100 - (r.commission_owner || 40)}%</span></td>
-                            <td className="px-4 py-3 text-right font-mono text-primary font-semibold">{formatCurrency(ownerCut)}<span className="text-xs text-primary/60 ml-1">{r.commission_owner || 40}%</span></td>
-                            <td className="px-4 py-3 w-24"><SplitBar ownerPct={r.commission_owner || 40} /></td>
-                          </tr>
-                        );
-                      })}
-                      <tr className="bg-muted/30 border-t border-border font-semibold">
-                        <td className="pl-5 py-3">{t("totals") || "Totals"}</td>
-                        <td className="px-4 py-3 text-right">{commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).length, 0)}</td>
-                        <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.amount || 0), 0), 0))}</td>
-                        <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.renter_earnings || 0), 0), 0))}</td>
-                        <td className="px-4 py-3 text-right font-mono text-primary">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.owner_earnings || 0), 0), 0))}</td>
-                        <td className="px-4 py-3" />
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Tab 3 — Payroll History */}
-          <TabsContent value="payroll">
-            <PayrollHistory renters={renters} services={services} />
-          </TabsContent>
-
-          {/* Tab 4 — User Management */}
+          {/* Tab 2 — User Management */}
           <TabsContent value="users">
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-lg px-4 py-3 text-xs text-muted-foreground border border-border">
@@ -426,90 +342,6 @@ export default function Renters() {
   );
 }
 
-function PayrollHistory({ renters, services }) {
-  const { t } = useLanguage();
-  const now = new Date();
-  const months = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-  }
-  const [selectedMonth, setSelectedMonth] = useState(months[0]);
-  const monthServices = services.filter(s => s.service_date?.startsWith(selectedMonth));
-
-  const rentRenters = renters.filter(r => r.payment_model === "rent");
-  const commRenters = renters.filter(r => r.payment_model === "commission");
-
-  return (
-    <div className="space-y-4">
-      <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-        <SelectTrigger className="w-48 min-h-[44px]"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          {months.map(m => {
-            const [yr, mo] = m.split("-").map(Number);
-            return <SelectItem key={m} value={m}>{new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</SelectItem>;
-          })}
-        </SelectContent>
-      </Select>
-
-      {rentRenters.length > 0 && (
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-5 py-3 border-b border-border bg-muted/20">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("rentStylists") || "Rent Stylists"}</p>
-          </div>
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-border">
-              {[t("stylists"), t("rentAmount") || "Rent Amount", t("totalRevenue")].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
-            </tr></thead>
-            <tbody className="divide-y divide-border">
-              {rentRenters.map(r => {
-                const rs = monthServices.filter(s => s.renter_id === r.id);
-                const rev = rs.reduce((s, e) => s + (e.amount || 0), 0);
-                return (
-                  <tr key={r.id} className="hover:bg-muted/20">
-                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(rev)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {commRenters.length > 0 && (
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-5 py-3 border-b border-border bg-muted/20">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("commissionStylists") || "Commission Stylists"}</p>
-          </div>
-          <table className="w-full text-sm">
-            <thead><tr className="border-b border-border">
-              {[t("stylists"), t("services"), t("amount"), t("stylistsEarnings"), `${t("ourCommission")} ✦`].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
-            </tr></thead>
-            <tbody className="divide-y divide-border">
-              {commRenters.map(r => {
-                const rs = monthServices.filter(s => s.renter_id === r.id);
-                const total = rs.reduce((s, e) => s + (e.amount || 0), 0);
-                const their = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
-                const ours = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
-                return (
-                  <tr key={r.id} className="hover:bg-muted/20">
-                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
-                    <td className="px-4 py-3 text-right">{rs.length}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(total)}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(their)}</td>
-                    <td className="px-4 py-3 text-right font-mono text-primary font-semibold">{formatCurrency(ours)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   const [showAdd, setShowAdd] = useState(false);

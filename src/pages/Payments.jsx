@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Info } from "lucide-react";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor } from "@/lib/utils";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Info, Scissors } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
+import SplitBar from "@/components/ui/SplitBar.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,12 @@ export default function Payments() {
   const { toast } = useToast();
   const { t } = useLanguage();
 
+  const [services, setServices] = useState([]);
+  const [weekOffset, setWeekOffset] = useState(0);
+
   const loadData = useCallback(async () => {
-    const [r, p] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period")]);
-    setRenters(r); setPayments(p); setLoading(false);
+    const [r, p, s] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300)]);
+    setRenters(r); setPayments(p); setServices(s); setLoading(false);
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -158,6 +162,9 @@ export default function Payments() {
 
         {/* Payment History (last 3 months) */}
         <PaymentHistory renters={rentRenters} allPayments={payments} currentMonth={monthStr} />
+
+        {/* Commission Splits */}
+        <CommissionSplits renters={renters} services={services} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
       </div>
 
       {/* Mark Paid Dialog */}
@@ -189,6 +196,81 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
     </PullToRefresh>
+  );
+}
+
+function CommissionSplits({ renters, services, weekOffset, setWeekOffset }) {
+  const { t } = useLanguage();
+  const commissionRenters = renters.filter(r => r.payment_model === "commission" && r.status === "active");
+  const ws = getWeekStart(new Date(), weekOffset);
+  const we = getWeekEnd(ws);
+  const wsStr = ws.toISOString().split("T")[0];
+  const weStr = we.toISOString().split("T")[0];
+  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
+
+  if (commissionRenters.length === 0) return null;
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-2 flex-wrap">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary flex items-center gap-1.5"><Scissors className="w-3 h-3" />{t("commissionSplits")}</p>
+          <p className="font-serif text-base font-medium mt-0.5">{t("weekOf")} {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
+          <span className="text-xs text-muted-foreground min-w-[130px] text-center">{formatDateRange(ws)}</span>
+          <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-muted/30 border-b border-border">
+              {[t("stylists"), t("services"), t("totalRevenue"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, "Split"].map(h => (
+                <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === t("stylists") ? "text-left pl-5" : "text-right last:text-left"}`}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {commissionRenters.map((r, i) => {
+              const rs = weekServices.filter(s => s.renter_id === r.id);
+              const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
+              const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+              const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+              const av = getAvatarColor(i);
+              return (
+                <tr key={r.id} className={cn("hover:bg-muted/20", gross === 0 && "opacity-50")}>
+                  <td className="pl-5 pr-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", av.bg, av.text)}>{getInitials(r.name)}</div>
+                      <div><p className="font-medium text-sm">{r.name}</p><p className="text-xs text-muted-foreground">{r.role}</p></div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums">{rs.length}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums">{formatCurrency(gross)}</td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground">
+                    <span className="text-xs mr-1">{100 - (r.commission_owner || 40)}%</span>{formatCurrency(stylistCut)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono tabular-nums text-primary font-semibold">
+                    <span className="text-xs mr-1">{r.commission_owner || 40}%</span>{formatCurrency(ownerCut)}
+                  </td>
+                  <td className="px-4 py-3 w-28"><SplitBar ownerPct={r.commission_owner || 40} /></td>
+                </tr>
+              );
+            })}
+            <tr className="bg-muted/30 border-t border-border font-semibold">
+              <td className="pl-5 pr-4 py-3 text-sm">{t("totals")}</td>
+              <td className="px-4 py-3 text-right">{commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).length, 0)}</td>
+              <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.amount || 0), 0), 0))}</td>
+              <td className="px-4 py-3 text-right font-mono">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.renter_earnings || 0), 0), 0))}</td>
+              <td className="px-4 py-3 text-right font-mono text-primary">{formatCurrency(commissionRenters.reduce((s, r) => s + weekServices.filter(x => x.renter_id === r.id).reduce((a, e) => a + (e.owner_earnings || 0), 0), 0))}</td>
+              <td className="px-4 py-3" />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }
 

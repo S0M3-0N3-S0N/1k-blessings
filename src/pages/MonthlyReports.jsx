@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, getWeekStart, getWeekEnd, cn } from "@/lib/utils";
+import { formatCurrency, getWeekStart, getWeekEnd, cn, freqLabel } from "@/lib/utils";
 import { Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PullToRefresh from "@/components/PullToRefresh";
 
 function getMondaysInMonth(year, month) {
@@ -74,6 +75,9 @@ export default function MonthlyReports() {
             <p className="text-sm text-muted-foreground">{t("noDataYet") || "No data yet. Start logging services and payments."}</p>
           </div>
         )}
+
+        {/* Payroll History */}
+        <PayrollHistory renters={renters} services={services} />
 
         <div className="space-y-3">
           {allMonths.map((m, idx) => {
@@ -184,6 +188,96 @@ export default function MonthlyReports() {
         </div>
       </div>
     </PullToRefresh>
+  );
+}
+
+function PayrollHistory({ renters, services }) {
+  const { t } = useLanguage();
+  const now = new Date();
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  const [selectedMonth, setSelectedMonth] = useState(months[0]);
+  const monthServices = services.filter(s => s.service_date?.startsWith(selectedMonth));
+  const rentRenters = renters.filter(r => r.payment_model === "rent");
+  const commRenters = renters.filter(r => r.payment_model === "commission");
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-wrap gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
+          <p className="font-serif text-base font-medium mt-0.5">Per-Stylist Breakdown</p>
+        </div>
+        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+          <SelectTrigger className="w-48 min-h-[44px]"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            {months.map(m => {
+              const [yr, mo] = m.split("-").map(Number);
+              return <SelectItem key={m} value={m}>{new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}</SelectItem>;
+            })}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {rentRenters.length > 0 && (
+        <div>
+          <div className="px-5 py-2.5 bg-muted/20 border-b border-border">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("rentStylists") || "Rent Stylists"}</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border bg-muted/10">
+              {[t("stylists"), t("rentAmount") || "Rent Amount", t("totalRevenue")].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === t("stylists") ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-border">
+              {rentRenters.map(r => {
+                const rs = monthServices.filter(s => s.renter_id === r.id);
+                const rev = rs.reduce((s, e) => s + (e.amount || 0), 0);
+                return (
+                  <tr key={r.id} className="hover:bg-muted/20">
+                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(rev)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {commRenters.length > 0 && (
+        <div>
+          <div className={cn("px-5 py-2.5 bg-muted/20 border-b border-border", rentRenters.length > 0 && "border-t border-border")}>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("commissionStylists") || "Commission Stylists"}</p>
+          </div>
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border bg-muted/10">
+              {[t("stylists"), t("services"), t("amount"), t("stylistsEarnings"), `${t("ourCommission")} ✦`].map(h => <th key={h} className={`px-4 py-2 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground ${h === t("stylists") ? "text-left pl-5" : "text-right"}`}>{h}</th>)}
+            </tr></thead>
+            <tbody className="divide-y divide-border">
+              {commRenters.map(r => {
+                const rs = monthServices.filter(s => s.renter_id === r.id);
+                const total = rs.reduce((s, e) => s + (e.amount || 0), 0);
+                const their = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+                const ours = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+                return (
+                  <tr key={r.id} className="hover:bg-muted/20">
+                    <td className="pl-5 pr-4 py-3 font-medium">{r.name}</td>
+                    <td className="px-4 py-3 text-right">{rs.length}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(total)}</td>
+                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(their)}</td>
+                    <td className="px-4 py-3 text-right font-mono text-primary font-semibold">{formatCurrency(ours)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
