@@ -26,13 +26,6 @@ export default function Messages() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, selectedConv]);
 
-  // Mark messages as read when conversation is opened
-  useEffect(() => {
-    if (!selectedConv || !user?.email) return;
-    const unread = messages.filter(m => m.conversation_id === selectedConv && !m.is_read && m.sender_email !== user.email);
-    unread.forEach(m => base44.entities.Message.update(m.id, { is_read: true }));
-  }, [selectedConv, messages, user?.email]);
-
   const { t } = useLanguage();
   const isAdmin = user?.role === "admin";
   const convMessages = messages.filter(m => m.conversation_id === selectedConv).sort((a, b) => new Date(a.created_date) - new Date(b.created_date));

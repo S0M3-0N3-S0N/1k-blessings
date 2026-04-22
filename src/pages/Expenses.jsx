@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +31,6 @@ export default function Expenses() {
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [editExpense, setEditExpense] = useState(null);
   const [expanded, setExpanded] = useState({});
   const [monthOffset, setMonthOffset] = useState(0);
   const { toast } = useToast();
@@ -43,24 +42,12 @@ export default function Expenses() {
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
-  const openEdit = (e) => {
-    setEditExpense(e);
-    setForm({ description: e.description, amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || new Date().toISOString().split("T")[0], paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "" });
-    setShowAdd(true);
-  };
-
   const handleSave = async () => {
     if (!form.description || !form.amount || !form.expense_date) return;
     setSaving(true);
-    if (editExpense) {
-      await base44.entities.Expense.update(editExpense.id, { ...form, amount: parseFloat(form.amount) || 0 });
-      toast({ title: t("edit") });
-    } else {
-      await base44.entities.Expense.create({ ...form, amount: parseFloat(form.amount) || 0 });
-      toast({ title: t("addExpense") });
-    }
-    setShowAdd(false); setEditExpense(null); setForm(emptyForm); setSaving(false);
-    loadData();
+    await base44.entities.Expense.create({ ...form, amount: parseFloat(form.amount) || 0 });
+    setShowAdd(false); setForm(emptyForm); setSaving(false);
+    toast({ title: t("addExpense") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -169,11 +156,8 @@ export default function Expenses() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <span className="font-mono text-sm font-semibold text-destructive mr-2">−{formatCurrency(e.amount)}</span>
-                          <button onClick={() => openEdit(e)} className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
                           <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -188,9 +172,9 @@ export default function Expenses() {
         </div>
       </div>
 
-      <Dialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setEditExpense(null); }}>
+      <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editExpense ? t("edit") : t("addExpense")}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("addExpense")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
             <div className="grid grid-cols-2 gap-2">

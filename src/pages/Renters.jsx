@@ -371,7 +371,7 @@ function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
+    <div className="bg-card rounded-xl border border-border overflow-hidden hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <h2 className="font-serif text-base font-medium">{t("chargesLedger") || "Charges Ledger"}</h2>
         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd((s) => !s)}>

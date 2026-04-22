@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency, categoryBadge, computeEarnings, PAYMENT_METHOD_LABELS, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,7 +60,6 @@ export default function ServiceTracker() {
   const [filterCat, setFilterCat] = useState("all");
   const [filterMethod, setFilterMethod] = useState("all");
   const [filterDate, setFilterDate] = useState("month");
-  const [editService, setEditService] = useState(null);
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -80,12 +79,6 @@ export default function ServiceTracker() {
 
   const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
 
-  const openEdit = (s) => {
-    setEditService(s);
-    setForm({ renter_id: s.renter_id, client_name: s.client_name || "", description: s.description || "", amount: String(s.amount || ""), tip_amount: String(s.tip_amount || ""), service_date: s.service_date || new Date().toISOString().split("T")[0], category: s.category || "hair", payment_method: s.payment_method || "cash" });
-    setShowAdd(true);
-  };
-
   const handleSave = async () => {
     if (!form.amount || !form.service_date) return;
     setSaving(true);
@@ -95,15 +88,9 @@ export default function ServiceTracker() {
     const amt = parseFloat(form.amount) || 0;
     const tip = parseFloat(form.tip_amount) || 0;
     const earnings = computeEarnings(amt, renter);
-    if (editService) {
-      await base44.entities.ServiceEntry.update(editService.id, { ...form, renter_id: renterId, amount: amt, tip_amount: tip, ...earnings });
-      toast({ title: t("edit") });
-    } else {
-      await base44.entities.ServiceEntry.create({ ...form, renter_id: renterId, amount: amt, tip_amount: tip, ...earnings });
-      toast({ title: t("logService") });
-    }
-    setShowAdd(false); setEditService(null); setForm(emptyForm); setSaving(false);
-    loadData();
+    await base44.entities.ServiceEntry.create({ ...form, renter_id: renterId, amount: amt, tip_amount: tip, ...earnings });
+    setShowAdd(false); setForm(emptyForm); setSaving(false);
+    toast({ title: t("logService") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -243,9 +230,6 @@ export default function ServiceTracker() {
                         {(s.tip_amount || 0) > 0 && (
                           <span className="font-mono text-xs text-muted-foreground">+{formatCurrency(s.tip_amount)} tip</span>
                         )}
-                        <button onClick={() => openEdit(s)} className="text-muted-foreground hover:text-foreground min-h-[36px] min-w-[36px] flex items-center justify-center mt-1">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
                         <button
                           onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })}
                           className="text-muted-foreground hover:text-destructive min-h-[36px] min-w-[36px] flex items-center justify-center mt-1"
@@ -316,14 +300,9 @@ export default function ServiceTracker() {
                             )}
                           </td>
                           <td className="px-2 py-3">
-                           <div className="flex items-center">
-                             <button onClick={() => openEdit(s)} className="text-muted-foreground hover:text-foreground min-h-[44px] min-w-[44px] flex items-center justify-center">
-                               <Pencil className="w-3.5 h-3.5" />
-                             </button>
-                             <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
-                               <Trash2 className="w-3.5 h-3.5" />
-                             </button>
-                           </div>
+                            <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -347,9 +326,9 @@ export default function ServiceTracker() {
       </div>
 
       {/* Log Service Dialog */}
-      <Dialog open={showAdd} onOpenChange={(v) => { setShowAdd(v); if (!v) setEditService(null); }}>
+      <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editService ? t("edit") : t("logService")}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("logService")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             {isAdmin && (
               <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
