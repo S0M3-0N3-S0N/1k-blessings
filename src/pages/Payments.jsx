@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Info, Scissors } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import SplitBar from "@/components/ui/SplitBar.jsx";
@@ -101,12 +101,6 @@ export default function Payments() {
           </div>
         </div>
 
-        {/* Banner */}
-        <div className="flex items-start gap-2 bg-muted/40 border border-border rounded-lg px-4 py-3 text-xs text-muted-foreground">
-          <Info className="w-3.5 h-3.5 shrink-0 mt-0.5 text-primary" />
-          {t("paymentsInfo") || "Commission-model stylists earn through service splits — tracked in Services. Only rent-model stylists appear here."}
-        </div>
-
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard label={t("collected")} value={formatCurrency(collectedAmt)} accent glow />
@@ -124,41 +118,49 @@ export default function Payments() {
           ))}
         </div>
 
-        {/* Payments list */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          {filteredRows.length === 0 ? (
-            <div className="text-center py-12 space-y-2">
-              <p className="text-sm text-muted-foreground">{rentRenters.length === 0 ? "No rent-model stylists found." : "No payments match this filter."}</p>
+        {/* Rent Stylists */}
+        {rentRenters.length > 0 && (
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="px-5 py-3 border-b border-border bg-muted/20">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rent Stylists</p>
             </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {filteredRows.map(r => (
-                <div key={r.id} className={cn("flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap", r.status === "overdue" && "border-l-[3px] border-l-red-500")}>
-                  <div>
-                    <p className="text-sm font-medium">{r.name}</p>
-                    <p className="text-xs text-muted-foreground">{r.role} · {freqLabel(r.frequency)}</p>
-                    {r.payment?.payment_method && r.status === "paid" && (
-                      <p className="text-xs text-muted-foreground mt-0.5">Paid via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} · {r.payment.paid_date ? new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</p>
-                    )}
+            {filteredRows.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-muted-foreground">No payments match this filter.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filteredRows.map(r => (
+                  <div key={r.id} className={cn("flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap", r.status === "overdue" && "border-l-[3px] border-l-red-500")}>
+                    <div>
+                      <p className="text-sm font-medium">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{r.role} · {freqLabel(r.frequency)}</p>
+                      {r.payment?.payment_method && r.status === "paid" && (
+                        <p className="text-xs text-muted-foreground mt-0.5">Paid via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} · {r.payment.paid_date ? new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap justify-end">
+                      <span className="font-mono text-sm font-semibold">{formatCurrency(r.rent_amount)}<span className="text-muted-foreground text-xs font-normal">/{freqLabel(r.frequency)}</span></span>
+                      <StatusBadge status={r.status} />
+                      {r.status !== "paid" ? (
+                        <GoldButton size="sm" onClick={() => openMarkPaid(r)}>
+                          <CheckCircle2 className="w-3.5 h-3.5" />{t("markPaid")}
+                        </GoldButton>
+                      ) : (
+                        <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => markPending(r)}>
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" />{t("undo") || "Undo"}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-wrap justify-end">
-                    <span className="font-mono text-sm font-semibold">{formatCurrency(r.rent_amount)}<span className="text-muted-foreground text-xs font-normal">/{freqLabel(r.frequency)}</span></span>
-                    <StatusBadge status={r.status} />
-                    {r.status !== "paid" ? (
-                      <GoldButton size="sm" onClick={() => openMarkPaid(r)}>
-                        <CheckCircle2 className="w-3.5 h-3.5" />{t("markPaid")}
-                      </GoldButton>
-                    ) : (
-                      <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => markPending(r)}>
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />{t("undo") || "Undo"}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Commission Stylists - Weekly Service Summary */}
+        <CommissionSummary renters={renters} services={services} monthStr={monthStr} />
 
         {/* Payment History (last 3 months) */}
         <PaymentHistory renters={rentRenters} allPayments={payments} currentMonth={monthStr} />
@@ -196,6 +198,52 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
     </PullToRefresh>
+  );
+}
+
+function CommissionSummary({ renters, services, monthStr }) {
+  const { t } = useLanguage();
+  const commissionRenters = renters.filter(r => r.payment_model === "commission" && r.status === "active");
+  if (commissionRenters.length === 0) return null;
+
+  const monthServices = services.filter(s => s.service_date?.startsWith(monthStr));
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="px-5 py-3 border-b border-border bg-muted/20">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Commission Stylists — {new Date(monthStr + "-01").toLocaleDateString("en-US", { month: "long", year: "numeric" })}</p>
+      </div>
+      <div className="divide-y divide-border">
+        {commissionRenters.map(r => {
+          const rs = monthServices.filter(s => s.renter_id === r.id);
+          const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
+          const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+          const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+          return (
+            <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap">
+              <div>
+                <p className="text-sm font-medium">{r.name}</p>
+                <p className="text-xs text-muted-foreground">{r.role} · {rs.length} services · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% split</p>
+              </div>
+              <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
+                <div className="text-right">
+                  <p className="text-muted-foreground">Total Revenue</p>
+                  <p className="font-mono font-semibold">{formatCurrency(gross)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-muted-foreground">Stylist Earns</p>
+                  <p className="font-mono">{formatCurrency(stylistCut)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-muted-foreground">Owner Earns</p>
+                  <p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
