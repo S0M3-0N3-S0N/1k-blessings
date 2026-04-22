@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { QRCodeSVG } from "qrcode.react";
 import { Search, Link2, Copy, Check, X, UserCheck, Loader2, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -155,6 +156,11 @@ export default function UserLinker({ renter, onLinked }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {t("inviteLinkDesc").replace("{name}", renter.name)}
           </p>
+          <div className="flex justify-center py-2">
+            <div className="p-3 bg-white rounded-xl border border-border">
+              <QRCodeSVG value={inviteLink} size={140} />
+            </div>
+          </div>
           <div className="bg-muted/40 border border-border rounded-xl p-3 space-y-2">
             <div className="flex items-center gap-2">
               <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
