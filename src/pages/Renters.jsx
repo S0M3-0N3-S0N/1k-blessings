@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, Info, X, Search, Copy, Check } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Info, X, Search, Copy, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -208,9 +208,10 @@ export default function Renters() {
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
-  
+
   if (error) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
       <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
     </div>

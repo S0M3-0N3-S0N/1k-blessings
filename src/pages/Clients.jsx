@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Search, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -75,6 +75,7 @@ export default function Clients() {
 
   if (error) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
       <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
     </div>

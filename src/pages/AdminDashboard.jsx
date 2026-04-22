@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue } from "@/lib/utils";
+import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue, getDueDate } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
         if (isPaymentOverdue(payment, r)) count++;
       });
       setOverdueCount(count);
-    });
+    }).catch(err => console.error('Overdue check error:', err));
   }, []);
 
   const loadData = useCallback(async () => {
@@ -106,13 +106,19 @@ export default function AdminDashboard() {
 
   const markPaid = async (renter) => {
     setMarkingId(renter.id);
-    const existing = payments.find(p => p.renter_id === renter.id && p.period === wsStr);
-    if (existing) {
-      await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString() });
-    } else {
-      await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.weeklyAmt, period: wsStr, status: "paid", paid_date: new Date().toISOString() });
+    try {
+      const existing = payments.find(p => p.renter_id === renter.id && p.period === wsStr);
+      if (existing) {
+        await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(wsStr, renter.frequency) });
+      } else {
+        await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.weeklyAmt, period: wsStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(wsStr, renter.frequency) });
+      }
+      loadData();
+    } catch (err) {
+      console.error('Mark paid error:', err);
+    } finally {
+      setMarkingId(null);
     }
-    setMarkingId(null); loadData();
   };
 
   // Hourly payroll this week
