@@ -222,80 +222,77 @@ export default function Renters() {
               {renters.map((r, i) => {
                 const av = getAvatarColor(i);
                 return (
-                  <div key={r.id} className="bg-card rounded-2xl border border-border p-6 flex flex-col gap-5 relative group hover:shadow-md transition-shadow">
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-4">
-                        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
+                  <div key={r.id} className="bg-card rounded-xl border border-border p-5 flex flex-col gap-4 relative group">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
                           {getInitials(r.name)}
                         </div>
                         <div>
-                          <p className="font-semibold text-base leading-tight">{r.name}</p>
-                          <p className="text-sm text-muted-foreground mt-0.5">{r.role || "Stylist"}</p>
-                          {r.start_date && <p className="text-[11px] text-muted-foreground/50 mt-1">Since {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
+                          <p className="font-medium">{r.name}</p>
+                          <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
+                          {r.start_date && <p className="text-[10px] text-muted-foreground/60 mt-0.5">Since {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
                         <ModelBadge model={r.payment_model} />
                         <StatusBadge status={r.status} />
                       </div>
                     </div>
 
-                    {/* Payment Details */}
                     {r.payment_model === "rent" && (
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
+                      <div className="space-y-1 text-xs border-t border-border pt-3">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Rent</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.rent_amount)} / {freqLabel(r.frequency)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">≈ Monthly</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
                         </div>
                       </div>
                     )}
                     {r.payment_model === "commission" && (
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-3 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span className="text-muted-foreground">Owner / Stylist</span>
-                          <span className="font-mono font-semibold">{r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}%</span>
+                      <div className="space-y-2 text-xs border-t border-border pt-3">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Owner / Stylist split</span>
+                          <span className="font-mono">{r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}%</span>
                         </div>
                         <SplitBar ownerPct={r.commission_owner || 40} />
                       </div>
                     )}
                     {r.payment_model === "hourly" && (
-                      <div className="bg-muted/40 rounded-xl p-4 space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
+                      <div className="space-y-1 text-xs border-t border-border pt-3">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Hourly Rate</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.hourly_wage)}/hr</span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">Rent Deduction</span>
                           <span className="font-mono text-muted-foreground">−{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</span>
                         </div>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between">
                           <span className="text-muted-foreground">≈ Gross/wk</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.hourly_wage || 0) * 40)}</span>
                         </div>
                         {r.commission_owner > 0 && (
-                          <div className="pt-1 space-y-2 border-t border-border">
-                            <div className="flex justify-between items-center">
+                          <>
+                            <div className="flex justify-between mt-1">
                               <span className="text-muted-foreground">Commission Split</span>
                               <span className="font-mono">{r.commission_owner}% / {100 - r.commission_owner}%</span>
                             </div>
                             <SplitBar ownerPct={r.commission_owner} />
-                          </div>
+                          </>
                         )}
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 pt-1">
-                      <Button variant="outline" size="sm" className="flex-1 min-h-[42px] rounded-xl" onClick={() => openEdit(r)}>
+                    <div className="flex items-center gap-2 border-t border-border pt-2">
+                      <Button variant="ghost" size="sm" className="flex-1 min-h-[44px]" onClick={() => openEdit(r)}>
                         <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="min-h-[42px] min-w-[42px] rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(r.id)}>
-                        <Trash2 className="w-4 h-4" />
+                      <Button variant="ghost" size="sm" className="min-h-[44px] text-destructive hover:text-destructive" onClick={() => handleDelete(r.id)}>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
