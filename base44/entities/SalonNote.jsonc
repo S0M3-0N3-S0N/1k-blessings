@@ -21,6 +21,20 @@
         "goal"
       ],
       "default": "general"
+    },
+    "is_pinned": {
+      "type": "boolean",
+      "title": "Is Pinned",
+      "default": false
+    },
+    "is_shared": {
+      "type": "boolean",
+      "title": "Shared with Renters",
+      "default": false
+    },
+    "tags": {
+      "type": "string",
+      "title": "Tags (comma-separated)"
     }
   },
   "required": [

@@ -46,6 +46,15 @@
           "default": false
         }
       }
+    },
+    "weekly_goal": {
+      "type": "number",
+      "title": "Weekly Earnings Goal ($)",
+      "default": 0
     }
-  }
+  },
+  "required": [
+    "profile_picture",
+    "notifications"
+  ]
 }

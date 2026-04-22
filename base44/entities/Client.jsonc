@@ -1,0 +1,43 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Client Name"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "preferred_renter_id": {
+      "type": "string",
+      "title": "Preferred Stylist ID"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    },
+    "last_visit_date": {
+      "type": "string",
+      "title": "Last Visit (YYYY-MM-DD)"
+    },
+    "visit_count": {
+      "type": "number",
+      "title": "Total Visits",
+      "default": 0
+    },
+    "total_spent": {
+      "type": "number",
+      "title": "Total Spent ($)",
+      "default": 0
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -66,6 +66,9 @@ export const CATEGORY_CONFIG = {
   hair:       { label: "Hair",       className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
   nails:      { label: "Nails",      className: "bg-pink-500/15 text-pink-600 dark:text-pink-400 border-pink-500/30" },
   aesthetics: { label: "Aesthetics", className: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30" },
+  waxing:     { label: "Waxing",     className: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
+  lashes:     { label: "Lashes",     className: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" },
+  massage:    { label: "Massage",    className: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30" },
   other:      { label: "Other",      className: "bg-muted text-muted-foreground border-border" },
 };
 export function categoryBadge(cat) { return CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.other; }

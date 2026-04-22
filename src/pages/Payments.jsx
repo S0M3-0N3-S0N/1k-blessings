@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2 } from "lucide-react";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate } from "@/lib/utils";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import SplitBar from "@/components/ui/SplitBar.jsx";
@@ -35,7 +35,12 @@ export default function Payments() {
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [r, p, s, c] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300), base44.entities.Charge.list()]);
+      const [r, p, s, c] = await Promise.all([
+        base44.entities.Renter.list(),
+        base44.entities.Payment.list("-period"),
+        base44.entities.ServiceEntry.list("-service_date", 300),
+        base44.entities.Charge.list()
+      ]);
       setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
@@ -75,7 +80,14 @@ export default function Payments() {
         setSaving(false);
         return;
       }
-      const data = { status: "paid", paid_date: new Date().toISOString(), amount, payment_method: markForm.payment_method, notes: markForm.notes };
+      const data = {
+        status: "paid",
+        paid_date: new Date().toISOString(),
+        due_date: getDueDate(monthStr, renter.frequency),
+        amount,
+        payment_method: markForm.payment_method,
+        notes: markForm.notes
+      };
       if (existing) {
         await base44.entities.Payment.update(existing.id, data);
       } else {
@@ -85,6 +97,7 @@ export default function Payments() {
       toast({ title: `${renter.name} ${t("markPaid")}` });
       loadData();
     } catch (err) {
+      console.error('Mark paid error:', err);
       toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
@@ -94,20 +107,24 @@ export default function Payments() {
   const markPending = async (renter) => {
     try {
       const { payment } = getRenterStatus(renter);
-      if (payment) await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
-      toast({ title: t("pending") });
-      loadData();
+      if (payment) {
+        await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
+        toast({ title: t("pending") });
+        loadData();
+      }
     } catch (err) {
+      console.error('Mark pending error:', err);
       toast({ title: 'Failed to update', description: err.message, variant: 'destructive' });
     }
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
-  
+
   if (error) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
-      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">Retry</button>
     </div>
   );
 

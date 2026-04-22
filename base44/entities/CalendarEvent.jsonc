@@ -16,7 +16,9 @@
       "enum": [
         "callout",
         "day_off",
-        "shop_event"
+        "shop_event",
+        "vacation",
+        "training"
       ],
       "default": "day_off"
     },

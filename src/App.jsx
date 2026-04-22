@@ -16,6 +16,7 @@ import RenterDashboard from './pages/RenterDashboard.jsx';
 import Paystub from './pages/Paystub.jsx';
 import TeamCalendar from './pages/TeamCalendar.jsx';
 import Renters from './pages/Renters.jsx';
+import Clients from './pages/Clients.jsx';
 import Messages from './pages/Messages.jsx';
 import ServiceTracker from './pages/ServiceTracker.jsx';
 import Payments from './pages/Payments.jsx';
@@ -56,6 +57,7 @@ const AuthenticatedApp = () => {
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
         <Route path="/renters" element={<AdminRoute><Renters /></AdminRoute>} />
+        <Route path="/clients" element={<AdminRoute><Clients /></AdminRoute>} />
         <Route path="/payments" element={<AdminRoute><Payments /></AdminRoute>} />
         <Route path="/reports" element={<AdminRoute><MonthlyReports /></AdminRoute>} />
         <Route path="/expenses" element={<AdminRoute><Expenses /></AdminRoute>} />

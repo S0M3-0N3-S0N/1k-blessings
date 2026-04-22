@@ -45,6 +45,9 @@
         "hair",
         "nails",
         "aesthetics",
+        "waxing",
+        "lashes",
+        "massage",
         "other"
       ],
       "default": "hair"

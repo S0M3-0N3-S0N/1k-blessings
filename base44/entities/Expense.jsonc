@@ -45,6 +45,15 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "receipt_url": {
+      "type": "string",
+      "title": "Receipt Image URL"
+    },
+    "is_recurring": {
+      "type": "boolean",
+      "title": "Recurring Expense",
+      "default": false
     }
   },
   "required": [

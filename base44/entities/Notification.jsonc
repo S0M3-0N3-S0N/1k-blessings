@@ -1,0 +1,42 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "recipient_email": {
+      "type": "string",
+      "title": "Recipient Email"
+    },
+    "type": {
+      "type": "string",
+      "title": "Type",
+      "enum": [
+        "payment_due",
+        "paystub_ready",
+        "new_message",
+        "announcement"
+      ]
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "body": {
+      "type": "string",
+      "title": "Message Body"
+    },
+    "is_read": {
+      "type": "boolean",
+      "title": "Is Read",
+      "default": false
+    },
+    "link": {
+      "type": "string",
+      "title": "Link URL"
+    }
+  },
+  "required": [
+    "recipient_email",
+    "type",
+    "title"
+  ]
+}

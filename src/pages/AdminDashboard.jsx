@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useLanguage } from "@/lib/i18n";
+import { useCallback, useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -19,6 +20,20 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [markingId, setMarkingId] = useState(null);
+  const [overdueCount, setOverdueCount] = useState(0);
+
+  useEffect(() => {
+    const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
+    Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
+      const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
+      let count = 0;
+      rentRenters.forEach(r => {
+        const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+        if (isPaymentOverdue(payment, r)) count++;
+      });
+      setOverdueCount(count);
+    });
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -39,11 +54,14 @@ export default function AdminDashboard() {
   useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
-  
+
   if (error) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
-      <p className="text-sm text-destructive text-center">{error}</p>
-      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+      <div className="text-center space-y-2">
+        <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
+        <p className="text-sm text-destructive">{error}</p>
+      </div>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">Retry</button>
     </div>
   );
 
