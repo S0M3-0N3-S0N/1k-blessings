@@ -7,7 +7,7 @@ import {
   Scissors, BarChart2, Receipt, Calendar, Settings, LogOut,
   Sparkles, StickyNote, MoreHorizontal, X
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, isPaymentOverdue } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -29,14 +29,13 @@ export default function Layout() {
 
   useEffect(() => {
     if (!isAdmin) return;
-    const now = new Date();
-    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
       const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
       let count = 0;
       rentRenters.forEach(r => {
-        const paid = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr) && p.status === "paid");
-        if (!paid && now.getDate() > 5) count++;
+        const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+        if (isPaymentOverdue(payment, r)) count++;
       });
       setOverdueCount(count);
     });

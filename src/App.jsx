@@ -8,6 +8,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout.jsx';
+import AppErrorBoundary from '@/components/AppErrorBoundary';
+import AdminRoute from '@/components/AdminRoute';
 
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import RenterDashboard from './pages/RenterDashboard.jsx';
@@ -53,11 +55,11 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
-        <Route path="/renters" element={<Renters />} />
-        <Route path="/payments" element={<Payments />} />
+        <Route path="/renters" element={<AdminRoute><Renters /></AdminRoute>} />
+        <Route path="/payments" element={<AdminRoute><Payments /></AdminRoute>} />
+        <Route path="/reports" element={<AdminRoute><MonthlyReports /></AdminRoute>} />
+        <Route path="/expenses" element={<AdminRoute><Expenses /></AdminRoute>} />
         <Route path="/services" element={<ServiceTracker />} />
-        <Route path="/reports" element={<MonthlyReports />} />
-        <Route path="/expenses" element={<Expenses />} />
         <Route path="/calendar" element={<TeamCalendar />} />
         <Route path="/paystub" element={<Paystub />} />
         <Route path="/notes" element={<Notes />} />
@@ -71,18 +73,20 @@ const AuthenticatedApp = () => {
 
 function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AuthProvider>
-          <QueryClientProvider client={queryClientInstance}>
-            <Router>
-              <AuthenticatedApp />
-            </Router>
-            <Toaster />
-          </QueryClientProvider>
-        </AuthProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <AppErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <QueryClientProvider client={queryClientInstance}>
+              <Router>
+                <AuthenticatedApp />
+              </Router>
+              <Toaster />
+            </QueryClientProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </AppErrorBoundary>
   );
 }
 

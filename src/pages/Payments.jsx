@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor } from "@/lib/utils";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2 } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
@@ -18,6 +18,7 @@ export default function Payments() {
   const [renters, setRenters] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState("all");
   const [monthOffset, setMonthOffset] = useState(0);
   const [markDialog, setMarkDialog] = useState(null); // { renter, existing }
@@ -32,8 +33,15 @@ export default function Payments() {
   const [charges, setCharges] = useState([]);
 
   const loadData = useCallback(async () => {
-    const [r, p, s, c] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300), base44.entities.Charge.list()]);
-    setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
+    try {
+      setError(null);
+      const [r, p, s, c] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300), base44.entities.Charge.list()]);
+      setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
+    } catch (err) {
+      console.error('Load error:', err);
+      setError('Failed to load data. Pull down to retry.');
+      setLoading(false);
+    }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -47,7 +55,7 @@ export default function Payments() {
   const getRenterStatus = (renter) => {
     const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(monthStr));
     if (existing?.status === "paid") return { status: "paid", payment: existing };
-    const isOverdue = monthOffset === 0 && now.getDate() > 5;
+    const isOverdue = isPaymentOverdue(existing, renter);
     return { status: isOverdue ? "overdue" : "pending", payment: existing };
   };
 
@@ -59,24 +67,49 @@ export default function Payments() {
 
   const confirmMarkPaid = async () => {
     setSaving(true);
-    const { renter, existing } = markDialog;
-    const data = { status: "paid", paid_date: new Date().toISOString(), amount: parseFloat(markForm.amount) || renter.rent_amount, payment_method: markForm.payment_method, notes: markForm.notes };
-    if (existing) {
-      await base44.entities.Payment.update(existing.id, data);
-    } else {
-      await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
+    try {
+      const { renter, existing } = markDialog;
+      const amount = parseFloat(markForm.amount) || renter.rent_amount;
+      if (amount <= 0) {
+        toast({ title: 'Invalid amount', description: 'Amount must be greater than 0', variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      const data = { status: "paid", paid_date: new Date().toISOString(), amount, payment_method: markForm.payment_method, notes: markForm.notes };
+      if (existing) {
+        await base44.entities.Payment.update(existing.id, data);
+      } else {
+        await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
+      }
+      setMarkDialog(null);
+      toast({ title: `${renter.name} ${t("markPaid")}` });
+      loadData();
+    } catch (err) {
+      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    setMarkDialog(null); setSaving(false);
-    toast({ title: `${renter.name} ${t("markPaid")}` }); loadData();
   };
 
   const markPending = async (renter) => {
-    const { payment } = getRenterStatus(renter);
-    if (payment) await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
-    toast({ title: t("pending") }); loadData();
+    try {
+      const { payment } = getRenterStatus(renter);
+      if (payment) await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
+      toast({ title: t("pending") });
+      loadData();
+    } catch (err) {
+      toast({ title: 'Failed to update', description: err.message, variant: 'destructive' });
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+  
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <p className="text-sm text-destructive text-center">{error}</p>
+      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+    </div>
+  );
 
   const rows = rentRenters.map(r => ({ ...r, ...getRenterStatus(r) }));
   const filteredRows = filter === "all" ? rows : rows.filter(r => r.status === filter);

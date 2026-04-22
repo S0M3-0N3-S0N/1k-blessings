@@ -11,15 +11,15 @@ export function formatCurrency(amount, symbol = "$") {
 }
 
 export function freqMultiplier(freq) {
-  if (freq === "weekly") return 4.33;
-  if (freq === "biweekly") return 2.165;
-  return 1;
+  if (freq === "weekly") return 52 / 12;    // ≈ 4.3333...
+  if (freq === "biweekly") return 26 / 12;  // ≈ 2.1666...
+  return 1; // monthly
 }
 
 export function toWeekly(amount, freq) {
   if (freq === "weekly") return amount;
   if (freq === "biweekly") return amount / 2;
-  return amount / 4.33;
+  return amount / (52 / 12); // monthly to weekly
 }
 
 export function freqLabel(freq) {
@@ -96,4 +96,25 @@ export function getMonthsInRange(count = 12) {
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
   }
   return months;
+}
+
+export function isPaymentOverdue(payment, renter) {
+  if (!payment || payment.status === 'paid') return false;
+  // If a due_date exists, use it
+  if (payment.due_date) return new Date(payment.due_date) < new Date();
+  // Fallback: if no due_date, use 7 days after the period start date
+  if (payment.period) {
+    const due = new Date(payment.period);
+    due.setDate(due.getDate() + 7);
+    return due < new Date();
+  }
+  return false;
+}
+
+export function getDueDate(periodStart, frequency) {
+  const d = new Date(periodStart);
+  if (frequency === 'weekly') d.setDate(d.getDate() + 7);
+  else if (frequency === 'biweekly') d.setDate(d.getDate() + 14);
+  else d.setDate(d.getDate() + 30);
+  return d.toISOString();
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn } from "@/lib/utils";
+import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2 } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
@@ -16,21 +16,36 @@ export default function AdminDashboard() {
   const [payments, setPayments] = useState([]);
   const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [markingId, setMarkingId] = useState(null);
 
   const loadData = useCallback(async () => {
-    const [r, s, p, te] = await Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.ServiceEntry.list("-service_date", 100),
-      base44.entities.Payment.list("-period"),
-      base44.entities.TimeEntry.list("-clock_in", 200),
-    ]);
-    setRenters(r); setServices(s); setPayments(p); setTimeEntries(te); setLoading(false);
+    try {
+      setError(null);
+      const [r, s, p, te] = await Promise.all([
+        base44.entities.Renter.list(),
+        base44.entities.ServiceEntry.list("-service_date", 100),
+        base44.entities.Payment.list("-period"),
+        base44.entities.TimeEntry.list("-clock_in", 200),
+      ]);
+      setRenters(r); setServices(s); setPayments(p); setTimeEntries(te); setLoading(false);
+    } catch (err) {
+      console.error('Load error:', err);
+      setError('Failed to load data. Pull down to retry.');
+      setLoading(false);
+    }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+  
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <p className="text-sm text-destructive text-center">{error}</p>
+      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+    </div>
+  );
 
   const now = new Date();
   const hour = now.getHours();
@@ -66,9 +81,10 @@ export default function AdminDashboard() {
   // Rent due
   const rentRows = rentRenters.map(r => {
     const weeklyAmt = toWeekly(r.rent_amount || 0, r.frequency);
-    const paid = payments.find(p => p.renter_id === r.id && p.period === wsStr && p.status === "paid");
-    const status = paid ? "paid" : (now.getDate() > 5 ? "overdue" : "pending");
-    return { ...r, weeklyAmt, paid: !!paid, status };
+    const payment = payments.find(p => p.renter_id === r.id && p.period === wsStr);
+    const status = payment?.status || "pending";
+    const overdue = !payment || isPaymentOverdue(payment, r);
+    return { ...r, weeklyAmt, paid: !!payment, status: !payment && overdue ? "overdue" : status };
   });
 
   const markPaid = async (renter) => {
