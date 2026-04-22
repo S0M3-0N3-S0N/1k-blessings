@@ -235,7 +235,7 @@ export default function Renters() {
                           {r.start_date && <p className="text-[11px] text-muted-foreground/50 mt-1">Since {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                         <ModelBadge model={r.payment_model} />
                         <StatusBadge status={r.status} />
                       </div>
