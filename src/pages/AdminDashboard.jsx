@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2 } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
-import SplitBar from "@/components/ui/SplitBar.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -120,81 +119,31 @@ export default function AdminDashboard() {
           <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} rent · ${commissionRenters.length} comm · ${hourlyRenters.length} hourly`} />
         </div>
 
-        {/* Commission Splits */}
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-2 flex-wrap">
+        {/* Commission Summary Card */}
+        <div className="bg-card rounded-xl border border-border p-5">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("commissionSplits")}</p>
-              <p className="font-serif text-base font-medium mt-0.5">{t("weekOf")} {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+              <p className="font-serif text-base font-medium mt-0.5">{t("weekOf")} {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {formatDateRange(ws)}</p>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => setWeekOffset(o => o + 1)} className="p-2 rounded-lg hover:bg-muted transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="text-xs text-muted-foreground min-w-[130px] text-center">{formatDateRange(ws)}</span>
-              <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg hover:bg-muted transition-colors disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center">
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+            <Link to="/payments" className="text-xs text-primary hover:underline font-medium">View Full Splits →</Link>
           </div>
           {commissionRenters.length === 0 ? (
-            <div className="px-5 py-10 text-center space-y-2">
-              <p className="text-sm text-muted-foreground">{t("commissionOnlyNote")}</p>
-              <Link to="/renters" className="text-xs text-primary hover:underline">{t("addStylist")} →</Link>
-            </div>
+            <p className="text-sm text-muted-foreground mt-3">{t("commissionOnlyNote")}</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border">
-                    {[t("stylists"), t("services"), t("totalRevenue"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, "Split"].map(h => (
-                      <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right last:text-left"}`}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {commRows.map(r => {
-                    const av = getAvatarColor(r.avatarIndex);
-                    return (
-                      <tr key={r.id} className={cn("hover:bg-muted/20 transition-colors", r.gross === 0 && "opacity-50")}>
-                        <td className="pl-5 pr-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", av.bg, av.text)}>
-                              {getInitials(r.name)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{r.name}</p>
-                              <p className="text-xs text-muted-foreground">{r.role}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums">{r.rs.length}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums">{formatCurrency(r.gross)}</td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground">
-                          <span className="text-xs text-muted-foreground mr-1">{100 - (r.commission_owner || 40)}%</span>
-                          {formatCurrency(r.stylistCut)}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono tabular-nums text-primary font-semibold">
-                          <span className="text-xs mr-1">{r.commission_owner || 40}%</span>
-                          {formatCurrency(r.ownerCut)}
-                        </td>
-                        <td className="px-4 py-3 w-28">
-                          <SplitBar ownerPct={r.commission_owner || 40} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {/* Totals */}
-                  <tr className="bg-muted/30 border-t border-border font-semibold">
-                    <td className="pl-5 pr-4 py-3 text-sm">{t("totals")}</td>
-                    <td className="px-4 py-3 text-right">{commRows.reduce((s, r) => s + r.rs.length, 0)}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(commRows.reduce((s, r) => s + r.gross, 0))}</td>
-                    <td className="px-4 py-3 text-right font-mono">{formatCurrency(commRows.reduce((s, r) => s + r.stylistCut, 0))}</td>
-                    <td className="px-4 py-3 text-right font-mono text-primary">{formatCurrency(commRows.reduce((s, r) => s + r.ownerCut, 0))}</td>
-                    <td className="px-4 py-3" />
-                  </tr>
-                </tbody>
-              </table>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {commRows.map(r => (
+                <div key={r.id} className={cn("flex-1 min-w-[140px] bg-muted/30 rounded-lg px-4 py-3 space-y-1", r.gross === 0 && "opacity-50")}>
+                  <p className="text-xs font-semibold">{r.name}</p>
+                  <p className="font-mono text-sm font-bold text-primary">{formatCurrency(r.ownerCut)} <span className="text-[10px] font-normal text-muted-foreground">ours</span></p>
+                  <p className="text-[10px] text-muted-foreground">{r.rs.length} services · {formatCurrency(r.gross)} total</p>
+                </div>
+              ))}
+              <div className="flex-1 min-w-[140px] bg-primary/10 rounded-lg px-4 py-3 space-y-1 border border-primary/20">
+                <p className="text-xs font-semibold text-primary">Total This Week</p>
+                <p className="font-mono text-sm font-bold text-primary">{formatCurrency(commRows.reduce((s, r) => s + r.ownerCut, 0))}</p>
+                <p className="text-[10px] text-muted-foreground">{commRows.reduce((s, r) => s + r.rs.length, 0)} services · {formatCurrency(commRows.reduce((s, r) => s + r.gross, 0))} revenue</p>
+              </div>
             </div>
           )}
         </div>

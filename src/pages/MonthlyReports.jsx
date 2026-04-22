@@ -178,6 +178,9 @@ export default function MonthlyReports() {
                       </table>
                     </div>
 
+                    {/* Expense Summary */}
+                    <ExpenseSummary expenses={monthExp} />
+
                     {/* Per-Stylist Breakdown */}
                     <PerStylistBreakdown services={monthSvcs} payments={monthPmts} renters={renters} renterMap={renterMap} monthStr={m} />
                   </div>
@@ -277,6 +280,37 @@ function PayrollHistory({ renters, services }) {
           </table>
         </div>
       )}
+    </div>
+  );
+}
+
+function ExpenseSummary({ expenses }) {
+  const { t } = useLanguage();
+  if (!expenses || expenses.length === 0) return null;
+  const byCategory = expenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + (e.amount || 0);
+    return acc;
+  }, {});
+  const CAT_COLORS = {
+    supplies: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+    cleaning: "bg-blue-500/15 text-blue-500 border-blue-500/30",
+    software: "bg-violet-500/15 text-violet-500 border-violet-500/30",
+    utilities: "bg-orange-500/15 text-orange-500 border-orange-500/30",
+    marketing: "bg-pink-500/15 text-pink-500 border-pink-500/30",
+    equipment: "bg-stone-500/15 text-stone-500 border-stone-500/30",
+    other: "bg-muted text-muted-foreground border-border",
+  };
+  return (
+    <div className="border-t border-border px-5 py-3">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("expenses")} Breakdown</p>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(byCategory).map(([cat, total]) => (
+          <div key={cat} className={cn("flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium", CAT_COLORS[cat] || CAT_COLORS.other)}>
+            <span className="capitalize">{cat}</span>
+            <span className="font-mono font-semibold">−{formatCurrency(total)}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
