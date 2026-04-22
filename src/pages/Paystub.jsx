@@ -7,7 +7,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
 
-const WEEK_LABELS_KEYS = ["thisWeek", "Last Week", "2 Weeks Ago", "3 Weeks Ago", "4 Weeks Ago"];
+const WEEK_LABELS_KEYS = ["thisWeek", "lastWeek", "twoWeeksAgo", "threeWeeksAgo", "fourWeeksAgo"];
 
 export default function Paystub() {
   const { user } = useAuth();
@@ -128,7 +128,7 @@ export default function Paystub() {
           <div className="flex items-center gap-2">
             <button onClick={() => setWeekOffset(o => Math.min(4, o + 1))} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
             <select className="text-xs bg-card border border-border rounded-lg px-2 py-2 font-medium min-h-[44px]" value={weekOffset} onChange={e => setWeekOffset(Number(e.target.value))}>
-              {WEEK_LABELS_KEYS.map((l, i) => <option key={i} value={i}>{i === 0 ? t("thisWeek") : l}</option>)}
+              {WEEK_LABELS_KEYS.map((l, i) => <option key={i} value={i}>{t(l)}</option>)}
             </select>
             <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
           </div>

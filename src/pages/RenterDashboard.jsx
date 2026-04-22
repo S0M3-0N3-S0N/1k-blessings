@@ -9,7 +9,6 @@ import PullToRefresh from "@/components/PullToRefresh";
 import ClockInOut from "@/components/renter/ClockInOut";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
-import { useEffect as useEffectChart } from "react";
 
 export default function RenterDashboard() {
   const { user } = useAuth();

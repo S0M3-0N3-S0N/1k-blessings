@@ -57,7 +57,7 @@ export default function TeamCalendar() {
 
   const getDayEvents = (day) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return monthEvents.filter(e => e.date === dateStr);
+    return events.filter(e => dateStr >= e.date && dateStr <= (e.end_date || e.date));
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;

@@ -77,7 +77,7 @@ export default function AdminDashboard() {
     if (existing) {
       await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString() });
     } else {
-      await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.weeklyAmt, period: wsStr, status: "paid", paid_date: new Date().toISOString() });
+      await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.weeklyAmt, period: currentMonthStr, status: "paid", paid_date: new Date().toISOString() });
     }
     setMarkingId(null); loadData();
   };
