@@ -5,7 +5,6 @@ import { formatCurrency, getWeekStart, getWeekEnd, cn, freqLabel } from "@/lib/u
 import { Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PullToRefresh from "@/components/PullToRefresh";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 function getMondaysInMonth(year, month) {
   const mondays = [];
@@ -76,9 +75,6 @@ export default function MonthlyReports() {
             <p className="text-sm text-muted-foreground">{t("noDataYet") || "No data yet. Start logging services and payments."}</p>
           </div>
         )}
-
-        {/* Income vs Expenses Chart */}
-        {allMonths.length > 0 && <IncomeExpensesChart allMonths={allMonths} getMonthData={getMonthData} />}
 
         {/* Payroll History */}
         <PayrollHistory renters={renters} services={services} />
@@ -195,38 +191,6 @@ export default function MonthlyReports() {
         </div>
       </div>
     </PullToRefresh>
-  );
-}
-
-function IncomeExpensesChart({ allMonths, getMonthData }) {
-  const { t } = useLanguage();
-  const chartData = [...allMonths].reverse().slice(-6).map(m => {
-    const { rentIncome, commissionIncome, totalExpenses } = getMonthData(m);
-    const [yr, mo] = m.split("-").map(Number);
-    return {
-      month: new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "short" }),
-      Rent: Math.round(rentIncome),
-      Commission: Math.round(commissionIncome),
-      Expenses: Math.round(totalExpenses),
-    };
-  });
-
-  return (
-    <div className="bg-card rounded-xl border border-border p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Overview</p>
-      <p className="font-serif text-base font-medium mb-4">Income vs Expenses · Last 6 Months</p>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={chartData} barSize={12} barGap={2}>
-          <XAxis dataKey="month" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(1)+"k" : v}`} />
-          <Tooltip formatter={(v) => `$${v.toLocaleString()}`} contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
-          <Legend wrapperStyle={{ fontSize: 11 }} />
-          <Bar dataKey="Rent" fill="hsl(var(--primary))" radius={[3,3,0,0]} opacity={0.8} />
-          <Bar dataKey="Commission" fill="hsl(43 72% 62%)" radius={[3,3,0,0]} opacity={0.8} />
-          <Bar dataKey="Expenses" fill="hsl(var(--destructive))" radius={[3,3,0,0]} opacity={0.7} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
   );
 }
 
