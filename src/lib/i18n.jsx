@@ -216,7 +216,7 @@ const TRANSLATIONS = {
     inviteLinkDesc: "Share this link with {name}. When they open it and log in, their account will be linked automatically.",
     inviteLinkNote: "This link contains the stylist profile ID. It does not expire.",
     linkAccountTitle: "Link User Account",
-    linkAccountSubtitle: "Connect a user account so this stylist can log in.",
+    linkAccountSubtitle: "Link each stylist to a user account so they can log in and see their private dashboard. Search for an existing user or send them an invite link.",
   },
   es: {
     dashboard: "Panel",
@@ -379,7 +379,7 @@ const TRANSLATIONS = {
     inviteLinkDesc: "Comparte este enlace con {name}. Al abrirlo e iniciar sesión, su cuenta se vinculará automáticamente.",
     inviteLinkNote: "Este enlace contiene el ID del perfil de la estilista. No caduca.",
     linkAccountTitle: "Vincular Cuenta de Usuario",
-    linkAccountSubtitle: "Conecta una cuenta para que esta estilista pueda iniciar sesión.",
+    linkAccountSubtitle: "Vincula cada estilista a una cuenta de usuario para que pueda iniciar sesión y ver su panel privado. Busca un usuario existente o envíale un enlace de invitación.",
   },
   fr: {
     dashboard: "Tableau de bord",
@@ -542,7 +542,7 @@ const TRANSLATIONS = {
     inviteLinkDesc: "Partagez ce lien avec {name}. Lorsqu'il/elle l'ouvre et se connecte, son compte sera lié automatiquement.",
     inviteLinkNote: "Ce lien contient l'ID du profil de la styliste. Il n'expire pas.",
     linkAccountTitle: "Lier un Compte Utilisateur",
-    linkAccountSubtitle: "Connectez un compte pour que cette styliste puisse se connecter.",
+    linkAccountSubtitle: "Liez chaque styliste à un compte utilisateur pour qu'elle puisse se connecter et voir son tableau de bord privé. Recherchez un utilisateur existant ou envoyez-lui un lien d'invitation.",
   },
   zh: {
     dashboard: "仪表板",
@@ -705,7 +705,7 @@ const TRANSLATIONS = {
     inviteLinkDesc: "将此链接分享给 {name}。当他们打开并登录后，账户将自动关联。",
     inviteLinkNote: "此链接包含发型师档案 ID，不会过期。",
     linkAccountTitle: "关联用户账户",
-    linkAccountSubtitle: "关联账户以便该发型师可以登录。",
+    linkAccountSubtitle: "将每位发型师关联到用户账户，使其能够登录并查看私人仪表板。搜索现有用户或发送邀请链接。",
   },
 };
 

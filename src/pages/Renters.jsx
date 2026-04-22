@@ -376,7 +376,7 @@ export default function Renters() {
           <TabsContent value="users">
             <div className="space-y-4">
               <div className="bg-muted/30 rounded-lg px-4 py-3 text-xs text-muted-foreground border border-border">
-                Link each stylist to a user account so they can log in and see their private dashboard. Search for an existing user or send them an invite link.
+                {t("linkAccountSubtitle")}
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {renters.map((r, i) => {
