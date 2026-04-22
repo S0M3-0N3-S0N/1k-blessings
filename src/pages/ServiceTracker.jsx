@@ -134,20 +134,35 @@ export default function ServiceTracker() {
         </div>
 
         {/* Filters */}
-        <div className="space-y-2">
-          {/* Date filter pills — scrollable on mobile */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="bg-card border border-border rounded-xl p-3 md:p-4 space-y-3">
+          {/* Date filter pills */}
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
             {DATE_FILTER_KEYS.map(f => (
-              <button key={f.value} onClick={() => setFilterDate(f.value)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap shrink-0", filterDate === f.value ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
+              <button
+                key={f.value}
+                onClick={() => setFilterDate(f.value)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap shrink-0 border",
+                  filterDate === f.value
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
+                )}
+              >
                 {t(f.key)}
               </button>
             ))}
           </div>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
           {/* Dropdown filters */}
-          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center gap-2">
+          <div className={cn("grid gap-2", isAdmin ? "grid-cols-3" : "grid-cols-2")}>
             {isAdmin && (
               <Select value={filterRenter} onValueChange={setFilterRenter}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="All Stylists" /></SelectTrigger>
+                <SelectTrigger className="h-8 text-xs bg-muted/40 border-border rounded-lg">
+                  <SelectValue placeholder="All Stylists" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("allStylists") || "All Stylists"}</SelectItem>
                   {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
@@ -155,7 +170,9 @@ export default function ServiceTracker() {
               </Select>
             )}
             <Select value={filterCat} onValueChange={setFilterCat}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs bg-muted/40 border-border rounded-lg">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("allCategories") || "All Categories"}</SelectItem>
                 <SelectItem value="hair">{t("hair")}</SelectItem>
@@ -165,7 +182,9 @@ export default function ServiceTracker() {
               </SelectContent>
             </Select>
             <Select value={filterMethod} onValueChange={setFilterMethod}>
-              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Method" /></SelectTrigger>
+              <SelectTrigger className="h-8 text-xs bg-muted/40 border-border rounded-lg">
+                <SelectValue placeholder="Method" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("allMethods") || "All Methods"}</SelectItem>
                 {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
