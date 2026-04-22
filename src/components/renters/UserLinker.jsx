@@ -155,22 +155,24 @@ export default function UserLinker({ renter, onLinked }) {
           <p className="text-xs text-muted-foreground leading-relaxed">
             {t("inviteLinkDesc").replace("{name}", renter.name)}
           </p>
-          <div className="flex items-center gap-2 bg-muted/40 border border-border rounded-xl px-3 py-2.5">
-            <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            <p className="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">{inviteLink}</p>
+          <div className="bg-muted/40 border border-border rounded-xl p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">{inviteLink}</p>
+            </div>
             <button
               onClick={handleCopy}
               className={cn(
-                "shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-[40px]",
                 copied
                   ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                  : "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "bg-primary/10 text-primary hover:bg-primary/20 active:bg-primary/30"
               )}
             >
               {copied ? (
-                <><Check className="w-3 h-3" /> {t("copied")}</>
+                <><Check className="w-3.5 h-3.5" /> {t("copied")}</>
               ) : (
-                <><Copy className="w-3 h-3" /> {t("copy")}</>
+                <><Copy className="w-3.5 h-3.5" /> {t("copy")}</>
               )}
             </button>
           </div>

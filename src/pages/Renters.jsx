@@ -378,17 +378,17 @@ export default function Renters() {
               <div className="bg-muted/30 rounded-lg px-4 py-3 text-xs text-muted-foreground border border-border">
                 Link each stylist to a user account so they can log in and see their private dashboard. Search for an existing user or send them an invite link.
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 {renters.map((r, i) => {
                   const av = getAvatarColor(i);
                   return (
                     <div key={r.id} className="bg-card rounded-xl border border-border p-4 space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
+                        <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0", av.bg, av.text)}>
                           {getInitials(r.name)}
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{r.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{r.name}</p>
                           <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
                         </div>
                       </div>
