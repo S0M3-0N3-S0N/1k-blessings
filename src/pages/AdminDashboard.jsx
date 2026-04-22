@@ -8,7 +8,6 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useLanguage } from "@/lib/i18n";
-import { useCallback, useEffect, useState } from "react";
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
