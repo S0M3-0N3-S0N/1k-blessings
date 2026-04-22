@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useCallback } from "react";
 
 const TRANSLATIONS = {
   en: {
@@ -721,14 +721,14 @@ const LanguageContext = createContext(null);
 export function LanguageProvider({ children }) {
   const [lang, setLang] = useState(() => localStorage.getItem("1kb-lang") || "en");
 
-  const setLanguage = (code) => {
+  const setLanguage = useCallback((code) => {
     setLang(code);
     localStorage.setItem("1kb-lang", code);
-  };
+  }, []);
 
-  const t = (key) => {
+  const t = useCallback((key) => {
     return TRANSLATIONS[lang]?.[key] || TRANSLATIONS["en"]?.[key] || key;
-  };
+  }, [lang]);
 
   return (
     <LanguageContext.Provider value={{ lang, setLanguage, t, LANGUAGES }}>
