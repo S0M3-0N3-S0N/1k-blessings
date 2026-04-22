@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getWeekStart, getWeekEnd, cn, freqLabel } from "@/lib/utils";
-import { Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Download } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import PullToRefresh from "@/components/PullToRefresh";
 
 function getMondaysInMonth(year, month) {
@@ -62,12 +63,35 @@ export default function MonthlyReports() {
 
   const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
 
+  const exportCSV = () => {
+    const rows = [["Month", "Rental Income", "Commission Income", "Total Income", "Expenses", "Net Profit"]];
+    allMonths.forEach(m => {
+      const { rentIncome, commissionIncome, totalIncome, totalExpenses, netProfit } = getMonthData(m);
+      const [yr, mo] = m.split("-").map(Number);
+      const label = new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      rows.push([label, rentIncome.toFixed(2), commissionIncome.toFixed(2), totalIncome.toFixed(2), totalExpenses.toFixed(2), netProfit.toFixed(2)]);
+    });
+    const csv = rows.map(r => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "financial-report.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <PullToRefresh onRefresh={loadData}>
       <div className="space-y-6">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("reports")}</p>
-          <h1 className="font-serif text-3xl font-light tracking-wide">{t("reports")}</h1>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("reports")}</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("reports")}</h1>
+          </div>
+          {allMonths.length > 0 && (
+            <Button variant="outline" size="sm" className="min-h-[44px] gap-2" onClick={exportCSV}>
+              <Download className="w-3.5 h-3.5" /> Export CSV
+            </Button>
+          )}
         </div>
 
         {allMonths.length === 0 && (

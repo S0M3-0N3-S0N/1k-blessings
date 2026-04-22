@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
@@ -25,6 +25,22 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
+  const [overdueCount, setOverdueCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const now = new Date();
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
+      const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
+      let count = 0;
+      rentRenters.forEach(r => {
+        const paid = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr) && p.status === "paid");
+        if (!paid && now.getDate() > 5) count++;
+      });
+      setOverdueCount(count);
+    });
+  }, [isAdmin]);
 
   const adminNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
@@ -89,6 +105,7 @@ export default function Layout() {
       <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
         {nav.map(({ path, label, icon: Icon }) => {
           const active = location.pathname === path;
+          const showBadge = path === "/payments" && overdueCount > 0;
           return (
             <Link
               key={path}
@@ -102,6 +119,9 @@ export default function Layout() {
             >
               <Icon className="w-4 h-4 shrink-0" />
               {label}
+              {showBadge && (
+                <span className="ml-auto bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{overdueCount}</span>
+              )}
             </Link>
           );
         })}
@@ -161,6 +181,7 @@ export default function Layout() {
         <div className="relative flex w-full mx-3 mb-3 bg-sidebar/90 backdrop-blur-xl border border-sidebar-border rounded-2xl shadow-lg overflow-hidden">
           {bottomTabs.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path;
+            const showBadge = path === "/payments" && overdueCount > 0;
             return (
               <Link
                 key={path}
@@ -177,7 +198,12 @@ export default function Layout() {
                     transition={{ type: "spring", damping: 28, stiffness: 320 }}
                   />
                 )}
-                <Icon className="w-[18px] h-[18px] relative z-10" />
+                <div className="relative">
+                  <Icon className="w-[18px] h-[18px] relative z-10" />
+                  {showBadge && (
+                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[13px] h-3.5 flex items-center justify-center px-0.5 z-20">{overdueCount}</span>
+                  )}
+                </div>
               </Link>
             );
           })}

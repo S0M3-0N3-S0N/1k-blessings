@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Info, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -138,6 +138,7 @@ export default function Renters() {
   const [editRenter, setEditRenter] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [tipDismissed, setTipDismissed] = useState(() => localStorage.getItem("renters-tip-dismissed") === "1");
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -189,6 +190,19 @@ export default function Renters() {
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("stylists")}</p>
           <h1 className="font-serif text-3xl font-light tracking-wide">{t("stylists")}</h1>
         </div>
+
+        {renters.length === 0 && !tipDismissed && (
+          <div className="bg-primary/10 border border-primary/25 rounded-xl px-4 py-3 flex items-start gap-3">
+            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 text-sm text-foreground/80 space-y-1">
+              <p className="font-semibold text-foreground">Getting started</p>
+              <p>Add your first stylist by clicking <span className="font-semibold">Add Stylist</span> below. You can set their payment model — rent, commission, or hourly — and link them to a user account so they can log in.</p>
+            </div>
+            <button onClick={() => { setTipDismissed(true); localStorage.setItem("renters-tip-dismissed", "1"); }} className="text-muted-foreground hover:text-foreground p-1 shrink-0">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
 
         <Tabs defaultValue="stylists">
           <div className="mb-5 overflow-x-auto scrollbar-none">
