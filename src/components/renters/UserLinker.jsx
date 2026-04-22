@@ -161,15 +161,15 @@ export default function UserLinker({ renter, onLinked }) {
               <QRCodeSVG value={inviteLink} size={140} />
             </div>
           </div>
-          <div className="bg-muted/40 border border-border rounded-xl p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">{inviteLink}</p>
+          <div className="bg-muted/40 border border-border rounded-xl p-3 space-y-2 overflow-hidden">
+            <div className="flex items-start gap-2">
+              <Link2 className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground font-mono break-all leading-relaxed flex-1 min-w-0">{inviteLink}</p>
             </div>
             <button
               onClick={handleCopy}
               className={cn(
-                "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-[40px]",
+                "w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all min-h-[44px]",
                 copied
                   ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                   : "bg-primary/10 text-primary hover:bg-primary/20 active:bg-primary/30"
