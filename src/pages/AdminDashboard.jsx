@@ -148,56 +148,38 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Hourly Payroll */}
+        {/* Hourly Payroll - compact summary */}
         {hourlyRenters.length > 0 && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
-              <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("hourlyStylists")}</p>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
+                <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("hourlyStylists")}</p>
+              </div>
+              <Link to="/paystub" className="text-xs text-primary hover:underline font-medium">View Paystub →</Link>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border">
-                    {[t("stylists"), t("status"), "Hours", "Rate", "Gross", "Deduction", t("netPay")].map(h => (
-                      <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === "Stylist" ? "text-left pl-5" : "text-right"}`}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {hourlyRows.map(r => {
-                    const av = getAvatarColor(r.avatarIndex);
-                    return (
-                      <tr key={r.id} className="hover:bg-muted/20">
-                        <td className="pl-5 pr-4 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", av.bg, av.text)}>
-                              {getInitials(r.name)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-sm">{r.name}</p>
-                              <p className="text-xs text-muted-foreground">{r.role}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <div className={cn("w-2 h-2 rounded-full", r.clockedIn ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30")} />
-                            <span className="text-xs text-muted-foreground">{r.clockedIn ? "In" : "Out"}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono">{r.totalHours.toFixed(2)}h</td>
-                        <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">{formatCurrency(r.hourly_wage)}/hr</td>
-                        <td className="px-4 py-3 text-right font-mono">{formatCurrency(r.grossPay)}</td>
-                        <td className="px-4 py-3 text-right font-mono text-destructive text-xs">−{formatCurrency(r.weeklyDeduction)}</td>
-                        <td className={cn("px-4 py-3 text-right font-mono font-semibold", r.netPay >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
-                          {formatCurrency(r.netPay)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="divide-y divide-border">
+              {hourlyRows.map(r => {
+                const av = getAvatarColor(r.avatarIndex);
+                return (
+                  <div key={r.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", av.bg, av.text)}>{getInitials(r.name)}</div>
+                      <div>
+                        <p className="font-medium text-sm">{r.name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className={cn("w-1.5 h-1.5 rounded-full", r.clockedIn ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30")} />
+                          <span className="text-xs text-muted-foreground">{r.totalHours.toFixed(1)}h · {formatCurrency(r.hourly_wage)}/hr</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className={cn("font-mono text-sm font-semibold", r.netPay >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatCurrency(r.netPay)}</p>
+                      <p className="text-[10px] text-muted-foreground">net pay</p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -205,9 +187,12 @@ export default function AdminDashboard() {
         {/* Rent Due */}
         {rentRows.length > 0 && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("rentDue")}</p>
-              <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("rentStylists")}</p>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("rentDue")}</p>
+                <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("rentStylists")}</p>
+              </div>
+              <Link to="/payments" className="text-xs text-primary hover:underline font-medium">View All →</Link>
             </div>
             <div className="divide-y divide-border">
               {rentRows.map(r => (

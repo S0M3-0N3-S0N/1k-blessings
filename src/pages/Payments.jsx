@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2 } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import SplitBar from "@/components/ui/SplitBar.jsx";
@@ -29,9 +29,11 @@ export default function Payments() {
   const [services, setServices] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
 
+  const [charges, setCharges] = useState([]);
+
   const loadData = useCallback(async () => {
-    const [r, p, s] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300)]);
-    setRenters(r); setPayments(p); setServices(s); setLoading(false);
+    const [r, p, s, c] = await Promise.all([base44.entities.Renter.list(), base44.entities.Payment.list("-period"), base44.entities.ServiceEntry.list("-service_date", 300), base44.entities.Charge.list()]);
+    setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -164,6 +166,9 @@ export default function Payments() {
 
         {/* Payment History (last 3 months) */}
         <PaymentHistory renters={rentRenters} allPayments={payments} currentMonth={monthStr} />
+
+        {/* Charges Ledger */}
+        <ChargesLedger charges={charges} renters={renters} onRefresh={loadData} />
 
 
       </div>
@@ -310,6 +315,74 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
 }
 
 
+
+function ChargesLedger({ charges, renters, onRefresh }) {
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ description: "", renter_id: "", amount: "", frequency: "monthly" });
+  const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
+
+  const handleAdd = async () => {
+    if (!form.description || !form.amount) return;
+    await base44.entities.Charge.create({ ...form, amount: parseFloat(form.amount) || 0 });
+    setForm({ description: "", renter_id: "", amount: "", frequency: "monthly" });
+    setShowAdd(false); toast({ title: "Charge added" }); onRefresh();
+  };
+
+  return (
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("chargesLedger") || "Charges Ledger"}</p>
+          <p className="font-serif text-base font-medium mt-0.5">Recurring Charges</p>
+        </div>
+        <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd(s => !s)}>
+          <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge") || "Add"}
+        </Button>
+      </div>
+      {showAdd && (
+        <div className="px-5 py-4 border-b border-border bg-muted/20 flex flex-wrap gap-2 items-end">
+          <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="flex-1 min-w-[140px] min-h-[44px]" />
+          <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
+            <SelectTrigger className="w-36 min-h-[44px]"><SelectValue placeholder="Stylist" /></SelectTrigger>
+            <SelectContent>{renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+          </Select>
+          <Input type="number" placeholder="$" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="w-24 font-mono min-h-[44px]" />
+          <Select value={form.frequency} onValueChange={v => setForm(f => ({ ...f, frequency: v }))}>
+            <SelectTrigger className="w-28 min-h-[44px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="weekly">{t("weekly")}</SelectItem>
+              <SelectItem value="biweekly">{t("biweekly")}</SelectItem>
+              <SelectItem value="monthly">{t("monthly")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <GoldButton onClick={handleAdd}>{t("add")}</GoldButton>
+        </div>
+      )}
+      {charges.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-8">No recurring charges yet.</p>
+      ) : (
+        <div className="divide-y divide-border">
+          {charges.map(c => (
+            <div key={c.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 min-h-[44px]">
+              <div>
+                <p className="text-sm font-medium">{c.description}</p>
+                <p className="text-xs text-muted-foreground">{c.renter_id ? renterMap[c.renter_id]?.name || "—" : "All"} · {freqLabel(c.frequency)}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-sm">{formatCurrency(c.amount)}</span>
+                <button onClick={() => base44.entities.Charge.delete(c.id).then(onRefresh)} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function PaymentHistory({ renters, allPayments, currentMonth }) {
   const { t } = useLanguage();
