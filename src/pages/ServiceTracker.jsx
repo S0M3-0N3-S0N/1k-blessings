@@ -256,7 +256,7 @@ export default function ServiceTracker() {
                   <thead>
                     <tr className="bg-muted/30 border-b border-border">
                       <th className="px-5 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("date")}</th>
-                      {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylists")}</th>}
+                      {isAdmin && <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("stylist")}</th>}
                       <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("clientName")}</th>
                       <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("category")}</th>
                       <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("paymentMethod")}</th>
@@ -314,7 +314,7 @@ export default function ServiceTracker() {
                       <td className="px-4 py-3 text-right font-mono">{formatCurrency(totalAmount)}</td>
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs">{formatCurrency(totalTips)}</td>
                       <td colSpan={2} className="px-4 py-3 text-xs text-muted-foreground">
-                      {t("stylist")}: {formatCurrency(totalStylist)} · {t("owner")}: {formatCurrency(totalOwner)}
+                      {t("stylistGets")}: {formatCurrency(totalStylist)} · {t("ownerGets")}: {formatCurrency(totalOwner)}
                       </td>
                     </tr>
                   </tfoot>

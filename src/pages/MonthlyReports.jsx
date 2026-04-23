@@ -253,20 +253,20 @@ export default function MonthlyReports() {
                             const we = getWeekEnd(ws);
                             const wStr = ws.toISOString().split("T")[0];
                             const weStr = we.toISOString().split("T")[0];
-                            const wRent = payments.filter(p => p.status === "paid" && p.period >= wStr && p.period <= weStr).reduce((s, p) => s + (p.amount || 0), 0);
                             const wComm = services.filter(s => s.service_date >= wStr && s.service_date <= weStr).reduce((s, e) => s + (e.owner_earnings || 0), 0);
+                            const wSvcRev = services.filter(s => s.service_date >= wStr && s.service_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
                             const wExp = expenses.filter(e => e.expense_date >= wStr && e.expense_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
-                            const wNet = wRent + wComm - wExp;
+                            const wNet = wComm - wExp;
                             return (
                               <div key={wStr} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/10">
                                 <span className="text-xs text-muted-foreground">
                                   {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                 </span>
                                 <div className="flex items-center gap-3 text-xs font-mono">
-                                  <span className="text-muted-foreground hidden sm:inline" title={t("totalRevenue")}>{formatCurrency(wRent + wComm)}</span>
-                                      <span className="text-destructive hidden sm:inline">−{formatCurrency(wExp)}</span>
+                                  {wSvcRev > 0 && <span className="text-muted-foreground hidden sm:inline">{formatCurrency(wSvcRev)}</span>}
+                                  {wExp > 0 && <span className="text-destructive hidden sm:inline">−{formatCurrency(wExp)}</span>}
                                   <span className={cn("font-semibold", wNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
-                                    {wNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(wNet))}
+                                    {wNet >= 0 ? "+" : ""}{formatCurrency(wNet)}
                                   </span>
                                 </div>
                               </div>
@@ -274,15 +274,15 @@ export default function MonthlyReports() {
                           })}
                           {/* Totals row */}
                           <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 font-semibold">
-                            <span className="text-xs">{t("totals")}</span>
-                            <div className="flex items-center gap-3 text-xs font-mono">
-                              <span className="text-muted-foreground hidden sm:inline">{formatCurrency(totalIncome)}</span>
-                              <span className="text-destructive hidden sm:inline">−{formatCurrency(totalExpenses)}</span>
-                              <span className={cn("font-bold", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
-                                {netProfit >= 0 ? "+" : "−"}{formatCurrency(Math.abs(netProfit))}
-                              </span>
-                            </div>
-                          </div>
+                             <span className="text-xs">{t("totals")}</span>
+                             <div className="flex items-center gap-3 text-xs font-mono">
+                               {commissionIncome > 0 && <span className="text-muted-foreground hidden sm:inline">{formatCurrency(commissionIncome)}</span>}
+                               {totalExpenses > 0 && <span className="text-destructive hidden sm:inline">−{formatCurrency(totalExpenses)}</span>}
+                               <span className={cn("font-bold", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                                 {netProfit >= 0 ? "+" : ""}{formatCurrency(netProfit)}
+                               </span>
+                             </div>
+                           </div>
                         </div>
                       </div>
 
