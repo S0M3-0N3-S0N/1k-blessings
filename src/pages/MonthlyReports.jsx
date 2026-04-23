@@ -125,15 +125,15 @@ export default function MonthlyReports() {
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="grid grid-cols-3 divide-x divide-border">
               <div className="p-3 md:p-4">
-                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Income</p>
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{t("income")}</p>
                 <p className="font-mono text-sm md:text-xl font-semibold text-primary">{formatCurrency(ytdIncome)}</p>
               </div>
               <div className="p-3 md:p-4">
-                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Expenses</p>
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{t("expenses")}</p>
                 <p className="font-mono text-sm md:text-xl font-semibold text-destructive">−{formatCurrency(ytdExpenses)}</p>
               </div>
               <div className="p-3 md:p-4">
-                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Net</p>
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{t("net")}</p>
                 <p className={cn("font-mono text-sm md:text-xl font-semibold", ytdNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                   {ytdNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(ytdNet))}
                 </p>
@@ -147,7 +147,7 @@ export default function MonthlyReports() {
 
         {/* Tab Switcher */}
         <div className="flex gap-1 bg-muted/40 rounded-xl p-1">
-          {[{ id: "overview", label: t("monthly") }, { id: "stylists", label: t("stylists") }].map(tab => (
+          {[{ id: "overview", label: t("monthly") }, { id: "stylists", label: t("stylistsTab") }].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
