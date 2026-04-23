@@ -128,7 +128,7 @@ export default function Paystub() {
           <div className="flex items-center gap-2">
             <button onClick={() => setWeekOffset(o => Math.min(4, o + 1))} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
             <select className="text-xs bg-card border border-border rounded-lg px-2 py-2 font-medium min-h-[44px]" value={weekOffset} onChange={e => setWeekOffset(Number(e.target.value))}>
-              {WEEK_LABELS_KEYS.map((l, i) => <option key={i} value={i}>{i === 0 ? t("thisWeek") : l}</option>)}
+              {WEEK_LABELS_KEYS.map((l, i) => <option key={i} value={i}>{i === 0 ? t("thisWeek") : i === 1 ? (t("lastWeek") || "Last Week") : `${i} ${t("weeksAgo") || "Weeks Ago"}`}</option>)}
             </select>
             <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
           </div>
@@ -157,10 +157,10 @@ export default function Paystub() {
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
-              <p className="font-serif text-base font-medium">Hours Breakdown</p>
+              <p className="font-serif text-base font-medium">{t("hoursBreakdown") || "Hours Breakdown"}</p>
             </div>
             {weekTimeEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">No hours logged this week.</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("noHoursThisWeek") || "No hours logged this week."}</p>
             ) : (
               <>
                 <div className="divide-y divide-border">
@@ -179,7 +179,7 @@ export default function Paystub() {
                 </div>
                 <div className="px-5 py-4 border-t border-border bg-muted/20 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Hours</span>
+                    <span className="text-muted-foreground">{t("hoursThisWeek")}</span>
                     <span className="font-mono font-semibold">{totalHours.toFixed(2)}h</span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -194,7 +194,7 @@ export default function Paystub() {
                   )}
                   {grossRevenue > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Service Income</span>
+                      <span className="text-muted-foreground">{t("serviceIncome") || "Service Income"}</span>
                       <span className="font-mono text-primary">+{formatCurrency(grossRevenue)}</span>
                     </div>
                   )}
@@ -278,7 +278,7 @@ export default function Paystub() {
                 {renter.payment_model === "commission" && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Commission Earnings ({100 - (renter.commission_owner || 40)}%)</span>
+                      <span className="text-muted-foreground">{t("commissionBreakdown")} ({100 - (renter.commission_owner || 40)}%)</span>
                       <span className="font-mono font-semibold">{formatCurrency(myEarnings)}</span>
                     </div>
                     {tipTotal > 0 && (
@@ -288,7 +288,7 @@ export default function Paystub() {
                       </div>
                     )}
                     <div className="flex justify-between text-sm font-semibold border-t border-border pt-2">
-                      <span>Total Pay</span>
+                      <span>{t("netPay")}</span>
                       <span className="font-mono text-primary">{formatCurrency(netPay)}</span>
                     </div>
                   </>
@@ -296,7 +296,7 @@ export default function Paystub() {
                 {renter.payment_model === "hourly" && grossRevenue > 0 && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Service Revenue (bonus)</span>
+                      <span className="text-muted-foreground">{t("serviceIncome") || "Service Income"} (bonus)</span>
                       <span className="font-mono font-semibold text-primary">+{formatCurrency(grossRevenue)}</span>
                     </div>
                     {tipTotal > 0 && (

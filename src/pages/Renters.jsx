@@ -213,7 +213,7 @@ export default function Renters() {
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
       <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
-      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+      <button onClick={loadData} className="text-xs text-primary underline">{t("retry")}</button>
     </div>
   );
 
@@ -265,7 +265,7 @@ export default function Renters() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <Input
-                    placeholder="Search by name or role..."
+                    placeholder={t("searchByNameOrRole") || "Search by name or role..."}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="pl-9 min-h-[44px]"
@@ -278,14 +278,14 @@ export default function Renters() {
                       onClick={() => setModelFilter(f)}
                       className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", modelFilter === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}
                     >
-                      {f === "all" ? "All Models" : f}
+                      {f === "all" ? (t("allModels") || "All Models") : t(f)}
                     </button>
                   ))}
                   <button
                     onClick={() => setShowInactive(!showInactive)}
                     className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[44px]", showInactive ? "bg-muted/60 text-foreground" : "bg-muted text-muted-foreground")}
                   >
-                    {showInactive ? "✓ Show Inactive" : "Hide Inactive"}
+                    {showInactive ? `✓ ${t("showInactive") || "Show Inactive"}` : (t("hideInactive") || "Hide Inactive")}
                   </button>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function Renters() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-muted-foreground">
-                    <p className="text-sm">No stylists match your filters.</p>
+                    <p className="text-sm">{t("noStylistsMatch") || "No stylists match your filters."}</p>
                   </div>
                 ) : (
                   filtered.map((r, i) => {
@@ -321,11 +321,11 @@ export default function Renters() {
                     {r.payment_model === "rent" &&
                     <div className="space-y-1 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Rent</span>
+                          <span className="text-muted-foreground">{t("rent")}</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.rent_amount)} / {freqLabel(r.frequency)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">≈ Monthly</span>
+                          <span className="text-muted-foreground">≈ {t("monthly")}</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
                         </div>
                       </div>
@@ -333,7 +333,7 @@ export default function Renters() {
                     {r.payment_model === "commission" &&
                     <div className="space-y-2 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Owner / Stylist split</span>
+                          <span className="text-muted-foreground">{t("owner")} / {t("stylist")} {t("split")}</span>
                           <span className="font-mono">{r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}%</span>
                         </div>
                         <SplitBar ownerPct={r.commission_owner || 40} />
@@ -342,21 +342,21 @@ export default function Renters() {
                     {r.payment_model === "hourly" &&
                     <div className="space-y-1 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Hourly Rate</span>
+                          <span className="text-muted-foreground">{t("hourlyRate") || "Hourly Rate"}</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.hourly_wage)}/hr</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Rent Deduction</span>
+                          <span className="text-muted-foreground">{t("rentDeduction")}</span>
                           <span className="font-mono text-muted-foreground">−{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">≈ Gross/wk</span>
+                          <span className="text-muted-foreground">≈ {t("grossPerWeek") || "Gross/wk"}</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.hourly_wage || 0) * 40)}</span>
                         </div>
                         {r.commission_owner > 0 &&
                       <>
                             <div className="flex justify-between mt-1">
-                              <span className="text-muted-foreground">Commission Split</span>
+                              <span className="text-muted-foreground">{t("commissionSplits")}</span>
                               <span className="font-mono">{r.commission_owner}% / {100 - r.commission_owner}%</span>
                             </div>
                             <SplitBar ownerPct={r.commission_owner} />
@@ -367,14 +367,14 @@ export default function Renters() {
 
                     {r.notes && (
                       <div className="text-xs bg-muted/30 rounded-lg p-2 border border-border/50 leading-relaxed text-muted-foreground">
-                        <p className="font-medium text-foreground mb-0.5">Note</p>
+                        <p className="font-medium text-foreground mb-0.5">{t("notes")}</p>
                         {r.notes}
                       </div>
                     )}
 
                     <div className="flex items-center gap-2 border-t border-border pt-2">
                       <Button variant="ghost" size="sm" className="flex-1 min-h-[44px]" onClick={() => openEdit(r)}>
-                        <Pencil className="w-3.5 h-3.5 mr-1.5" />Edit
+                        <Pencil className="w-3.5 h-3.5 mr-1.5" />{t("edit")}
                       </Button>
                       <RenterCardActions renter={r} services={services} onDelete={handleDelete} />
                     </div>
