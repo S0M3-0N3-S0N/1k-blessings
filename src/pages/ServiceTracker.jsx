@@ -197,8 +197,8 @@ export default function ServiceTracker() {
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           {filtered.length === 0 ? (
             <div className="text-center py-12 space-y-2">
-              <p className="text-sm text-muted-foreground">No services found for this filter.</p>
-              <button onClick={() => setShowAdd(true)} className="text-xs text-primary hover:underline">Log your first service →</button>
+              <p className="text-sm text-muted-foreground">{t("noServicesFilter")}</p>
+              <button onClick={() => setShowAdd(true)} className="text-xs text-primary hover:underline">{t("logFirstService")}</button>
             </div>
           ) : (
             <>
@@ -231,7 +231,7 @@ export default function ServiceTracker() {
                           <span className="font-mono text-xs text-muted-foreground">+{formatCurrency(s.tip_amount)} tip</span>
                         )}
                         <button
-                          onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })}
+                          onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: t("deleted") }); loadData(); })}
                           className="text-muted-foreground hover:text-destructive min-h-[36px] min-w-[36px] flex items-center justify-center mt-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -314,7 +314,7 @@ export default function ServiceTracker() {
                       <td className="px-4 py-3 text-right font-mono">{formatCurrency(totalAmount)}</td>
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground text-xs">{formatCurrency(totalTips)}</td>
                       <td colSpan={2} className="px-4 py-3 text-xs text-muted-foreground">
-                        Stylists: {formatCurrency(totalStylist)} · Ours: {formatCurrency(totalOwner)}
+                      {t("stylist")}: {formatCurrency(totalStylist)} · {t("owner")}: {formatCurrency(totalOwner)}
                       </td>
                     </tr>
                   </tfoot>
@@ -368,16 +368,16 @@ export default function ServiceTracker() {
                   <>
                     <SplitBar ownerPct={selectedRenter.commission_owner || 40} height="h-2" showLabels />
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Owner gets</span>
+                      <span className="text-muted-foreground">{t("ownerGets")}</span>
                       <span className="font-mono font-semibold text-primary">{formatCurrency(previewEarnings.owner_earnings)}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Stylist gets</span>
+                      <span className="text-muted-foreground">{t("stylistGets")}</span>
                       <span className="font-mono font-semibold">{formatCurrency(previewEarnings.renter_earnings)}{previewTip > 0 ? ` + ${formatCurrency(previewTip)} tip` : ""}</span>
                     </div>
                   </>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Full amount → stylist (rent model){previewTip > 0 ? ` + ${formatCurrency(previewTip)} tip` : ""}</p>
+                  <p className="text-xs text-muted-foreground">{t("fullAmountRent")}{previewTip > 0 ? ` + ${formatCurrency(previewTip)} tip` : ""}</p>
                 )}
               </div>
             )}

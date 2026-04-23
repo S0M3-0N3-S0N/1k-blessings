@@ -111,7 +111,7 @@ export default function MonthlyReports() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("reports")}</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Financial Reports</h1>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("financialReports")}</h1>
           </div>
           {allMonths.length > 0 && (
             <Button variant="outline" size="sm" className="min-h-[44px] gap-2 shrink-0" onClick={exportCSV}>
@@ -140,14 +140,14 @@ export default function MonthlyReports() {
               </div>
             </div>
             <div className="px-3 py-1.5 bg-muted/30 border-t border-border">
-              <p className="text-[9px] text-muted-foreground">{currentYear} year-to-date</p>
+              <p className="text-[9px] text-muted-foreground">{currentYear} {t("ytdYearToDate")}</p>
             </div>
           </div>
         )}
 
         {/* Tab Switcher */}
         <div className="flex gap-1 bg-muted/40 rounded-xl p-1">
-          {[{ id: "overview", label: "Monthly" }, { id: "stylists", label: "Stylists" }].map(tab => (
+          {[{ id: "overview", label: t("monthly") }, { id: "stylists", label: t("stylists") }].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -162,7 +162,7 @@ export default function MonthlyReports() {
 
         {allMonths.length === 0 && (
           <div className="text-center py-16">
-            <p className="text-sm text-muted-foreground">No data yet. Start logging services and payments.</p>
+            <p className="text-sm text-muted-foreground">{t("noDataYet")}</p>
           </div>
         )}
 
@@ -194,10 +194,10 @@ export default function MonthlyReports() {
                         {trendPct !== null && (
                           <div className={cn("flex items-center gap-1 text-[10px] font-semibold", trendPct >= 0 ? "text-emerald-500" : "text-red-500")}>
                             {trendPct >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                            {Math.abs(trendPct)}% vs prior
+                            {Math.abs(trendPct)}% {t("vsPrior")}
                           </div>
                         )}
-                        <span className="text-[10px] text-muted-foreground">{monthSvcs.length} services</span>
+                        <span className="text-[10px] text-muted-foreground">{monthSvcs.length} {t("services")}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -205,7 +205,7 @@ export default function MonthlyReports() {
                         <p className={cn("font-mono font-bold text-lg", netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                           {netProfit >= 0 ? "+" : "−"}{formatCurrency(Math.abs(netProfit))}
                         </p>
-                        <p className="text-[9px] text-muted-foreground">net profit</p>
+                        <p className="text-[9px] text-muted-foreground">{t("netProfit")}</p>
                       </div>
                       {isOpen ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
                     </div>
@@ -216,10 +216,10 @@ export default function MonthlyReports() {
                       {/* Summary Stats */}
                       <div className="grid grid-cols-2 gap-px bg-border">
                         {[
-                          { label: "Rental Income", value: formatCurrency(rentIncome), color: "text-foreground" },
-                          { label: "Commission", value: formatCurrency(commissionIncome), color: "text-primary" },
-                          { label: "Expenses", value: `−${formatCurrency(totalExpenses)}`, color: "text-destructive" },
-                          { label: "Net Profit", value: `${netProfit >= 0 ? "+" : "−"}${formatCurrency(Math.abs(netProfit))}`, color: netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive" },
+                          { label: t("rentalIncome"), value: formatCurrency(rentIncome), color: "text-foreground" },
+                          { label: t("commission"), value: formatCurrency(commissionIncome), color: "text-primary" },
+                          { label: t("expenses"), value: `−${formatCurrency(totalExpenses)}`, color: "text-destructive" },
+                          { label: t("netProfit"), value: `${netProfit >= 0 ? "+" : "−"}${formatCurrency(Math.abs(netProfit))}`, color: netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive" },
                         ].map(stat => (
                           <div key={stat.label} className="bg-card px-4 py-3">
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{stat.label}</p>
@@ -231,7 +231,7 @@ export default function MonthlyReports() {
                       {/* Expense breakdown */}
                       {monthExp.length > 0 && (
                         <div className="px-4 py-3 border-t border-border">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Expense Breakdown</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{t("categoryBreakdown")}</p>
                           <div className="flex flex-wrap gap-1.5">
                             {Object.entries(monthExp.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + (e.amount || 0); return acc; }, {})).map(([cat, total]) => (
                               <div key={cat} className={cn("flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium", CAT_COLORS[cat] || CAT_COLORS.other)}>
@@ -246,7 +246,7 @@ export default function MonthlyReports() {
                       {/* Weekly Breakdown */}
                       <div className="border-t border-border">
                         <div className="px-4 py-2.5 bg-muted/20">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Weekly Breakdown</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("weeklyBreakdown")}</p>
                         </div>
                         <div className="divide-y divide-border">
                           {mondays.map(ws => {
@@ -263,8 +263,8 @@ export default function MonthlyReports() {
                                   {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                                 </span>
                                 <div className="flex items-center gap-3 text-xs font-mono">
-                                  <span className="text-muted-foreground hidden sm:inline">{formatCurrency(wRent + wComm)}</span>
-                                  <span className="text-destructive hidden sm:inline">−{formatCurrency(wExp)}</span>
+                                  <span className="text-muted-foreground hidden sm:inline" title={t("totalRevenue")}>{formatCurrency(wRent + wComm)}</span>
+                                      <span className="text-destructive hidden sm:inline">−{formatCurrency(wExp)}</span>
                                   <span className={cn("font-semibold", wNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
                                     {wNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(wNet))}
                                   </span>
@@ -274,7 +274,7 @@ export default function MonthlyReports() {
                           })}
                           {/* Totals row */}
                           <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 font-semibold">
-                            <span className="text-xs">Totals</span>
+                            <span className="text-xs">{t("totals")}</span>
                             <div className="flex items-center gap-3 text-xs font-mono">
                               <span className="text-muted-foreground hidden sm:inline">{formatCurrency(totalIncome)}</span>
                               <span className="text-destructive hidden sm:inline">−{formatCurrency(totalExpenses)}</span>
@@ -306,6 +306,7 @@ export default function MonthlyReports() {
 }
 
 function PayrollHistory({ renters, services, payments }) {
+  const { t } = useLanguage();
   const now = new Date();
   const months = [];
   for (let i = 0; i < 12; i++) {
@@ -321,7 +322,7 @@ function PayrollHistory({ renters, services, payments }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="text-sm font-medium text-muted-foreground">Select month to view stylist performance</p>
+        <p className="text-sm font-medium text-muted-foreground">{t("selectMonth")}</p>
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-44 min-h-[44px]"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -336,7 +337,7 @@ function PayrollHistory({ renters, services, payments }) {
       {rentRenters.length > 0 && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-muted/20 border-b border-border">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rent Stylists</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("rentStylists")}</p>
           </div>
           <div className="divide-y divide-border">
             {rentRenters.map(r => {
@@ -366,7 +367,7 @@ function PayrollHistory({ renters, services, payments }) {
       {commRenters.length > 0 && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-muted/20 border-b border-border">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Commission Stylists</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("commissionStylists")}</p>
           </div>
           <div className="divide-y divide-border">
             {commRenters.map(r => {
@@ -378,20 +379,20 @@ function PayrollHistory({ renters, services, payments }) {
                 <div key={r.id} className="px-4 py-3">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-sm">{r.name}</p>
-                    <span className="text-xs text-muted-foreground">{rs.length} services</span>
+                    <span className="text-xs text-muted-foreground">{rs.length} {t("services")}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="bg-muted/30 rounded-lg px-2 py-1.5">
                       <p className="font-mono text-xs font-semibold">{formatCurrency(total)}</p>
-                      <p className="text-[9px] text-muted-foreground mt-0.5">Total</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{t("totals")}</p>
                     </div>
                     <div className="bg-muted/30 rounded-lg px-2 py-1.5">
                       <p className="font-mono text-xs font-semibold">{formatCurrency(their)}</p>
-                      <p className="text-[9px] text-muted-foreground mt-0.5">Theirs</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{t("stylist")}</p>
                     </div>
                     <div className="bg-primary/10 rounded-lg px-2 py-1.5">
                       <p className="font-mono text-xs font-semibold text-primary">{formatCurrency(ours)}</p>
-                      <p className="text-[9px] text-muted-foreground mt-0.5">Ours ✦</p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">{t("ourCommission")} ✦</p>
                     </div>
                   </div>
                 </div>
@@ -403,7 +404,7 @@ function PayrollHistory({ renters, services, payments }) {
 
       {rentRenters.length === 0 && commRenters.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-sm text-muted-foreground">No stylists found.</p>
+          <p className="text-sm text-muted-foreground">{t("noDataYet")}</p>
         </div>
       )}
     </div>
@@ -411,6 +412,7 @@ function PayrollHistory({ renters, services, payments }) {
 }
 
 function PerStylistBreakdown({ services, payments, renters }) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const rentRenters = renters.filter(r => r.payment_model === "rent");
   const commRenters = renters.filter(r => r.payment_model === "commission");
@@ -419,7 +421,7 @@ function PerStylistBreakdown({ services, payments, renters }) {
   return (
     <div className="border-t border-border">
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/10 min-h-[48px]">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Per-Stylist Detail</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t("perStylistDetail")}</p>
         {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       {open && (
@@ -447,7 +449,7 @@ function PerStylistBreakdown({ services, payments, renters }) {
               <div key={r.id} className="flex items-center justify-between py-1.5">
                 <span className="font-medium text-sm">{r.name}</span>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground">{rs.length} svcs</span>
+                  <span className="text-muted-foreground">{rs.length} {t("services").slice(0, 4)}</span>
                   <span className="font-mono text-primary font-semibold">+{formatCurrency(ours)}</span>
                 </div>
               </div>

@@ -75,7 +75,7 @@ export default function Notes() {
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Owner</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("owner")}</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{t("salonNotes")}</h1>
           </div>
           <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />{t("addNote")}</GoldButton>
@@ -139,7 +139,7 @@ export default function Notes() {
               </SelectContent>
             </Select>
             <textarea
-              placeholder="Note content *"
+              placeholder={`${t("notes")} *`}
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
               className="w-full min-h-[120px] rounded-lg border border-border bg-transparent px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground"

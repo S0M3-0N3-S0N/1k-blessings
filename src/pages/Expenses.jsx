@@ -85,7 +85,7 @@ export default function Expenses() {
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Finance</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("finance")}</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{t("expensesTitle")}</h1>
           </div>
           <div className="flex items-center gap-2">
@@ -107,7 +107,7 @@ export default function Expenses() {
         {/* Category Breakdown */}
         {catBreakdown.length > 0 && (
           <div className="bg-card rounded-xl border border-border p-4 space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Category Breakdown · {monthLabel}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("categoryBreakdown")} · {monthLabel}</p>
             <div className="flex flex-wrap gap-2 mt-2">
               {catBreakdown.map(({ cat, total }) => (
                 <div key={cat} className={cn("flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium", CAT_COLORS[cat] || CAT_COLORS.other)}>
@@ -177,9 +177,9 @@ export default function Expenses() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{t("addExpense")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
-            <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
+            <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
             <div className="grid grid-cols-2 gap-2">
-              <Input type="number" placeholder="Amount ($) *" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
+              <Input type="number" placeholder={`${t("amount")} *`} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
               <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
                 <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
                 <SelectContent>{CATS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
@@ -195,8 +195,8 @@ export default function Expenses() {
                 </SelectContent>
               </Select>
             </div>
-            <Input placeholder="Receipt note (optional)" value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
-            <Input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>

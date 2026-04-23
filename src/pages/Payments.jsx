@@ -124,7 +124,7 @@ export default function Payments() {
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
       <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
-      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">Retry</button>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">{t("retry")}</button>
     </div>
   );
 
@@ -142,7 +142,7 @@ export default function Payments() {
         {/* Header */}
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Finance</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("finance")}</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{monthLabel}</h1>
             <p className="text-sm text-muted-foreground mt-0.5">{t("rent")}</p>
           </div>
@@ -174,11 +174,11 @@ export default function Payments() {
         {rentRenters.length > 0 && (
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="px-5 py-3 border-b border-border bg-muted/20">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rent Stylists</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("rentStylists")}</p>
             </div>
             {filteredRows.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-sm text-muted-foreground">No payments match this filter.</p>
+                <p className="text-sm text-muted-foreground">{t("noPaymentsMatch")}</p>
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -273,14 +273,14 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
       <div className="flex items-center justify-between px-5 py-4 border-b border-border gap-2 flex-wrap">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary flex items-center gap-1.5"><Scissors className="w-3 h-3" />{t("commissionSplits")}</p>
-          <p className="font-serif text-base font-medium mt-0.5">Commission Stylists</p>
+          <p className="font-serif text-base font-medium mt-0.5">{t("commissionStylists")}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex gap-1 bg-muted/40 rounded-lg p-1">
-            {["monthly", "weekly"].map(v => (
-              <button key={v} onClick={() => setView(v)} className={cn("px-3 py-1 rounded-md text-xs font-semibold transition-all capitalize", view === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                {v}
-              </button>
+            {[{ v: "monthly", label: t("monthly") }, { v: "weekly", label: t("weekly") }].map(({ v, label }) => (
+            <button key={v} onClick={() => setView(v)} className={cn("px-3 py-1 rounded-md text-xs font-semibold transition-all capitalize", view === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+            {label}
+            </button>
             ))}
           </div>
           {view === "weekly" && (
@@ -307,9 +307,9 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
                   <p className="text-xs text-muted-foreground">{r.role} · {rs.length} services · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% split</p>
                 </div>
                 <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
-                  <div className="text-right"><p className="text-muted-foreground">Revenue</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
-                  <div className="text-right"><p className="text-muted-foreground">Stylist</p><p className="font-mono">{formatCurrency(stylistCut)}</p></div>
-                  <div className="text-right"><p className="text-muted-foreground">Owner</p><p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p></div>
+                  <div className="text-right"><p className="text-muted-foreground">{t("revenue")}</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
+                  <div className="text-right"><p className="text-muted-foreground">{t("stylist")}</p><p className="font-mono">{formatCurrency(stylistCut)}</p></div>
+                  <div className="text-right"><p className="text-muted-foreground">{t("owner")}</p><p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p></div>
                 </div>
               </div>
             );
@@ -320,7 +320,7 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/30 border-b border-border">
-                {[t("stylists"), t("services"), t("totalRevenue"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, "Split"].map(h => (
+                {[t("stylists"), t("services"), t("totalRevenue"), t("stylistsEarnings"), `${t("ourCommission")} ✦`, t("split")].map(h => (
                   <th key={h} className={`px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground ${h === t("stylists") ? "text-left pl-5" : "text-right last:text-left"}`}>{h}</th>
                 ))}
               </tr>
@@ -377,7 +377,7 @@ function ChargesLedger({ charges, renters, onRefresh }) {
     if (!form.description || !form.amount) return;
     await base44.entities.Charge.create({ ...form, amount: parseFloat(form.amount) || 0 });
     setForm({ description: "", renter_id: "", amount: "", frequency: "monthly" });
-    setShowAdd(false); toast({ title: "Charge added" }); onRefresh();
+    setShowAdd(false); toast({ title: t("chargeAdded") }); onRefresh();
   };
 
   return (
@@ -385,7 +385,7 @@ function ChargesLedger({ charges, renters, onRefresh }) {
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("chargesLedger") || "Charges Ledger"}</p>
-          <p className="font-serif text-base font-medium mt-0.5">Recurring Charges</p>
+          <p className="font-serif text-base font-medium mt-0.5">{t("recurringCharges")}</p>
         </div>
         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd(s => !s)}>
           <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge") || "Add"}
@@ -411,7 +411,7 @@ function ChargesLedger({ charges, renters, onRefresh }) {
         </div>
       )}
       {charges.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-8">No recurring charges yet.</p>
+        <p className="text-sm text-muted-foreground text-center py-8">{t("noRecurringCharges")}</p>
       ) : (
         <div className="divide-y divide-border">
           {charges.map(c => (
