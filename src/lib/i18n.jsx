@@ -261,6 +261,9 @@ const TRANSLATIONS = {
     split: "Split",
     receiptNote: "Receipt note",
     vsPrior: "vs prior",
+    totalThisWeek: "Total This Week",
+    viewFullSplits: "View Full Splits →",
+    viewPaystub: "View Paystub →",
   },
   es: {
     dashboard: "Panel",
@@ -467,6 +470,9 @@ const TRANSLATIONS = {
     stylist: "Estilista",
     split: "División",
     receiptNote: "Nota de recibo",
+    totalThisWeek: "Total Esta Semana",
+    viewFullSplits: "Ver División Completa →",
+    viewPaystub: "Ver Recibo →",
   },
   fr: {
     dashboard: "Tableau de bord",
@@ -673,6 +679,9 @@ const TRANSLATIONS = {
     stylist: "Styliste",
     split: "Partage",
     receiptNote: "Note de reçu",
+    totalThisWeek: "Total Cette Semaine",
+    viewFullSplits: "Voir Répartition Complète →",
+    viewPaystub: "Voir Fiche de Paie →",
   },
   zh: {
     dashboard: "仪表板",
@@ -879,6 +888,9 @@ const TRANSLATIONS = {
     stylist: "发型师",
     split: "分配",
     receiptNote: "收据备注",
+    totalThisWeek: "本周合计",
+    viewFullSplits: "查看完整分配 →",
+    viewPaystub: "查看工资单 →",
   },
 };
 

@@ -60,7 +60,7 @@ export default function AdminDashboard() {
         <AlertCircle className="w-8 h-8 text-destructive mx-auto" />
         <p className="text-sm text-destructive">{error}</p>
       </div>
-      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">Retry</button>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90">{t("retry")}</button>
     </div>
   );
 
@@ -165,7 +165,7 @@ export default function AdminDashboard() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("commissionSplits")}</p>
               <p className="font-serif text-base font-medium mt-0.5">{t("weekOf")} {ws.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · {formatDateRange(ws)}</p>
             </div>
-            <Link to="/payments" className="text-xs text-primary hover:underline font-medium">View Full Splits →</Link>
+            <Link to="/payments" className="text-xs text-primary hover:underline font-medium">{t("viewFullSplits")}</Link>
           </div>
           {commissionRenters.length === 0 ? (
             <p className="text-sm text-muted-foreground mt-3">{t("commissionOnlyNote")}</p>
@@ -175,13 +175,13 @@ export default function AdminDashboard() {
                 <div key={r.id} className={cn("flex-1 min-w-[140px] bg-muted/30 rounded-lg px-4 py-3 space-y-1", r.gross === 0 && "opacity-50")}>
                   <p className="text-xs font-semibold">{r.name}</p>
                   <p className="font-mono text-sm font-bold text-primary">{formatCurrency(r.ownerCut)} <span className="text-[10px] font-normal text-muted-foreground">ours</span></p>
-                  <p className="text-[10px] text-muted-foreground">{r.rs.length} services · {formatCurrency(r.gross)} total</p>
+                  <p className="text-[10px] text-muted-foreground">{r.rs.length} {t("services")} · {formatCurrency(r.gross)} total</p>
                 </div>
               ))}
               <div className="flex-1 min-w-[140px] bg-primary/10 rounded-lg px-4 py-3 space-y-1 border border-primary/20">
-                <p className="text-xs font-semibold text-primary">Total This Week</p>
+                <p className="text-xs font-semibold text-primary">{t("totalThisWeek")}</p>
                 <p className="font-mono text-sm font-bold text-primary">{formatCurrency(commRows.reduce((s, r) => s + r.ownerCut, 0))}</p>
-                <p className="text-[10px] text-muted-foreground">{commRows.reduce((s, r) => s + r.rs.length, 0)} services · {formatCurrency(commRows.reduce((s, r) => s + r.gross, 0))} revenue</p>
+                <p className="text-[10px] text-muted-foreground">{commRows.reduce((s, r) => s + r.rs.length, 0)} {t("services")} · {formatCurrency(commRows.reduce((s, r) => s + r.gross, 0))} {t("revenue")}</p>
               </div>
             </div>
           )}
@@ -195,7 +195,7 @@ export default function AdminDashboard() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
                 <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("hourlyStylists")}</p>
               </div>
-              <Link to="/paystub" className="text-xs text-primary hover:underline font-medium">View Paystub →</Link>
+              <Link to="/paystub" className="text-xs text-primary hover:underline font-medium">{t("viewPaystub")}</Link>
             </div>
             <div className="divide-y divide-border">
               {hourlyRows.map(r => {
@@ -214,7 +214,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className={cn("font-mono text-sm font-semibold", r.netPay >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatCurrency(r.netPay)}</p>
-                      <p className="text-[10px] text-muted-foreground">net pay</p>
+                      <p className="text-[10px] text-muted-foreground">{t("netPay")}</p>
                     </div>
                   </div>
                 );
@@ -231,7 +231,7 @@ export default function AdminDashboard() {
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("rentDue")}</p>
                 <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("rentStylists")}</p>
               </div>
-              <Link to="/payments" className="text-xs text-primary hover:underline font-medium">View All →</Link>
+              <Link to="/payments" className="text-xs text-primary hover:underline font-medium">{t("viewAll")}</Link>
             </div>
             <div className="divide-y divide-border">
               {rentRows.map(r => (
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-mono text-sm font-semibold">{formatCurrency(s.amount)}</p>
-                      <p className="text-[10px] text-muted-foreground">ours: {formatCurrency(s.owner_earnings)}</p>
+                      <p className="text-[10px] text-muted-foreground">{t("ourCommission")}: {formatCurrency(s.owner_earnings)}</p>
                     </div>
                   </div>
                 );
