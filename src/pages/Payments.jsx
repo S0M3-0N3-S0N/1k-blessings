@@ -188,7 +188,7 @@ export default function Payments() {
                       <p className="text-sm font-medium">{r.name}</p>
                       <p className="text-xs text-muted-foreground">{r.role} · {freqLabel(r.frequency)}</p>
                       {r.payment?.payment_method && r.status === "paid" && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Paid via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} · {r.payment.paid_date ? new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("paid")} via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} · {r.payment.paid_date ? new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap justify-end">
@@ -241,7 +241,7 @@ export default function Payments() {
                 </SelectContent>
               </Select>
             </div>
-            <Input placeholder="Note (optional)" value={markForm.notes} onChange={e => setMarkForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("notes")} (${t("optional")})`} value={markForm.notes} onChange={e => setMarkForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setMarkDialog(null)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={confirmMarkPaid} disabled={saving}>
@@ -304,7 +304,7 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
               <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap">
                 <div>
                   <p className="text-sm font-medium">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.role} · {rs.length} services · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% split</p>
+                  <p className="text-xs text-muted-foreground">{r.role} · {rs.length} {t("services")} · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% {t("split")}</p>
                 </div>
                 <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
                   <div className="text-right"><p className="text-muted-foreground">{t("revenue")}</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
@@ -393,7 +393,7 @@ function ChargesLedger({ charges, renters, onRefresh }) {
       </div>
       {showAdd && (
         <div className="px-5 py-4 border-b border-border bg-muted/20 flex flex-wrap gap-2 items-end">
-          <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="flex-1 min-w-[140px] min-h-[44px]" />
+          <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="flex-1 min-w-[140px] min-h-[44px]" />
           <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
             <SelectTrigger className="w-36 min-h-[44px]"><SelectValue placeholder="Stylist" /></SelectTrigger>
             <SelectContent>{renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>

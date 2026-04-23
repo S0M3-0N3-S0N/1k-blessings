@@ -45,10 +45,10 @@ export default function Clients() {
     try {
       if (form.id) {
         await base44.entities.Client.update(form.id, form);
-        toast({ title: "Client updated" });
+        toast({ title: t("clientUpdated") });
       } else {
         await base44.entities.Client.create(form);
-        toast({ title: "Client added" });
+        toast({ title: t("clientAdded") });
       }
       setShowAdd(false);
       setForm(emptyForm);
@@ -64,7 +64,7 @@ export default function Clients() {
     if (!confirm('Delete this client?')) return;
     try {
       await base44.entities.Client.delete(id);
-      toast({ title: "Client deleted" });
+      toast({ title: t("clientDeleted") });
       loadData();
     } catch (err) {
       toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
@@ -77,7 +77,7 @@ export default function Clients() {
     <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
       <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
-      <button onClick={loadData} className="text-xs text-primary underline">Try again</button>
+      <button onClick={loadData} className="text-xs text-primary underline">{t("retry")}</button>
     </div>
   );
 
@@ -95,23 +95,23 @@ export default function Clients() {
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">Clients</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">Client Directory</h1>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("clients")}</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("clientDirectory")}</h1>
           </div>
-          <GoldButton onClick={() => { setForm(emptyForm); setShowAdd(true); }}><Plus className="w-4 h-4" />Add Client</GoldButton>
+          <GoldButton onClick={() => { setForm(emptyForm); setShowAdd(true); }}><Plus className="w-4 h-4" />{t("addClient")}</GoldButton>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label="Total Clients" value={clients.length} accent glow />
-          <KpiCard label="New This Month" value={newThisMonth} />
-          <KpiCard label="Avg Visits" value={avgVisits} />
-          <KpiCard label="Top Spender" value={topSpender ? formatCurrency(topSpender.total_spent) : "$0"} />
+          <KpiCard label={t("totalClients")} value={clients.length} accent glow />
+          <KpiCard label={t("newThisMonth")} value={newThisMonth} />
+          <KpiCard label={t("avgVisits")} value={avgVisits} />
+          <KpiCard label={t("topSpender")} value={topSpender ? formatCurrency(topSpender.total_spent) : "$0"} />
         </div>
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
-            placeholder="Search clients..."
+            placeholder={t("searchClients")}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-9 min-h-[44px]"
@@ -121,8 +121,8 @@ export default function Clients() {
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           {filtered.length === 0 ? (
             <div className="text-center py-12 space-y-2">
-              <p className="text-sm text-muted-foreground">No clients found.</p>
-              {search && <button onClick={() => setSearch("")} className="text-xs text-primary underline">Clear search</button>}
+              <p className="text-sm text-muted-foreground">{t("noClientsFound")}</p>
+              {search && <button onClick={() => setSearch("")} className="text-xs text-primary underline">{t("clearSearch")}</button>}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -140,7 +140,7 @@ export default function Clients() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => { setForm(c); setShowAdd(true); }}>Edit</Button>
+                      <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => { setForm(c); setShowAdd(true); }}>{t("edit")}</Button>
                       <button onClick={() => handleDelete(c.id)} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 min-h-[44px] min-w-[44px] flex items-center justify-center">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -155,7 +155,7 @@ export default function Clients() {
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{form.id ? "Edit Client" : "Add Client"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{form.id ? t("editClient") : t("addClient")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <Input
               placeholder="Name *"
@@ -183,9 +183,9 @@ export default function Clients() {
               className="min-h-[44px]"
             />
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>Cancel</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.name}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
           </div>

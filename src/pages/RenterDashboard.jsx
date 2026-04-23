@@ -107,8 +107,8 @@ export default function RenterDashboard() {
   if (!renter) return (
     <div className="text-center py-20 space-y-3">
       <p className="font-serif text-2xl font-light">Hi {user?.full_name?.split(" ")[0] || "there"} ✦</p>
-      <p className="text-muted-foreground text-sm">Your account isn't linked to a stylist profile yet.</p>
-      <p className="text-xs text-muted-foreground">Contact the salon owner to get connected.</p>
+      <p className="text-muted-foreground text-sm">{t("notLinked")}</p>
+      <p className="text-xs text-muted-foreground">{t("linkEmailNote")}</p>
     </div>
   );
 
@@ -125,10 +125,10 @@ export default function RenterDashboard() {
       : `${formatCurrency(weekEarnings)} commission + ${formatCurrency(weekTips)} tips`;
 
   const kpiThird = renter.payment_model === "rent"
-    ? { label: "Weekly Rent", value: formatCurrency(weeklyRent) }
-    : renter.payment_model === "hourly"
-      ? { label: t("hoursThisWeek"), value: `${totalHours.toFixed(1)}h` }
-      : { label: "Your Rate", value: `${100 - (renter.commission_owner || 40)}%` };
+  ? { label: t("weeklyRentDeduction"), value: formatCurrency(weeklyRent) }
+  : renter.payment_model === "hourly"
+    ? { label: t("hoursThisWeek"), value: `${totalHours.toFixed(1)}h` }
+    : { label: t("commission"), value: `${100 - (renter.commission_owner || 40)}%` };
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -156,7 +156,7 @@ export default function RenterDashboard() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <KpiCard label={t("services")} value={weekServices.length} icon={Scissors} />
-          <KpiCard label="Revenue" value={formatCurrency(weekGross)} icon={TrendingUp} />
+          <KpiCard label={t("revenue")} value={formatCurrency(weekGross)} icon={TrendingUp} />
           <KpiCard label={kpiThird.label} value={kpiThird.value} icon={renter.payment_model === "hourly" ? Clock : DollarSign} />
         </div>
 
@@ -196,7 +196,7 @@ export default function RenterDashboard() {
               })}
               {weekTips > 0 && (
                 <div className="flex items-center justify-between px-5 py-3 bg-primary/5 min-h-[44px]">
-                  <p className="text-sm text-muted-foreground font-medium">{t("tips")} this week</p>
+                  <p className="text-sm text-muted-foreground font-medium">{t("tips")} {t("thisWeek")}</p>
                   <p className="font-mono text-sm font-semibold text-primary">+{formatCurrency(weekTips)}</p>
                 </div>
               )}

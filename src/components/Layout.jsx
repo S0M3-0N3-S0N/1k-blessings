@@ -56,7 +56,7 @@ export default function Layout() {
 
   const renterNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
-    { path: "/clients", label: "Clients", icon: Users },
+    { path: "/clients", label: t("clients"), icon: Users },
     { path: "/paystub", label: t("paystub"), icon: Receipt },
     { path: "/services", label: t("services"), icon: Scissors },
     { path: "/messages", label: t("messages"), icon: MessageSquare },
@@ -248,7 +248,7 @@ export default function Layout() {
                 <div className="w-9 h-1 rounded-full bg-sidebar-foreground/20" />
               </div>
               <div className="flex items-center justify-between px-5 pb-3">
-                <p className="font-serif text-lg font-medium text-sidebar-foreground">More</p>
+                <p className="font-serif text-lg font-medium text-sidebar-foreground">{t("all")}</p>
                 <button onClick={() => setMoreOpen(false)} className="p-2 rounded-xl hover:bg-sidebar-foreground/8 transition-colors">
                   <X className="w-4 h-4 text-sidebar-foreground/50" />
                 </button>
