@@ -122,23 +122,25 @@ export default function MonthlyReports() {
 
         {/* YTD Summary Cards */}
         {ytdMonths.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
-            <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">YTD Income</p>
-              <p className="font-mono text-lg md:text-2xl font-medium text-primary">{formatCurrency(ytdIncome)}</p>
-              <p className="text-[9px] text-muted-foreground mt-0.5">{currentYear}</p>
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="grid grid-cols-3 divide-x divide-border">
+              <div className="p-3 md:p-4">
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Income</p>
+                <p className="font-mono text-sm md:text-xl font-semibold text-primary">{formatCurrency(ytdIncome)}</p>
+              </div>
+              <div className="p-3 md:p-4">
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Expenses</p>
+                <p className="font-mono text-sm md:text-xl font-semibold text-destructive">−{formatCurrency(ytdExpenses)}</p>
+              </div>
+              <div className="p-3 md:p-4">
+                <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Net</p>
+                <p className={cn("font-mono text-sm md:text-xl font-semibold", ytdNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+                  {ytdNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(ytdNet))}
+                </p>
+              </div>
             </div>
-            <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">YTD Expenses</p>
-              <p className="font-mono text-lg md:text-2xl font-medium text-destructive">−{formatCurrency(ytdExpenses)}</p>
-              <p className="text-[9px] text-muted-foreground mt-0.5">{currentYear}</p>
-            </div>
-            <div className="bg-card border border-border rounded-xl p-3 md:p-4">
-              <p className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">YTD Net</p>
-              <p className={cn("font-mono text-lg md:text-2xl font-medium", ytdNet >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
-                {ytdNet >= 0 ? "+" : "−"}{formatCurrency(Math.abs(ytdNet))}
-              </p>
-              <p className="text-[9px] text-muted-foreground mt-0.5">{currentYear}</p>
+            <div className="px-3 py-1.5 bg-muted/30 border-t border-border">
+              <p className="text-[9px] text-muted-foreground">{currentYear} year-to-date</p>
             </div>
           </div>
         )}
