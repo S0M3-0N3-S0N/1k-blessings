@@ -1050,7 +1050,7 @@ const TRANSLATIONS = {
     deleteStylistConfirm: "删除此发型师？此操作无法撤销。",
     deleteStylist: "删除发型师",
     gettingStarted: "入门指南",
-    gettingStartedDesc: "点击下方"添加发型师"按钮添加您的第一位发型师。您可以设置其付款模式——租金、提成或按时计酬——并将其关联到用户账户以便登录。",
+    gettingStartedDesc: "点击下方「添加发型师」按钮添加您的第一位发型师。您可以设置其付款模式——租金、提成或按时计酬——并将其关联到用户账户以便登录。",
     rolePlaceholder: "发型师、美甲师...",
     phonePlaceholder: "(555) 000-0000",
     since: "自",
