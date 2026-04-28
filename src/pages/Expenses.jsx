@@ -121,7 +121,7 @@ export default function Expenses() {
 
         {/* Expense list */}
         <div className="space-y-3">
-          {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses") || "No expenses recorded yet."}</p>}
+          {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses")}</p>}
           {sortedMonths.map(m => {
             const items = grouped[m];
             const total = items.reduce((s, e) => s + (e.amount || 0), 0);
@@ -159,7 +159,7 @@ export default function Expenses() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
-                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("delete") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("deleted") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -190,8 +190,8 @@ export default function Expenses() {
               <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
                 <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="salon">{t("paidBySalon") || "Paid by Salon"}</SelectItem>
-                  <SelectItem value="owner">{t("paidByOwner2") || "Paid by Owner"}</SelectItem>
+                  <SelectItem value="salon">{t("paidBySalon")}</SelectItem>
+                  <SelectItem value="owner">{t("paidByOwner2")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

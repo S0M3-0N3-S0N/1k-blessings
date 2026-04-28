@@ -46,7 +46,7 @@ export default function Notes() {
     setSaving(true);
     if (editNote) {
       await base44.entities.SalonNote.update(editNote.id, form);
-      toast({ title: t("edit") });
+      toast({ title: t("save") });
     } else {
       await base44.entities.SalonNote.create(form);
       toast({ title: t("addNote") });
@@ -56,7 +56,7 @@ export default function Notes() {
 
   const handleDelete = async (id) => {
     await base44.entities.SalonNote.delete(id);
-    toast({ title: t("delete") }); loadData();
+    toast({ title: t("deleted") }); loadData();
   };
 
   const togglePin = async (note) => {
@@ -85,14 +85,14 @@ export default function Notes() {
         <div className="flex gap-1.5 flex-wrap">
           {["all", "general", "reminder", "policy", "goal"].map(f => (
             <button key={f} onClick={() => setFilterCat(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", filterCat === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
-              {f === "all" ? t("all") || "All" : t(f)}
+              {f === "all" ? t("all") : t(f)}
             </button>
           ))}
         </div>
 
         {filtered.length === 0 ? (
           <div className="text-center py-16 space-y-2">
-            <p className="text-sm text-muted-foreground">{t("noNotes") || "No notes yet. Add reminders, policies, or goals here."}</p>
+            <p className="text-sm text-muted-foreground">{t("noNotes")}</p>
             <button onClick={openAdd} className="text-xs text-primary hover:underline">{t("addNote")} →</button>
           </div>
         ) : (

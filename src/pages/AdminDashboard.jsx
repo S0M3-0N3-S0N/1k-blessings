@@ -159,6 +159,26 @@ export default function AdminDashboard() {
           <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} ${t("rent")} · ${commissionRenters.length} ${t("commission")} · ${hourlyRenters.length} ${t("hourly")}`} />
         </div>
 
+        {/* Rent Collection Progress */}
+        {rentRenters.length > 0 && (
+          <div className="bg-card rounded-xl border border-border px-5 py-4 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold uppercase tracking-wider text-muted-foreground">{t("collected")} / {t("monthlyRent")}</span>
+              <span className="font-mono font-semibold">{formatCurrency(collectedThisMonth)} <span className="text-muted-foreground">/ {formatCurrency(monthlyRentProjected)}</span></span>
+            </div>
+            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full transition-all duration-500"
+                style={{ width: `${monthlyRentProjected > 0 ? Math.min(100, (collectedThisMonth / monthlyRentProjected) * 100) : 0}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>{rentRows.filter(r => r.status === "paid").length}/{rentRows.length} {t("paid")}</span>
+              <span>{monthlyRentProjected > 0 ? Math.round((collectedThisMonth / monthlyRentProjected) * 100) : 0}%</span>
+            </div>
+          </div>
+        )}
+
         {/* Commission Summary Card */}
         <div className="bg-card rounded-xl border border-border p-5">
           <div className="flex items-center justify-between flex-wrap gap-3">
@@ -175,7 +195,7 @@ export default function AdminDashboard() {
               {commRows.map(r => (
                 <div key={r.id} className={cn("flex-1 min-w-[140px] bg-muted/30 rounded-lg px-4 py-3 space-y-1", r.gross === 0 && "opacity-50")}>
                   <p className="text-xs font-semibold">{r.name}</p>
-                  <p className="font-mono text-sm font-bold text-primary">{formatCurrency(r.ownerCut)} <span className="text-[10px] font-normal text-muted-foreground">ours</span></p>
+                  <p className="font-mono text-sm font-bold text-primary">{formatCurrency(r.ownerCut)} <span className="text-[10px] font-normal text-muted-foreground">{t("ours")}</span></p>
                   <p className="text-[10px] text-muted-foreground">{r.rs.length} {t("services")} · {formatCurrency(r.gross)} total</p>
                 </div>
               ))}

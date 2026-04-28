@@ -498,7 +498,7 @@ function ChargesSection({ charges, renters, renterMap, onRefresh }) {
     if (!form.description || !form.amount) return;
     await base44.entities.Charge.create({ ...form, amount: parseFloat(form.amount) || 0 });
     setForm({ description: "", renter_id: "", amount: "", frequency: "monthly" });
-    setShowAdd(false);toast({ title: t("add") });onRefresh();
+    setShowAdd(false); toast({ title: t("chargeAdded") }); onRefresh();
   };
 
   return (

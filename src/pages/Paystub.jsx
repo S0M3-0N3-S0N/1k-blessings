@@ -7,7 +7,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
 
-const WEEK_LABELS_KEYS = ["thisWeek", "Last Week", "2 Weeks Ago", "3 Weeks Ago", "4 Weeks Ago"];
+const WEEK_OFFSETS = [0, 1, 2, 3, 4];
 
 export default function Paystub() {
   const { user } = useAuth();
@@ -128,7 +128,7 @@ export default function Paystub() {
           <div className="flex items-center gap-2">
             <button onClick={() => setWeekOffset(o => Math.min(4, o + 1))} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
             <select className="text-xs bg-card border border-border rounded-lg px-2 py-2 font-medium min-h-[44px]" value={weekOffset} onChange={e => setWeekOffset(Number(e.target.value))}>
-              {WEEK_LABELS_KEYS.map((l, i) => <option key={i} value={i}>{i === 0 ? t("thisWeek") : i === 1 ? (t("lastWeek") || "Last Week") : `${i} ${t("weeksAgo") || "Weeks Ago"}`}</option>)}
+              {WEEK_OFFSETS.map(i => <option key={i} value={i}>{i === 0 ? t("thisWeek") : i === 1 ? t("lastWeek") : `${i} ${t("weeksAgo")}`}</option>)}
             </select>
             <button onClick={() => setWeekOffset(o => Math.max(0, o - 1))} disabled={weekOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
           </div>
@@ -157,10 +157,10 @@ export default function Paystub() {
           <div className="bg-card rounded-xl border border-border overflow-hidden">
             <div className="px-5 py-4 border-b border-border flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
-              <p className="font-serif text-base font-medium">{t("hoursBreakdown") || "Hours Breakdown"}</p>
+              <p className="font-serif text-base font-medium">{t("hoursBreakdown")}</p>
             </div>
             {weekTimeEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">{t("noHoursThisWeek") || "No hours logged this week."}</p>
+              <p className="text-sm text-muted-foreground text-center py-8">{t("noHoursThisWeek")}</p>
             ) : (
               <>
                 <div className="divide-y divide-border">
@@ -194,7 +194,7 @@ export default function Paystub() {
                   )}
                   {grossRevenue > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("serviceIncome") || "Service Income"}</span>
+                      <span className="text-muted-foreground">{t("serviceIncome")}</span>
                       <span className="font-mono text-primary">+{formatCurrency(grossRevenue)}</span>
                     </div>
                   )}
@@ -296,7 +296,7 @@ export default function Paystub() {
                 {renter.payment_model === "hourly" && grossRevenue > 0 && (
                   <>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("serviceIncome") || "Service Income"} (bonus)</span>
+                      <span className="text-muted-foreground">{t("serviceIncome")} (bonus)</span>
                       <span className="font-mono font-semibold text-primary">+{formatCurrency(grossRevenue)}</span>
                     </div>
                     {tipTotal > 0 && (

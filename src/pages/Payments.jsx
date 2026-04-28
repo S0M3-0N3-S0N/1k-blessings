@@ -98,7 +98,7 @@ export default function Payments() {
       loadData();
     } catch (err) {
       console.error('Mark paid error:', err);
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({ title: t("saveFailed"), description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -114,7 +114,7 @@ export default function Payments() {
       }
     } catch (err) {
       console.error('Mark pending error:', err);
-      toast({ title: 'Failed to update', description: err.message, variant: 'destructive' });
+      toast({ title: t("saveFailed"), description: err.message, variant: 'destructive' });
     }
   };
 
@@ -165,7 +165,7 @@ export default function Payments() {
         <div className="flex gap-1.5 flex-wrap">
           {["all", "paid", "pending", "overdue"].map(f => (
             <button key={f} onClick={() => setFilter(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", filter === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
-              {f === "all" ? (t("all") || "All") : t(f)}
+              {f === "all" ? t("all") : t(f)}
             </button>
           ))}
         </div>
@@ -200,7 +200,7 @@ export default function Payments() {
                         </GoldButton>
                       ) : (
                         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => markPending(r)}>
-                          <RotateCcw className="w-3.5 h-3.5 mr-1" />{t("undo") || "Undo"}
+                          <RotateCcw className="w-3.5 h-3.5 mr-1" />{t("undo")}
                         </Button>
                       )}
                     </div>
@@ -384,18 +384,18 @@ function ChargesLedger({ charges, renters, onRefresh }) {
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("chargesLedger") || "Charges Ledger"}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("chargesLedger")}</p>
           <p className="font-serif text-base font-medium mt-0.5">{t("recurringCharges")}</p>
         </div>
         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd(s => !s)}>
-          <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge") || "Add"}
+        <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge")}
         </Button>
       </div>
       {showAdd && (
         <div className="px-5 py-4 border-b border-border bg-muted/20 flex flex-wrap gap-2 items-end">
           <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="flex-1 min-w-[140px] min-h-[44px]" />
           <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
-            <SelectTrigger className="w-36 min-h-[44px]"><SelectValue placeholder="Stylist" /></SelectTrigger>
+            <SelectTrigger className="w-36 min-h-[44px]"><SelectValue placeholder={t("selectStylist")} /></SelectTrigger>
             <SelectContent>{renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
           </Select>
           <Input type="number" placeholder="$" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="w-24 font-mono min-h-[44px]" />
@@ -448,8 +448,8 @@ function PaymentHistory({ renters, allPayments, currentMonth }) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="px-5 py-4 border-b border-border">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("paymentHistory") || "Payment History"}</p>
-        <p className="font-serif text-base font-medium mt-0.5">{t("last3Months") || "Last 3 Months"}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("paymentHistory")}</p>
+        <p className="font-serif text-base font-medium mt-0.5">{t("last3Months")}</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
