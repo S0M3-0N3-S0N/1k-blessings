@@ -95,14 +95,16 @@ export default function AdminDashboard() {
   });
 
   // Rent due
-  const rentRows = rentRenters.map(r => {
-    const weeklyAmt = toWeekly(r.rent_amount || 0, r.frequency);
-    const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
-    const isPaid = payment?.status === "paid";
-    const overdue = !isPaid && isPaymentOverdue(payment, r);
-    const status = isPaid ? "paid" : overdue ? "overdue" : "pending";
-    return { ...r, weeklyAmt, paid: isPaid, status };
-  });
+  const rentRows = renters
+    .filter(r => r.payment_model === "rent" && r.status === "active" && !isBeforeStartDate(currentMonthStr, r))
+    .map(r => {
+      const weeklyAmt = toWeekly(r.rent_amount || 0, r.frequency);
+      const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+      const isPaid = payment?.status === "paid";
+      const overdue = !isPaid && isPaymentOverdue(payment, r);
+      const status = isPaid ? "paid" : overdue ? "overdue" : "pending";
+      return { ...r, weeklyAmt, paid: isPaid, status };
+    });
 
   const markPaid = async (renter) => {
     setMarkingId(renter.id);
