@@ -253,10 +253,12 @@ export default function MonthlyReports() {
                             const we = getWeekEnd(ws);
                             const wStr = ws.toISOString().split("T")[0];
                             const weStr = we.toISOString().split("T")[0];
-                            const wComm = services.filter(s => s.service_date >= wStr && s.service_date <= weStr).reduce((s, e) => s + (e.owner_earnings || 0), 0);
-                            const wSvcRev = services.filter(s => s.service_date >= wStr && s.service_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
+                            const weekSvcs = services.filter(s => s.service_date >= wStr && s.service_date <= weStr);
+                            const wComm = weekSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
+                            const wSvcRev = weekSvcs.reduce((s, e) => s + (e.amount || 0), 0);
+                            const wRent = payments.filter(p => p.status === "paid" && p.period >= wStr && p.period <= weStr).reduce((s, p) => s + (p.amount || 0), 0);
                             const wExp = expenses.filter(e => e.expense_date >= wStr && e.expense_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
-                            const wNet = wComm - wExp;
+                            const wNet = wComm + wRent - wExp;
                             return (
                               <div key={wStr} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/10">
                                 <span className="text-xs text-muted-foreground">

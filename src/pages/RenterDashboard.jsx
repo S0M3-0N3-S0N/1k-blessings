@@ -84,7 +84,7 @@ export default function RenterDashboard() {
   const hourlyNetPay = grossPay - weeklyRent;
 
   const netPay = renter?.payment_model === "rent"
-    ? weekGross - weeklyRent
+    ? weekGross - weeklyRent + weekTips
     : renter?.payment_model === "hourly"
       ? hourlyNetPay
       : weekEarnings + weekTips;

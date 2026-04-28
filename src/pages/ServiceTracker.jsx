@@ -300,7 +300,7 @@ export default function ServiceTracker() {
                             )}
                           </td>
                           <td className="px-2 py-3">
-                            <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: "Deleted" }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                            <button onClick={() => base44.entities.ServiceEntry.delete(s.id).then(() => { toast({ title: t("deleted") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </td>

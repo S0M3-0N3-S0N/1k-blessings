@@ -63,10 +63,10 @@ export default function Paystub() {
   // Hourly calculations
   const totalHours = weekTimeEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
   const grossPay = totalHours * (renter?.hourly_wage || 0);
-  const hourlyNetPay = grossPay - weeklyRent;
+  const hourlyNetPay = grossPay - weeklyRent + grossRevenue + tipTotal;
 
   const netPay = renter?.payment_model === "rent"
-    ? grossRevenue - weeklyRent
+    ? grossRevenue - weeklyRent + tipTotal
     : renter?.payment_model === "hourly"
       ? hourlyNetPay
       : myEarnings + tipTotal;
@@ -107,7 +107,7 @@ export default function Paystub() {
 
   if (!renter) return (
     <div className="text-center py-20">
-      <p className="text-muted-foreground">Your account is not linked to a stylist profile yet.</p>
+      <p className="text-muted-foreground">{t("notLinked")}</p>
     </div>
   );
 
