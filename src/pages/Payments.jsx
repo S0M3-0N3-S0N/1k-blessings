@@ -44,7 +44,7 @@ export default function Payments() {
       setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
-      setError('Failed to load data. Pull down to retry.');
+      setError("Failed to load data. Pull down to retry.");
       setLoading(false);
     }
   }, []);
@@ -76,7 +76,7 @@ export default function Payments() {
       const { renter, existing } = markDialog;
       const amount = parseFloat(markForm.amount) || renter.rent_amount;
       if (amount <= 0) {
-        toast({ title: 'Invalid amount', description: 'Amount must be greater than 0', variant: 'destructive' });
+        toast({ title: t("invalidAmount"), description: t("amountMustBePositive"), variant: 'destructive' });
         setSaving(false);
         return;
       }
@@ -94,7 +94,7 @@ export default function Payments() {
         await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
       }
       setMarkDialog(null);
-      toast({ title: `${renter.name} ${t("markPaid")}` });
+      toast({ title: `${renter.name} — ${t("markPaid")}` });
       loadData();
     } catch (err) {
       console.error('Mark paid error:', err);

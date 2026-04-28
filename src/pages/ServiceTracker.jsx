@@ -90,7 +90,7 @@ export default function ServiceTracker() {
     const earnings = computeEarnings(amt, renter);
     await base44.entities.ServiceEntry.create({ ...form, renter_id: renterId, amount: amt, tip_amount: tip, ...earnings });
     setShowAdd(false); setForm(emptyForm); setSaving(false);
-    toast({ title: t("logService") }); loadData();
+    toast({ title: t("serviceLogged") }); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -222,7 +222,7 @@ export default function ServiceTracker() {
                           <span>{dateStr}</span>
                           <span>·</span>
                           <span>{PAYMENT_METHOD_LABELS[s.payment_method] || "—"}</span>
-                          {isComm && <><span>·</span><span>{r.commission_owner || 40}% ours</span></>}
+                          {isComm && <><span>·</span><span>{r.commission_owner || 40}% {t("ours")}</span></>}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
@@ -296,7 +296,7 @@ export default function ServiceTracker() {
                                 <span className="text-[10px] text-muted-foreground whitespace-nowrap">{r.commission_owner || 40}%</span>
                               </div>
                             ) : (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-primary/30 text-primary bg-primary/5">Rent</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-primary/30 text-primary bg-primary/5">{t("rent")}</span>
                             )}
                           </td>
                           <td className="px-2 py-3">
@@ -332,7 +332,7 @@ export default function ServiceTracker() {
           <div className="space-y-3 pt-2">
             {isAdmin && (
               <Select value={form.renter_id} onValueChange={v => setForm(f => ({ ...f, renter_id: v }))}>
-                <SelectTrigger className="min-h-[44px]"><SelectValue placeholder="Select Stylist *" /></SelectTrigger>
+                <SelectTrigger className="min-h-[44px]"><SelectValue placeholder={`${t("selectStylist")} *`} /></SelectTrigger>
                 <SelectContent>{renters.filter(r => r.status === "active").map(r => <SelectItem key={r.id} value={r.id}>{r.name} · {r.role}</SelectItem>)}</SelectContent>
               </Select>
             )}
@@ -353,11 +353,11 @@ export default function ServiceTracker() {
                 </SelectContent>
               </Select>
             </div>
-            <Input placeholder="Client Name (optional)" value={form.client_name} onChange={e => setForm(f => ({ ...f, client_name: e.target.value }))} className="min-h-[44px]" />
-            <Input placeholder="Description (optional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("clientName")} (${t("optional")})`} value={form.client_name} onChange={e => setForm(f => ({ ...f, client_name: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("description")} (${t("optional")})`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" />
             <div className="grid grid-cols-2 gap-3">
-              <Input type="number" placeholder="Amount ($) *" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" />
-              <Input type="number" placeholder="Tip ($)" value={form.tip_amount} onChange={e => setForm(f => ({ ...f, tip_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" />
+              <Input type="number" placeholder={`${t("amount")} *`} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" />
+              <Input type="number" placeholder={t("tipAmount")} value={form.tip_amount} onChange={e => setForm(f => ({ ...f, tip_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" />
             </div>
             <Input type="date" value={form.service_date} onChange={e => setForm(f => ({ ...f, service_date: e.target.value }))} className="min-h-[44px]" />
 

@@ -46,7 +46,7 @@ export default function AdminDashboard() {
       setRenters(r); setServices(s); setPayments(p); setTimeEntries(te); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
-      setError('Failed to load data. Pull down to retry.');
+      setError("Failed to load data. Pull down to retry.");
       setLoading(false);
     }
   }, []);
@@ -98,20 +98,21 @@ export default function AdminDashboard() {
   // Rent due
   const rentRows = rentRenters.map(r => {
     const weeklyAmt = toWeekly(r.rent_amount || 0, r.frequency);
-    const payment = payments.find(p => p.renter_id === r.id && p.period === wsStr);
-    const status = payment?.status || "pending";
-    const overdue = !payment || isPaymentOverdue(payment, r);
-    return { ...r, weeklyAmt, paid: !!payment, status: !payment && overdue ? "overdue" : status };
+    const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+    const isPaid = payment?.status === "paid";
+    const overdue = !isPaid && isPaymentOverdue(payment, r);
+    const status = isPaid ? "paid" : overdue ? "overdue" : "pending";
+    return { ...r, weeklyAmt, paid: isPaid, status };
   });
 
   const markPaid = async (renter) => {
     setMarkingId(renter.id);
     try {
-      const existing = payments.find(p => p.renter_id === renter.id && p.period === wsStr);
+      const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(currentMonthStr));
       if (existing) {
-        await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(wsStr, renter.frequency) });
+        await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
       } else {
-        await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.weeklyAmt, period: wsStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(wsStr, renter.frequency) });
+        await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.rent_amount, period: currentMonthStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
       }
       loadData();
     } catch (err) {
@@ -152,10 +153,10 @@ export default function AdminDashboard() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label={t("monthlyRent")} value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub="projected · rent model" />
-          <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub="this month" />
-          <KpiCard label={t("ourCommission")} value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub="this week · commission" />
-          <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} rent · ${commissionRenters.length} comm · ${hourlyRenters.length} hourly`} />
+          <KpiCard label={t("monthlyRent")} value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub={t("projected")} />
+          <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub={t("thisMonth")} />
+          <KpiCard label={t("ourCommission")} value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub={t("thisWeek")} />
+          <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} ${t("rent")} · ${commissionRenters.length} ${t("commission")} · ${hourlyRenters.length} ${t("hourly")}`} />
         </div>
 
         {/* Commission Summary Card */}
@@ -266,7 +267,7 @@ export default function AdminDashboard() {
             <Link to="/services" className="text-xs text-primary hover:underline">{t("viewAll")}</Link>
           </div>
           {recentServices.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">{t("noServicesLogged")} <Link to="/services" className="text-primary hover:underline">Log one →</Link></p>
+            <p className="text-sm text-muted-foreground text-center py-8">{t("noServicesLogged")} <Link to="/services" className="text-primary hover:underline">{t("logOne")}</Link></p>
           ) : (
             <div className="divide-y divide-border">
               {recentServices.map(s => {

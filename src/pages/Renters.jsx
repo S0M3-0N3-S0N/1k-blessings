@@ -39,13 +39,13 @@ function RenterFormFields({ form, setForm }) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("role")}</label>
-          <Input value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} placeholder="Hair Stylist, Nail Tech..." className="min-h-[44px]" />
+          <Input value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))} placeholder={t("rolePlaceholder")} className="min-h-[44px]" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("phone")}</label>
-          <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="min-h-[44px]" />
+          <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder={t("phonePlaceholder")} className="min-h-[44px]" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("date")}</label>
@@ -125,7 +125,7 @@ function RenterFormFields({ form, setForm }) {
           </SelectContent>
         </Select>
       </div>
-      <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Notes (optional)" className="min-h-[44px]" />
+      <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={`${t("notes")} (${t("optional")})`} className="min-h-[44px]" />
     </div>);
 
 }
@@ -182,28 +182,28 @@ export default function Renters() {
       };
       if (editRenter) {
         await base44.entities.Renter.update(editRenter.id, data);
-        toast({ title: t("edit") });
+        toast({ title: t("stylistUpdated") });
       } else {
         await base44.entities.Renter.create(data);
-        toast({ title: t("add") });
+        toast({ title: t("stylistAdded") });
       }
       setShowDialog(false);
       loadData();
     } catch (err) {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({ title: t("saveFailed"), description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this stylist? This action cannot be undone.')) return;
+    if (!confirm(t("deleteStylistConfirm"))) return;
     try {
       await base44.entities.Renter.delete(id);
-      toast({ title: t("delete") });
+      toast({ title: t("stylistDeleted") });
       loadData();
     } catch (err) {
-      toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+      toast({ title: t("deleteFailed"), description: err.message, variant: 'destructive' });
     }
   };
 
@@ -240,8 +240,8 @@ export default function Renters() {
           <div className="bg-primary/10 border border-primary/25 rounded-xl px-4 py-3 flex items-start gap-3">
             <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <div className="flex-1 text-sm text-foreground/80 space-y-1">
-              <p className="font-semibold text-foreground">Getting started</p>
-              <p>Add your first stylist by clicking <span className="font-semibold">Add Stylist</span> below. You can set their payment model — rent, commission, or hourly — and link them to a user account so they can log in.</p>
+              <p className="font-semibold text-foreground">{t("gettingStarted")}</p>
+              <p>{t("gettingStartedDesc")}</p>
             </div>
             <button onClick={() => { setTipDismissed(true); localStorage.setItem("renters-tip-dismissed", "1"); }} className="text-muted-foreground hover:text-foreground p-1 shrink-0">
               <X className="w-3.5 h-3.5" />
@@ -253,7 +253,7 @@ export default function Renters() {
           <div className="mb-5 overflow-x-auto scrollbar-none">
             <TabsList className="h-auto md:flex-wrap inline-flex gap-2 bg-transparent border-b border-border rounded-none">
               <TabsTrigger value="stylists" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("stylists")}</TabsTrigger>
-              <TabsTrigger value="users" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("userMgmt") || "Users"}</TabsTrigger>
+              <TabsTrigger value="users" className="min-h-[44px] rounded-none border-b-2 border-b-transparent data-[state=active]:border-b-primary whitespace-nowrap">{t("userMgmt")}</TabsTrigger>
             </TabsList>
           </div>
 
@@ -265,7 +265,7 @@ export default function Renters() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                   <Input
-                    placeholder={t("searchByNameOrRole") || "Search by name or role..."}
+                    placeholder={t("searchByNameOrRole")}
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     className="pl-9 min-h-[44px]"
@@ -278,14 +278,14 @@ export default function Renters() {
                       onClick={() => setModelFilter(f)}
                       className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", modelFilter === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}
                     >
-                      {f === "all" ? (t("allModels") || "All Models") : t(f)}
+                      {f === "all" ? t("allModels") : t(f)}
                     </button>
                   ))}
                   <button
                     onClick={() => setShowInactive(!showInactive)}
                     className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors min-h-[44px]", showInactive ? "bg-muted/60 text-foreground" : "bg-muted text-muted-foreground")}
                   >
-                    {showInactive ? `✓ ${t("showInactive") || "Show Inactive"}` : (t("hideInactive") || "Hide Inactive")}
+                    {showInactive ? `✓ ${t("showInactive")}` : t("hideInactive")}
                   </button>
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function Renters() {
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {filtered.length === 0 ? (
                   <div className="col-span-full text-center py-12 text-muted-foreground">
-                    <p className="text-sm">{t("noStylistsMatch") || "No stylists match your filters."}</p>
+                    <p className="text-sm">{t("noStylistsMatch")}</p>
                   </div>
                 ) : (
                   filtered.map((r, i) => {
@@ -309,7 +309,7 @@ export default function Renters() {
                         <div>
                           <p className="font-medium">{r.name}</p>
                           <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
-                          {r.start_date && <p className="text-[10px] text-muted-foreground/60 mt-0.5">Since {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
+                          {r.start_date && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t("since")} {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
@@ -342,7 +342,7 @@ export default function Renters() {
                     {r.payment_model === "hourly" &&
                     <div className="space-y-1 text-xs border-t border-border pt-3">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t("hourlyRate") || "Hourly Rate"}</span>
+                          <span className="text-muted-foreground">{t("hourlyRate")}</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.hourly_wage)}/hr</span>
                         </div>
                         <div className="flex justify-between">
@@ -350,7 +350,7 @@ export default function Renters() {
                           <span className="font-mono text-muted-foreground">−{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">≈ {t("grossPerWeek") || "Gross/wk"}</span>
+                          <span className="text-muted-foreground">≈ {t("grossPerWeek")}</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.hourly_wage || 0) * 40)}</span>
                         </div>
                         {r.commission_owner > 0 &&
@@ -384,7 +384,7 @@ export default function Renters() {
 
                 <button onClick={openAdd} className="rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors p-5 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary min-h-[180px]">
                   <Plus className="w-6 h-6" />
-                  <span className="text-sm font-medium">{t("addStylist") || "Add Stylist"}</span>
+                  <span className="text-sm font-medium">{t("addStylist")}</span>
                 </button>
               </div>
             </div>
@@ -430,7 +430,7 @@ export default function Renters() {
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editRenter ? t("edit") : t("addStylist") || "Add Stylist"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editRenter ? t("editStylist") : t("addStylist")}</DialogTitle></DialogHeader>
           <RenterFormFields form={form} setForm={setForm} />
           <div className="flex gap-2 pt-2">
             <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
@@ -446,6 +446,7 @@ export default function Renters() {
 
 
 function RenterCardActions({ renter, services, onDelete }) {
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
   const inviteLink = `${window.location.origin}?link_renter=${renter.id}`;
   
@@ -470,16 +471,16 @@ function RenterCardActions({ renter, services, onDelete }) {
     <div className="flex items-center gap-1">
       <button
         onClick={handleCopy}
-        title="Copy invite link"
+        title={t("copyInviteLink")}
         className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-        aria-label="Copy invite link"
+        aria-label={t("copyInviteLink")}
       >
         {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
       </button>
       <button
         onClick={() => onDelete(renter.id)}
         className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-        aria-label="Delete stylist"
+        aria-label={t("deleteStylist")}
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
@@ -503,9 +504,9 @@ function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <h2 className="font-serif text-base font-medium">{t("chargesLedger") || "Charges Ledger"}</h2>
+        <h2 className="font-serif text-base font-medium">{t("chargesLedger")}</h2>
         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd((s) => !s)}>
-          <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge") || "Add Charge"}
+          <Plus className="w-3.5 h-3.5 mr-1" />{t("addCharge")}
         </Button>
       </div>
       {showAdd &&
@@ -528,7 +529,7 @@ function ChargesSection({ charges, renters, renterMap, onRefresh }) {
         </div>
       }
       {charges.length === 0 ?
-      <p className="text-sm text-muted-foreground text-center py-8">{t("noCharges") || "No recurring charges yet."}</p> :
+      <p className="text-sm text-muted-foreground text-center py-8">{t("noCharges")}</p> :
 
       <div className="divide-y divide-border">
           {charges.map((c) =>

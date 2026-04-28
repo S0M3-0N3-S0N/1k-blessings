@@ -9,7 +9,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import ClockInOut from "@/components/renter/ClockInOut";
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
-import { useEffect as useEffectChart } from "react";
+
 
 export default function RenterDashboard() {
   const { user } = useAuth();
@@ -81,7 +81,7 @@ export default function RenterDashboard() {
   // Hourly
   const totalHours = weekTimeEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
   const grossPay = totalHours * (renter?.hourly_wage || 0);
-  const hourlyNetPay = grossPay - weeklyRent;
+  const hourlyNetPay = grossPay - weeklyRent + weekGross + weekTips;
 
   const netPay = renter?.payment_model === "rent"
     ? weekGross - weeklyRent + weekTips
@@ -119,10 +119,10 @@ export default function RenterDashboard() {
       : t("thisWeekEarnings");
 
   const heroSub = renter.payment_model === "rent"
-    ? `${formatCurrency(weekGross)} gross − ${formatCurrency(weeklyRent)} rent`
+    ? `${formatCurrency(weekGross)} ${t("gross")} − ${formatCurrency(weeklyRent)} ${t("rent")}${weekTips > 0 ? ` + ${formatCurrency(weekTips)} ${t("tips")}` : ""}`
     : renter.payment_model === "hourly"
-      ? `${totalHours.toFixed(2)}h × ${formatCurrency(renter.hourly_wage)}/hr − ${formatCurrency(weeklyRent)} rent`
-      : `${formatCurrency(weekEarnings)} commission + ${formatCurrency(weekTips)} tips`;
+      ? `${totalHours.toFixed(2)}h × ${formatCurrency(renter.hourly_wage)}/hr − ${formatCurrency(weeklyRent)} ${t("rent")}${weekGross > 0 ? ` + ${formatCurrency(weekGross)} ${t("services")}` : ""}${weekTips > 0 ? ` + ${formatCurrency(weekTips)} ${t("tips")}` : ""}`
+      : `${formatCurrency(weekEarnings)} ${t("commission")} + ${formatCurrency(weekTips)} ${t("tips")}`;
 
   const kpiThird = renter.payment_model === "rent"
   ? { label: t("weeklyRentDeduction"), value: formatCurrency(weeklyRent) }
@@ -189,7 +189,7 @@ export default function RenterDashboard() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-mono text-sm font-semibold">{formatCurrency(s.renter_earnings)}</p>
-                      {renter.payment_model === "commission" && <p className="text-[10px] text-muted-foreground">of {formatCurrency(s.amount)}</p>}
+                      {renter.payment_model === "commission" && <p className="text-[10px] text-muted-foreground">{t("of")} {formatCurrency(s.amount)}</p>}
                     </div>
                   </div>
                 );
@@ -211,8 +211,8 @@ export default function RenterDashboard() {
             <div className="relative">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("earningsThisWeek") || "Earnings Trend"}</p>
-                  <p className="font-serif text-lg font-medium mt-1 text-foreground">{t("dailyBreakdown") || "Daily Breakdown"}</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("earningsThisWeek")}</p>
+                  <p className="font-serif text-lg font-medium mt-1 text-foreground">{t("dailyBreakdown")}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-muted-foreground">{t("thisWeek")}</p>
@@ -230,8 +230,8 @@ export default function RenterDashboard() {
                     cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1 }}
                   />
                   <Legend wrapperStyle={{ paddingTop: "20px" }} />
-                  <Line type="monotone" dataKey="earnings" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 5 }} activeDot={{ r: 7 }} name={t("yourEarnings") || "Your Earnings"} isAnimationActive={true} animationDuration={500} />
-                  {renter.payment_model === "commission" && <Line type="monotone" dataKey="owner" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ fill: "hsl(var(--muted-foreground))", r: 4 }} activeDot={{ r: 6 }} name={t("ownersCut") || "Owner's Cut"} strokeDasharray="5 5" isAnimationActive={true} animationDuration={500} />}
+                  <Line type="monotone" dataKey="earnings" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 5 }} activeDot={{ r: 7 }} name={t("yourEarnings")} isAnimationActive={true} animationDuration={500} />
+                  {renter.payment_model === "commission" && <Line type="monotone" dataKey="owner" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ fill: "hsl(var(--muted-foreground))", r: 4 }} activeDot={{ r: 6 }} name={t("ownersCut")} strokeDasharray="5 5" isAnimationActive={true} animationDuration={500} />}
                 </LineChart>
               </ResponsiveContainer>
             </div>
