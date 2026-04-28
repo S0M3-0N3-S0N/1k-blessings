@@ -4,9 +4,8 @@ export default function ModelBadge({ model, className }) {
   const styles = {
     rent: "border border-primary/60 text-primary bg-transparent",
     commission: "bg-primary text-white border border-primary",
-    hourly: "bg-foreground text-background border border-foreground",
   };
-  const labels = { rent: "Rent", commission: "Commission", hourly: "Hourly" };
+  const labels = { rent: "Rent", commission: "Commission" };
 
   return (
     <span className={cn(

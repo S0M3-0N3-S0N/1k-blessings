@@ -23,6 +23,10 @@
       "type": "string",
       "title": "Service Date (YYYY-MM-DD)"
     },
+    "service_time": {
+      "type": "string",
+      "title": "Service Time (HH:MM)"
+    },
     "renter_pct": {
       "type": "number",
       "title": "Renter Commission %",
@@ -68,6 +72,10 @@
       "type": "number",
       "title": "Tip Amount ($)",
       "default": 0
+    },
+    "last_edited_at": {
+      "type": "string",
+      "title": "Last Edited At"
     }
   },
   "required": [

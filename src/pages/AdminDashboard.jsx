@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue, getDueDate } from "@/lib/utils";
+import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue, getDueDate, isBeforeStartDate } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   const [renters, setRenters] = useState([]);
   const [services, setServices] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [timeEntries, setTimeEntries] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -37,13 +37,12 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [r, s, p, te] = await Promise.all([
+      const [r, s, p] = await Promise.all([
         base44.entities.Renter.list(),
         base44.entities.ServiceEntry.list("-service_date", 100),
         base44.entities.Payment.list("-period"),
-        base44.entities.TimeEntry.list("-clock_in", 200),
       ]);
-      setRenters(r); setServices(s); setPayments(p); setTimeEntries(te); setLoading(false);
+      setRenters(r); setServices(s); setPayments(p); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
       setError("Failed to load data. Pull down to retry.");
@@ -73,7 +72,7 @@ export default function AdminDashboard() {
   const activeRenters = renters.filter(r => r.status === "active");
   const rentRenters = activeRenters.filter(r => r.payment_model === "rent");
   const commissionRenters = activeRenters.filter(r => r.payment_model === "commission");
-  const hourlyRenters = activeRenters.filter(r => r.payment_model === "hourly");
+  const hourlyRenters = []; // removed hourly model
 
   // KPIs
   const monthlyRentProjected = rentRenters.reduce((s, r) => s + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
@@ -122,20 +121,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Hourly payroll this week
-  const weekTimeEntries = timeEntries.filter(e => {
-    const d = e.clock_in?.split("T")[0];
-    return d >= wsStr && d <= weStr;
-  });
-  const hourlyRows = hourlyRenters.map((r, i) => {
-    const entries = weekTimeEntries.filter(e => e.renter_id === r.id);
-    const totalHours = entries.reduce((s, e) => s + (e.total_hours || 0), 0);
-    const grossPay = totalHours * (r.hourly_wage || 0);
-    const weeklyDeduction = toWeekly(r.rent_amount || 0, r.frequency);
-    const netPay = grossPay - weeklyDeduction;
-    const clockedIn = entries.some(e => e.clock_in && !e.clock_out);
-    return { ...r, totalHours, grossPay, weeklyDeduction, netPay, clockedIn, avatarIndex: i };
-  });
+
 
   // Recent services (last 5)
   const recentServices = services.slice(0, 5);
@@ -156,7 +142,7 @@ export default function AdminDashboard() {
           <KpiCard label={t("monthlyRent")} value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub={t("projected")} />
           <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub={t("thisMonth")} />
           <KpiCard label={t("ourCommission")} value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub={t("thisWeek")} />
-          <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} ${t("rent")} · ${commissionRenters.length} ${t("commission")} · ${hourlyRenters.length} ${t("hourly")}`} />
+          <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} ${t("rent")} · ${commissionRenters.length} ${t("commission")}`} />
         </div>
 
         {/* Rent Collection Progress */}
@@ -208,41 +194,7 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* Hourly Payroll - compact summary */}
-        {hourlyRenters.length > 0 && (
-          <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("hourlyPayroll")}</p>
-                <p className="font-serif text-base font-medium mt-0.5">{t("thisWeek")} · {t("hourlyStylists")}</p>
-              </div>
-              <Link to="/paystub" className="text-xs text-primary hover:underline font-medium">{t("viewPaystub")}</Link>
-            </div>
-            <div className="divide-y divide-border">
-              {hourlyRows.map(r => {
-                const av = getAvatarColor(r.avatarIndex);
-                return (
-                  <div key={r.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", av.bg, av.text)}>{getInitials(r.name)}</div>
-                      <div>
-                        <p className="font-medium text-sm">{r.name}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <div className={cn("w-1.5 h-1.5 rounded-full", r.clockedIn ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/30")} />
-                          <span className="text-xs text-muted-foreground">{r.totalHours.toFixed(1)}h · {formatCurrency(r.hourly_wage)}/hr</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className={cn("font-mono text-sm font-semibold", r.netPay >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatCurrency(r.netPay)}</p>
-                      <p className="text-[10px] text-muted-foreground">{t("netPay")}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+
 
         {/* Rent Due */}
         {rentRows.length > 0 && (

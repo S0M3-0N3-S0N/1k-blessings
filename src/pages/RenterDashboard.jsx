@@ -3,10 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, cn } from "@/lib/utils";
-import { Loader2, Scissors, DollarSign, TrendingUp, Clock } from "lucide-react";
+import { Loader2, Scissors, DollarSign, TrendingUp } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
-import ClockInOut from "@/components/renter/ClockInOut";
+
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
 
@@ -16,7 +16,7 @@ export default function RenterDashboard() {
   const { t } = useLanguage();
   const [renter, setRenter] = useState(null);
   const [services, setServices] = useState([]);
-  const [timeEntries, setTimeEntries] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   // Handle invite link auto-linking
@@ -47,10 +47,6 @@ export default function RenterDashboard() {
     setRenter(r);
     if (r) {
       setServices(allServices.filter(s => s.renter_id === r.id));
-      if (r.payment_model === "hourly") {
-        const entries = await base44.entities.TimeEntry.filter({ renter_id: r.id });
-        setTimeEntries(entries);
-      }
     }
     setLoading(false);
   }, [user?.email]);
@@ -66,28 +62,21 @@ export default function RenterDashboard() {
   const weStr = we.toISOString().split("T")[0];
   const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
 
-  const weekTimeEntries = timeEntries.filter(e => {
-    const d = e.clock_in?.split("T")[0];
-    return d >= wsStr && d <= weStr;
-  });
-
   const weekGross = weekServices.reduce((s, e) => s + (e.amount || 0), 0);
   const weekEarnings = weekServices.reduce((s, e) => s + (e.renter_earnings || 0), 0);
   const weekTips = weekServices.reduce((s, e) => s + (e.tip_amount || 0), 0);
-  const weeklyRent = (renter?.payment_model === "rent" || renter?.payment_model === "hourly")
+  const weeklyRent = renter?.payment_model === "rent"
     ? toWeekly(renter.rent_amount || 0, renter.frequency)
     : 0;
 
-  // Hourly
-  const totalHours = weekTimeEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
-  const grossPay = totalHours * (renter?.hourly_wage || 0);
-  const hourlyNetPay = grossPay - weeklyRent + weekGross + weekTips;
+  // Base salary for commission stylists
+  const weeklyBaseSalary = renter?.payment_model === "commission" && renter?.base_salary
+    ? (renter.base_salary_frequency === "monthly" ? renter.base_salary / (52 / 12) : renter.base_salary)
+    : 0;
 
   const netPay = renter?.payment_model === "rent"
     ? weekGross - weeklyRent + weekTips
-    : renter?.payment_model === "hourly"
-      ? hourlyNetPay
-      : weekEarnings + weekTips;
+    : weekEarnings + weeklyBaseSalary + weekTips;
 
   // Chart
   const chartData = weekServices.reduce((acc, s) => {
@@ -112,22 +101,14 @@ export default function RenterDashboard() {
     </div>
   );
 
-  const heroLabel = renter.payment_model === "rent"
-    ? t("thisWeekNetRevenue")
-    : renter.payment_model === "hourly"
-      ? t("thisWeekNetPay")
-      : t("thisWeekEarnings");
+  const heroLabel = renter.payment_model === "rent" ? t("thisWeekNetRevenue") : t("thisWeekEarnings");
 
   const heroSub = renter.payment_model === "rent"
     ? `${formatCurrency(weekGross)} ${t("gross")} − ${formatCurrency(weeklyRent)} ${t("rent")}${weekTips > 0 ? ` + ${formatCurrency(weekTips)} ${t("tips")}` : ""}`
-    : renter.payment_model === "hourly"
-      ? `${totalHours.toFixed(2)}h × ${formatCurrency(renter.hourly_wage)}/hr − ${formatCurrency(weeklyRent)} ${t("rent")}${weekGross > 0 ? ` + ${formatCurrency(weekGross)} ${t("services")}` : ""}${weekTips > 0 ? ` + ${formatCurrency(weekTips)} ${t("tips")}` : ""}`
-      : `${formatCurrency(weekEarnings)} ${t("commission")} + ${formatCurrency(weekTips)} ${t("tips")}`;
+    : `${formatCurrency(weekEarnings)} ${t("commission")}${weeklyBaseSalary > 0 ? ` + ${formatCurrency(weeklyBaseSalary)} base` : ""}${weekTips > 0 ? ` + ${formatCurrency(weekTips)} ${t("tips")}` : ""}`;
 
   const kpiThird = renter.payment_model === "rent"
-  ? { label: t("weeklyRentDeduction"), value: formatCurrency(weeklyRent) }
-  : renter.payment_model === "hourly"
-    ? { label: t("hoursThisWeek"), value: `${totalHours.toFixed(1)}h` }
+    ? { label: t("weeklyRentDeduction"), value: formatCurrency(weeklyRent) }
     : { label: t("commission"), value: `${100 - (renter.commission_owner || 40)}%` };
 
   return (
@@ -148,16 +129,11 @@ export default function RenterDashboard() {
           <p className="text-xs text-muted-foreground mt-0.5 relative">{formatDateRange(ws)}</p>
         </div>
 
-        {/* Hourly: Clock In/Out */}
-        {renter.payment_model === "hourly" && (
-          <ClockInOut renterId={renter.id} onRefresh={loadData} />
-        )}
-
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
           <KpiCard label={t("services")} value={weekServices.length} icon={Scissors} />
           <KpiCard label={t("revenue")} value={formatCurrency(weekGross)} icon={TrendingUp} />
-          <KpiCard label={kpiThird.label} value={kpiThird.value} icon={renter.payment_model === "hourly" ? Clock : DollarSign} />
+          <KpiCard label={kpiThird.label} value={kpiThird.value} icon={DollarSign} />
         </div>
 
         {/* Services this week */}

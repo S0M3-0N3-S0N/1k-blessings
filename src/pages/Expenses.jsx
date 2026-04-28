@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,8 +28,8 @@ const emptyForm = { description: "", amount: "", category: "other", expense_date
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+  const [editExpense, setEditExpense] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState({});
@@ -43,12 +43,25 @@ export default function Expenses() {
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
+  const openAdd = () => { setEditExpense(null); setForm(emptyForm); setShowDialog(true); };
+  const openEdit = (e) => {
+    setEditExpense(e);
+    setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "" });
+    setShowDialog(true);
+  };
+
   const handleSave = async () => {
     if (!form.description || !form.amount || !form.expense_date) return;
     setSaving(true);
-    await base44.entities.Expense.create({ ...form, amount: parseFloat(form.amount) || 0 });
-    setShowAdd(false); setForm(emptyForm); setSaving(false);
-    toast({ title: t("addExpense") }); loadData();
+    const data = { ...form, amount: parseFloat(form.amount) || 0, last_edited_at: new Date().toISOString() };
+    if (editExpense) {
+      await base44.entities.Expense.update(editExpense.id, data);
+      toast({ title: t("save") });
+    } else {
+      await base44.entities.Expense.create(data);
+      toast({ title: t("addExpense") });
+    }
+    setShowDialog(false); setForm(emptyForm); setSaving(false); loadData();
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -63,13 +76,11 @@ export default function Expenses() {
   const lastMonth = expenses.filter(e => e.expense_date?.startsWith(prevM)).reduce((s, e) => s + (e.amount || 0), 0);
   const ytd = expenses.filter(e => e.expense_date?.startsWith(ytdYear)).reduce((s, e) => s + (e.amount || 0), 0);
 
-  // Category breakdown for current month
   const catBreakdown = CATS.map(cat => {
     const total = expenses.filter(e => e.expense_date?.startsWith(currentM) && e.category === cat).reduce((s, e) => s + (e.amount || 0), 0);
     return { cat, total };
   }).filter(x => x.total > 0);
 
-  // Group by month
   const grouped = expenses.reduce((acc, e) => {
     const m = e.expense_date?.slice(0, 7) || "unknown";
     if (!acc[m]) acc[m] = [];
@@ -101,10 +112,9 @@ export default function Expenses() {
             <KpiCard label={t("lastMonthTotal")} value={formatCurrency(lastMonth)} />
             <KpiCard label={t("ytd")} value={formatCurrency(ytd)} />
           </div>
-          <GoldButton onClick={() => setShowAdd(true)} className="shrink-0"><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
+          <GoldButton onClick={openAdd} className="shrink-0"><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
         </div>
 
-        {/* Category Breakdown */}
         {catBreakdown.length > 0 && (
           <div className="bg-card rounded-xl border border-border p-4 space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("categoryBreakdown")} · {monthLabel}</p>
@@ -119,7 +129,6 @@ export default function Expenses() {
           </div>
         )}
 
-        {/* Expense list */}
         <div className="space-y-3">
           {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses")}</p>}
           {sortedMonths.map(m => {
@@ -153,13 +162,16 @@ export default function Expenses() {
                             <p className="text-xs text-muted-foreground">
                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                               {e.notes && ` · ${e.notes}`}
-                              {e.paid_by === "owner" && ` · ${t("paidByOwner") || "paid by owner"}`}
+                              {e.paid_by === "owner" && ` · ${t("paidByOwner")}`}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
-                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("deleted") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[44px] flex items-center justify-center">
+                          <button onClick={() => openEdit(e)} className="text-muted-foreground hover:text-primary min-h-[44px] min-w-[36px] flex items-center justify-center">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => base44.entities.Expense.delete(e.id).then(() => { toast({ title: t("deleted") }); loadData(); })} className="text-muted-foreground hover:text-destructive min-h-[44px] min-w-[36px] flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -173,9 +185,9 @@ export default function Expenses() {
         </div>
       </div>
 
-      <Dialog open={showAdd} onOpenChange={setShowAdd}>
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{t("addExpense")}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editExpense ? t("edit") : t("addExpense")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
             <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
             <div className="grid grid-cols-2 gap-2">
@@ -198,7 +210,7 @@ export default function Expenses() {
             <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
             <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>

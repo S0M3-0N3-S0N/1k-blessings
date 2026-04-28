@@ -91,6 +91,21 @@ export function computeEarnings(amount, renter) {
   return { renter_pct: 100, renter_earnings: amount, owner_earnings: 0 };
 }
 
+// Returns weekly base salary for a commission stylist
+export function getWeeklyBaseSalary(renter) {
+  if (!renter || renter.payment_model !== "commission") return 0;
+  const base = renter.base_salary || 0;
+  if (!base) return 0;
+  if (renter.base_salary_frequency === "monthly") return base / (52 / 12);
+  return base; // weekly
+}
+
+// Check if a date is before the renter's start date (no backdated debt)
+export function isBeforeStartDate(periodStr, renter) {
+  if (!renter?.start_date) return false;
+  return periodStr < renter.start_date.slice(0, 7);
+}
+
 export function getMonthsInRange(count = 12) {
   const months = [];
   const now = new Date();

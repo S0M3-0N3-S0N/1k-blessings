@@ -14,6 +14,10 @@
       "type": "string",
       "title": "Email"
     },
+    "birthday": {
+      "type": "string",
+      "title": "Birthday (YYYY-MM-DD)"
+    },
     "preferred_renter_id": {
       "type": "string",
       "title": "Preferred Stylist ID"

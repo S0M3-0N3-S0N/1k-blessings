@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
-import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, cn } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, Copy, Check, Clock } from "lucide-react";
+import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, getWeeklyBaseSalary, cn } from "@/lib/utils";
+import { Loader2, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
@@ -14,8 +14,6 @@ export default function Paystub() {
   const { t } = useLanguage();
   const [renter, setRenter] = useState(null);
   const [services, setServices] = useState([]);
-  const [charges, setCharges] = useState([]);
-  const [timeEntries, setTimeEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -23,20 +21,12 @@ export default function Paystub() {
 
   const loadData = useCallback(async () => {
     if (!user?.email) return;
-    const [renters, allCharges] = await Promise.all([
-      base44.entities.Renter.filter({ user_email: user.email }),
-      base44.entities.Charge.list(),
-    ]);
+    const renters = await base44.entities.Renter.filter({ user_email: user.email });
     const r = renters[0] || null;
     setRenter(r);
-    setCharges(allCharges.filter(c => !c.renter_id || c.renter_id === r?.id));
     if (r) {
-      const [svcs, entries] = await Promise.all([
-        base44.entities.ServiceEntry.list("-service_date", 300),
-        base44.entities.TimeEntry.filter({ renter_id: r.id }),
-      ]);
+      const svcs = await base44.entities.ServiceEntry.list("-service_date", 300);
       setServices(svcs.filter(x => x.renter_id === r.id));
-      setTimeEntries(entries);
     }
     setLoading(false);
   }, [user?.email]);
@@ -48,28 +38,22 @@ export default function Paystub() {
   const weStr = we.toISOString().split("T")[0];
   const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
 
-  const weekTimeEntries = timeEntries.filter(e => {
-    const d = e.clock_in?.split("T")[0];
-    return d >= wsStr && d <= weStr;
-  });
-
   const grossRevenue = weekServices.reduce((s, e) => s + (e.amount || 0), 0);
   const myEarnings = weekServices.reduce((s, e) => s + (e.renter_earnings || 0), 0);
   const tipTotal = weekServices.reduce((s, e) => s + (e.tip_amount || 0), 0);
-  const weeklyRent = (renter?.payment_model === "rent" || renter?.payment_model === "hourly")
+
+  // Weekly rent deduction (rent model only)
+  const weeklyRent = renter?.payment_model === "rent"
     ? toWeekly(renter.rent_amount || 0, renter.frequency)
     : 0;
 
-  // Hourly calculations
-  const totalHours = weekTimeEntries.reduce((s, e) => s + (e.total_hours || 0), 0);
-  const grossPay = totalHours * (renter?.hourly_wage || 0);
-  const hourlyNetPay = grossPay - weeklyRent + grossRevenue + tipTotal;
+  // Base salary (commission model only)
+  const weeklyBaseSalary = getWeeklyBaseSalary(renter);
 
+  // Net pay
   const netPay = renter?.payment_model === "rent"
     ? grossRevenue - weeklyRent + tipTotal
-    : renter?.payment_model === "hourly"
-      ? hourlyNetPay
-      : myEarnings + tipTotal;
+    : myEarnings + weeklyBaseSalary + tipTotal; // commission + optional base
 
   const copyPaySummary = () => {
     const lines = [
@@ -82,17 +66,10 @@ export default function Paystub() {
       lines.push(`Rent Deduction: -${formatCurrency(weeklyRent)}`);
       if (tipTotal > 0) lines.push(`Tips: +${formatCurrency(tipTotal)}`);
       lines.push(`Net Pay: ${formatCurrency(netPay)}`);
-    } else if (renter?.payment_model === "hourly") {
-      lines.push(`Hours Worked: ${totalHours.toFixed(2)}h`);
-      lines.push(`Hourly Rate: ${formatCurrency(renter.hourly_wage)}/hr`);
-      lines.push(`Gross Pay: ${formatCurrency(grossPay)}`);
-      lines.push(`Rent Deduction: -${formatCurrency(weeklyRent)}`);
-      if (grossRevenue > 0) lines.push(`Service Income: +${formatCurrency(grossRevenue)}`);
-      if (tipTotal > 0) lines.push(`Tips: +${formatCurrency(tipTotal)}`);
-      lines.push(`Net Pay: ${formatCurrency(netPay)}`);
     } else {
       lines.push(`Total Service Revenue: ${formatCurrency(grossRevenue)}`);
-      lines.push(`Commission Earnings (${100 - (renter?.commission_owner || 40)}%): ${formatCurrency(myEarnings)}`);
+      lines.push(`Commission (${100 - (renter?.commission_owner || 40)}%): ${formatCurrency(myEarnings)}`);
+      if (weeklyBaseSalary > 0) lines.push(`Base Salary: +${formatCurrency(weeklyBaseSalary)}`);
       if (tipTotal > 0) lines.push(`Tips: +${formatCurrency(tipTotal)}`);
       lines.push(`Total Pay: ${formatCurrency(netPay)}`);
     }
@@ -111,11 +88,7 @@ export default function Paystub() {
     </div>
   );
 
-  const heroLabel = renter.payment_model === "rent"
-    ? t("netPay")
-    : renter.payment_model === "hourly"
-      ? t("thisWeekNetPay")
-      : t("totalCommissionEarned");
+  const heroLabel = renter.payment_model === "rent" ? t("netPay") : t("totalCommissionEarned");
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -142,9 +115,6 @@ export default function Paystub() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{heroLabel}</p>
               <p className={cn("font-mono text-5xl font-bold tracking-tight mt-2", netPay < 0 && "text-destructive")}>{formatCurrency(netPay)}</p>
               <p className="text-xs text-muted-foreground mt-2">{formatDateRange(ws)}</p>
-              {renter.payment_model === "hourly" && (
-                <p className="text-xs text-muted-foreground mt-0.5">{totalHours.toFixed(2)}h × {formatCurrency(renter.hourly_wage)}/hr = {formatCurrency(grossPay)} gross</p>
-              )}
             </div>
             <button onClick={copyPaySummary} className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors">
               {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
@@ -152,69 +122,7 @@ export default function Paystub() {
           </div>
         </div>
 
-        {/* Hourly: Time Entries */}
-        {renter.payment_model === "hourly" && (
-          <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              <p className="font-serif text-base font-medium">{t("hoursBreakdown")}</p>
-            </div>
-            {weekTimeEntries.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">{t("noHoursThisWeek")}</p>
-            ) : (
-              <>
-                <div className="divide-y divide-border">
-                  {weekTimeEntries.map(e => (
-                    <div key={e.id} className="flex items-center justify-between px-5 py-3 min-h-[48px]">
-                      <div>
-                        <p className="text-sm font-medium">{e.clock_in?.split("T")[0]}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(e.clock_in).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                          {e.clock_out && ` → ${new Date(e.clock_out).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`}
-                        </p>
-                      </div>
-                      <p className="font-mono text-sm font-semibold">{(e.total_hours || 0).toFixed(2)}h</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="px-5 py-4 border-t border-border bg-muted/20 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{t("hoursThisWeek")}</span>
-                    <span className="font-mono font-semibold">{totalHours.toFixed(2)}h</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">× {formatCurrency(renter.hourly_wage)}/hr</span>
-                    <span className="font-mono font-semibold">{formatCurrency(grossPay)}</span>
-                  </div>
-                  {weeklyRent > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("weeklyRentDeduction")}</span>
-                      <span className="font-mono text-destructive">−{formatCurrency(weeklyRent)}</span>
-                    </div>
-                  )}
-                  {grossRevenue > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("serviceIncome")}</span>
-                      <span className="font-mono text-primary">+{formatCurrency(grossRevenue)}</span>
-                    </div>
-                  )}
-                  {tipTotal > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("tips")} (bonus)</span>
-                      <span className="font-mono text-primary">+{formatCurrency(tipTotal)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm font-semibold border-t border-border pt-2">
-                    <span>{t("netPay")}</span>
-                    <span className={cn("font-mono", netPay >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{formatCurrency(netPay)}</span>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Services */}
+        {/* Services list */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-5 py-4 border-b border-border">
             <p className="font-serif text-base font-medium">
@@ -228,20 +136,23 @@ export default function Paystub() {
               <div className="divide-y divide-border">
                 {weekServices.map(s => {
                   const cat = categoryBadge(s.category);
+                  const timeStr = s.service_time || "";
                   return (
                     <div key={s.id} className="flex items-center justify-between px-5 py-3 min-h-[52px]">
                       <div className="flex items-center gap-3 min-w-0">
                         <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", cat.className)}>{cat.label}</span>
                         <div className="min-w-0">
                           <p className="text-sm font-medium">{s.description || "Service"}</p>
-                          <p className="text-xs text-muted-foreground">{s.client_name || "—"} · {s.service_date}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.client_name || "—"} · {s.service_date}{timeStr ? ` · ${timeStr}` : ""}
+                          </p>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
                         {renter.payment_model === "commission" ? (
                           <>
                             <p className="font-mono text-sm font-semibold text-primary">{formatCurrency(s.renter_earnings)}</p>
-                            <p className="text-[10px] text-muted-foreground">of {formatCurrency(s.amount)}</p>
+                            <p className="text-[10px] text-muted-foreground">{t("of")} {formatCurrency(s.amount)}</p>
                           </>
                         ) : (
                           <p className="font-mono text-sm font-semibold">{formatCurrency(s.amount)}</p>
@@ -281,9 +192,15 @@ export default function Paystub() {
                       <span className="text-muted-foreground">{t("commissionBreakdown")} ({100 - (renter.commission_owner || 40)}%)</span>
                       <span className="font-mono font-semibold">{formatCurrency(myEarnings)}</span>
                     </div>
+                    {weeklyBaseSalary > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Base Salary</span>
+                        <span className="font-mono text-primary">+{formatCurrency(weeklyBaseSalary)}</span>
+                      </div>
+                    )}
                     {tipTotal > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{t("tips")} (bonus)</span>
+                        <span className="text-muted-foreground">{t("tips")}</span>
                         <span className="font-mono text-primary">+{formatCurrency(tipTotal)}</span>
                       </div>
                     )}
@@ -291,20 +208,6 @@ export default function Paystub() {
                       <span>{t("netPay")}</span>
                       <span className="font-mono text-primary">{formatCurrency(netPay)}</span>
                     </div>
-                  </>
-                )}
-                {renter.payment_model === "hourly" && grossRevenue > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{t("serviceIncome")} (bonus)</span>
-                      <span className="font-mono font-semibold text-primary">+{formatCurrency(grossRevenue)}</span>
-                    </div>
-                    {tipTotal > 0 && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{t("tips")} (bonus)</span>
-                        <span className="font-mono text-primary">+{formatCurrency(tipTotal)}</span>
-                      </div>
-                    )}
                   </>
                 )}
               </div>

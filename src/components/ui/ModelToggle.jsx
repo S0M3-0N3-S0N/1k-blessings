@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 const MODELS = [
   { value: "rent", label: "Rent" },
   { value: "commission", label: "Commission" },
-  { value: "hourly", label: "Hourly" },
 ];
 
 export default function ModelToggle({ value, onChange }) {

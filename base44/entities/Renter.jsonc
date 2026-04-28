@@ -16,8 +16,7 @@
       "title": "Payment Model",
       "enum": [
         "rent",
-        "commission",
-        "hourly"
+        "commission"
       ],
       "default": "rent"
     },
@@ -43,10 +42,19 @@
       "minimum": 0,
       "maximum": 100
     },
-    "hourly_wage": {
+    "base_salary": {
       "type": "number",
-      "title": "Hourly Wage ($/hr)",
+      "title": "Base Salary ($)",
       "default": 0
+    },
+    "base_salary_frequency": {
+      "type": "string",
+      "title": "Base Salary Frequency",
+      "enum": [
+        "weekly",
+        "monthly"
+      ],
+      "default": "weekly"
     },
     "status": {
       "type": "string",

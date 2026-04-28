@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate } from "@/lib/utils";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
@@ -55,7 +55,12 @@ export default function Payments() {
   const monthStr = `${displayDate.getFullYear()}-${String(displayDate.getMonth() + 1).padStart(2, "0")}`;
   const monthLabel = displayDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
+  // Only show active rent renters whose start date is not after current month
+  const rentRenters = renters.filter(r =>
+    r.payment_model === "rent" &&
+    r.status === "active" &&
+    !isBeforeStartDate(monthStr, r)
+  );
 
   const getRenterStatus = (renter) => {
     const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(monthStr));
@@ -258,7 +263,11 @@ export default function Payments() {
 function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOffset }) {
   const { t } = useLanguage();
   const [view, setView] = useState("monthly");
-  const commissionRenters = renters.filter(r => r.payment_model === "commission" && r.status === "active");
+  // Only active commission renters whose start date is not after current period
+  const commissionRenters = renters.filter(r =>
+    r.payment_model === "commission" &&
+    r.status === "active"
+  );
   if (commissionRenters.length === 0) return null;
 
   const ws = getWeekStart(new Date(), weekOffset);

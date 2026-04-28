@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Search, AlertCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Search, AlertCircle, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,7 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
 
-const emptyForm = { name: "", phone: "", email: "", preferred_renter_id: "", notes: "" };
+const emptyForm = { name: "", phone: "", email: "", birthday: "", preferred_renter_id: "", notes: "" };
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
@@ -31,12 +31,10 @@ export default function Clients() {
       setClients(c);
       setLoading(false);
     } catch (err) {
-      console.error('Load error:', err);
       setError('Failed to load clients. Pull down to retry.');
       setLoading(false);
     }
   }, []);
-
   useEffect(() => { loadData(); }, [loadData]);
 
   const handleSave = async () => {
@@ -54,20 +52,20 @@ export default function Clients() {
       setForm(emptyForm);
       loadData();
     } catch (err) {
-      toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
+      toast({ title: t("saveFailed"), description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this client?')) return;
+    if (!confirm(t("deleteClient"))) return;
     try {
       await base44.entities.Client.delete(id);
       toast({ title: t("clientDeleted") });
       loadData();
     } catch (err) {
-      toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+      toast({ title: t("deleteFailed"), description: err.message, variant: 'destructive' });
     }
   };
 
@@ -81,7 +79,11 @@ export default function Clients() {
     </div>
   );
 
-  const filtered = clients.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
+  const filtered = clients.filter(c =>
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase())
+  );
   const newThisMonth = clients.filter(c => {
     const visitDate = c.last_visit_date ? new Date(c.last_visit_date) : null;
     const now = new Date();
@@ -89,6 +91,11 @@ export default function Clients() {
   }).length;
   const avgVisits = clients.length > 0 ? (clients.reduce((s, c) => s + (c.visit_count || 0), 0) / clients.length).toFixed(1) : 0;
   const topSpender = clients.length > 0 ? clients.reduce((max, c) => (c.total_spent || 0) > (max.total_spent || 0) ? c : max) : null;
+
+  // Birthday this month check
+  const now = new Date();
+  const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
+  const birthdaysThisMonth = clients.filter(c => c.birthday?.slice(5, 7) === currentMonth);
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -107,6 +114,17 @@ export default function Clients() {
           <KpiCard label={t("avgVisits")} value={avgVisits} />
           <KpiCard label={t("topSpender")} value={topSpender ? formatCurrency(topSpender.total_spent) : "$0"} />
         </div>
+
+        {/* Birthdays this month */}
+        {birthdaysThisMonth.length > 0 && (
+          <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
+            <Gift className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-primary mb-1">Birthdays this month 🎂</p>
+              <p className="text-xs text-foreground/80">{birthdaysThisMonth.map(c => c.name).join(", ")}</p>
+            </div>
+          </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
@@ -129,11 +147,19 @@ export default function Clients() {
               {filtered.map(c => {
                 const loyalty = (c.visit_count || 0) >= 10 ? "Gold" : (c.visit_count || 0) >= 5 ? "Silver" : "Bronze";
                 const loyaltyColor = loyalty === "Gold" ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400" : loyalty === "Silver" ? "bg-slate-500/15 text-slate-600 dark:text-slate-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+                const hasBirthdayThisMonth = c.birthday?.slice(5, 7) === currentMonth;
                 return (
                   <div key={c.id} className="px-5 py-4 flex items-start justify-between hover:bg-muted/20 gap-3 flex-wrap">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm">{c.name}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{c.phone || c.email || "—"}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{c.name}</p>
+                        {hasBirthdayThisMonth && <span title="Birthday this month">🎂</span>}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 space-y-0.5">
+                        {c.phone && <p>{c.phone}</p>}
+                        {c.email && <p>{c.email}</p>}
+                        {c.birthday && <p>🎂 {new Date(c.birthday + "T12:00:00").toLocaleDateString("en-US", { month: "long", day: "numeric" })}</p>}
+                      </div>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", loyaltyColor)}>{loyalty}</span>
                         {c.last_visit_date && <span className="text-[10px] text-muted-foreground">{c.visit_count || 0} visits · {formatCurrency(c.total_spent)}</span>}
@@ -154,34 +180,17 @@ export default function Clients() {
       </div>
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? t("editClient") : t("addClient")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
-            <Input
-              placeholder="Name *"
-              value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="min-h-[44px]"
-              autoFocus
-            />
-            <Input
-              placeholder="Phone"
-              value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-              className="min-h-[44px]"
-            />
-            <Input
-              placeholder="Email"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              className="min-h-[44px]"
-            />
-            <Input
-              placeholder="Notes (optional)"
-              value={form.notes}
-              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              className="min-h-[44px]"
-            />
+            <Input placeholder={`${t("fullName")} *`} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="min-h-[44px]" autoFocus />
+            <Input placeholder={t("phone")} value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="min-h-[44px]" />
+            <Input type="email" placeholder={t("email")} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="min-h-[44px]" />
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Birthday (optional)</label>
+              <Input type="date" value={form.birthday} onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} className="min-h-[44px]" />
+            </div>
+            <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.name}>

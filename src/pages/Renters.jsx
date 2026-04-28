@@ -19,8 +19,8 @@ import UserLinker from "@/components/renters/UserLinker";
 
 const emptyForm = {
   name: "", role: "Stylist", payment_model: "rent", rent_amount: "",
-  frequency: "weekly", commission_owner: 40, hourly_wage: "", status: "active",
-  phone: "", start_date: "", notes: "", user_email: ""
+  frequency: "weekly", commission_owner: 40, base_salary: "", base_salary_frequency: "weekly",
+  status: "active", phone: "", start_date: "", notes: "", user_email: ""
 };
 
 function RenterFormFields({ form, setForm }) {
@@ -72,47 +72,32 @@ function RenterFormFields({ form, setForm }) {
         </div>
       }
       {form.payment_model === "commission" &&
-      <div>
-          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("ownerCommissionPct") || "Owner Commission %"}</label>
-          <Input type="number" value={form.commission_owner} onChange={(e) => setForm((f) => ({ ...f, commission_owner: e.target.value }))} className="font-mono min-h-[44px]" min="0" max="100" />
-          <SplitBar ownerPct={ownerPct} showLabels className="mt-2" />
-          <p className="text-xs text-muted-foreground mt-1">{t("stylistKeeps") || "Stylist keeps"} {100 - ownerPct}%</p>
-        </div>
-      }
-      {form.payment_model === "hourly" &&
       <div className="space-y-3">
           <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("hourly")} ($/hr)</label>
-            <Input type="number" value={form.hourly_wage} onChange={(e) => setForm((f) => ({ ...f, hourly_wage: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("ownerCommissionPct")}</label>
+            <Input type="number" value={form.commission_owner} onChange={(e) => setForm((f) => ({ ...f, commission_owner: e.target.value }))} className="font-mono min-h-[44px]" min="0" max="100" />
+            <SplitBar ownerPct={ownerPct} showLabels className="mt-2" />
+            <p className="text-xs text-muted-foreground mt-1">{t("stylistKeeps")} {100 - ownerPct}%</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("rentDeduction") || "Rent Deduction ($)"}</label>
-              <Input type="number" value={form.rent_amount} onChange={(e) => setForm((f) => ({ ...f, rent_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
+          <div className="bg-muted/30 rounded-lg p-3 space-y-2 border border-border">
+            <p className="text-xs font-semibold text-foreground">Base Salary <span className="text-muted-foreground font-normal">(optional)</span></p>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Amount ($)</label>
+                <Input type="number" value={form.base_salary} onChange={(e) => setForm((f) => ({ ...f, base_salary: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Paid</label>
+                <Select value={form.base_salary_frequency} onValueChange={(v) => setForm((f) => ({ ...f, base_salary_frequency: v }))}>
+                  <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="weekly">{t("weekly")}</SelectItem>
+                    <SelectItem value="monthly">{t("monthly")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("frequency")}</label>
-              <Select value={form.frequency} onValueChange={(v) => setForm((f) => ({ ...f, frequency: v }))}>
-              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">{t("weekly")}</SelectItem>
-                <SelectItem value="biweekly">{t("biweekly")}</SelectItem>
-                <SelectItem value="monthly">{t("monthly")}</SelectItem>
-              </SelectContent>
-              </Select>
-            </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("ownerCommissionPct") || "Owner Commission %"} <span className="text-muted-foreground/50 font-normal">(optional)</span></label>
-            <Input type="number" value={form.commission_owner} onChange={(e) => setForm((f) => ({ ...f, commission_owner: e.target.value }))} className="font-mono min-h-[44px]" min="0" max="100" placeholder="0" />
-            {parseFloat(form.commission_owner) > 0 &&
-          <>
-                <SplitBar ownerPct={parseFloat(form.commission_owner)} showLabels className="mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">{t("stylistKeeps") || "Stylist keeps"} {100 - parseFloat(form.commission_owner)}%</p>
-              </>
-          }
-          </div>
-          {form.hourly_wage && <p className="text-xs text-muted-foreground">≈ {formatCurrency(parseFloat(form.hourly_wage || 0) * 40)}/wk gross (40h)</p>}
         </div>
       }
       <div>
@@ -168,7 +153,7 @@ export default function Renters() {
   useEffect(() => {loadData();}, [loadData]);
 
   const openAdd = () => {setForm(emptyForm);setEditRenter(null);setShowDialog(true);};
-  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, hourly_wage: r.hourly_wage || "" });setEditRenter(r);setShowDialog(true);};
+  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, base_salary: r.base_salary || "", base_salary_frequency: r.base_salary_frequency || "weekly" });setEditRenter(r);setShowDialog(true);};
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -176,9 +161,10 @@ export default function Renters() {
     try {
       const data = {
         ...form,
-        rent_amount: form.payment_model === "rent" || form.payment_model === "hourly" ? parseFloat(form.rent_amount) || 0 : 0,
-        commission_owner: form.payment_model === "commission" || form.payment_model === "hourly" ? parseFloat(form.commission_owner) || 0 : 0,
-        hourly_wage: form.payment_model === "hourly" ? parseFloat(form.hourly_wage) || 0 : 0
+        rent_amount: form.payment_model === "rent" ? parseFloat(form.rent_amount) || 0 : 0,
+        commission_owner: form.payment_model === "commission" ? parseFloat(form.commission_owner) || 40 : 0,
+        base_salary: form.payment_model === "commission" ? parseFloat(form.base_salary) || 0 : 0,
+        base_salary_frequency: form.base_salary_frequency || "weekly",
       };
       if (editRenter) {
         await base44.entities.Renter.update(editRenter.id, data);
@@ -339,29 +325,12 @@ export default function Renters() {
                         <SplitBar ownerPct={r.commission_owner || 40} />
                       </div>
                     }
-                    {r.payment_model === "hourly" &&
-                    <div className="space-y-1 text-xs border-t border-border pt-3">
+                    {r.payment_model === "commission" && (r.base_salary || 0) > 0 &&
+                    <div className="text-xs border-t border-border pt-2 mt-1">
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t("hourlyRate")}</span>
-                          <span className="font-mono font-semibold">{formatCurrency(r.hourly_wage)}/hr</span>
+                          <span className="text-muted-foreground">Base Salary</span>
+                          <span className="font-mono font-semibold">{formatCurrency(r.base_salary)}/{r.base_salary_frequency === "monthly" ? "mo" : "wk"}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">{t("rentDeduction")}</span>
-                          <span className="font-mono text-muted-foreground">−{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">≈ {t("grossPerWeek")}</span>
-                          <span className="font-mono text-muted-foreground">{formatCurrency((r.hourly_wage || 0) * 40)}</span>
-                        </div>
-                        {r.commission_owner > 0 &&
-                      <>
-                            <div className="flex justify-between mt-1">
-                              <span className="text-muted-foreground">{t("commissionSplits")}</span>
-                              <span className="font-mono">{r.commission_owner}% / {100 - r.commission_owner}%</span>
-                            </div>
-                            <SplitBar ownerPct={r.commission_owner} />
-                          </>
-                      }
                       </div>
                     }
 
