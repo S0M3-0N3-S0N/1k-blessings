@@ -10,7 +10,7 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone, HelpCircle } from "lucide-react";
+import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone, HelpCircle, Pencil, Check, X } from "lucide-react";
 import InstallSlideshow from "@/components/InstallSlideshow";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,12 @@ export default function AccountSettings() {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showSlideshow, setShowSlideshow] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
+
+  useEffect(() => {
+    if (user) setProfileForm({ full_name: user.full_name || "", phone: user.phone || "" });
+  }, [user]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -56,6 +62,14 @@ export default function AccountSettings() {
     else document.documentElement.classList.remove("dark");
   };
 
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    await base44.auth.updateMe({ full_name: profileForm.full_name, phone: profileForm.phone });
+    toast({ title: t("settingsSaved") });
+    setEditingProfile(false);
+    setSaving(false);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     toast({ title: t("settingsSaved") });
@@ -75,11 +89,39 @@ export default function AccountSettings() {
 
       {/* Profile */}
       <div className="bg-card rounded-xl border border-border p-5 space-y-4">
-        <h2 className="font-serif text-base font-medium">{t("profileInfo")}</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="font-serif text-base font-medium">{t("profileInfo")}</h2>
+          {!editingProfile ? (
+            <button onClick={() => setEditingProfile(true)} className="flex items-center gap-1.5 text-xs text-primary hover:underline">
+              <Pencil className="w-3.5 h-3.5" /> {t("edit")}
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button onClick={() => { setEditingProfile(false); setProfileForm({ full_name: user?.full_name || "", phone: user?.phone || "" }); }} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                <X className="w-3.5 h-3.5" /> {t("cancel")}
+              </button>
+              <button onClick={handleSaveProfile} disabled={saving} className="flex items-center gap-1 text-xs text-primary hover:underline font-semibold">
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} {t("save")}
+              </button>
+            </div>
+          )}
+        </div>
         <div className="space-y-3">
           <div>
             <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("fullName")}</label>
-            <Input value={user?.full_name || ""} disabled className="bg-muted/30 min-h-[44px]" />
+            {editingProfile ? (
+              <Input value={profileForm.full_name} onChange={e => setProfileForm(f => ({ ...f, full_name: e.target.value }))} className="min-h-[44px]" />
+            ) : (
+              <Input value={user?.full_name || ""} disabled className="bg-muted/30 min-h-[44px]" />
+            )}
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("phone")}</label>
+            {editingProfile ? (
+              <Input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="min-h-[44px]" />
+            ) : (
+              <Input value={user?.phone || ""} disabled className="bg-muted/30 min-h-[44px]" placeholder="—" />
+            )}
           </div>
           <div>
             <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("email")}</label>
