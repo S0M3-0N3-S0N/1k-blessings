@@ -10,7 +10,8 @@ import {
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone } from "lucide-react";
+import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone, HelpCircle } from "lucide-react";
+import InstallSlideshow from "@/components/InstallSlideshow";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ export default function AccountSettings() {
   const [saving, setSaving] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showSlideshow, setShowSlideshow] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -145,14 +147,22 @@ export default function AccountSettings() {
 
       {/* Install App */}
       <div className="bg-card rounded-xl border border-border p-5 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-            <Smartphone className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+              <Smartphone className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-serif text-base font-medium">Add to Home Screen</h2>
+              <p className="text-xs text-muted-foreground">Install the app for quick access from your phone.</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-serif text-base font-medium">Add to Home Screen</h2>
-            <p className="text-xs text-muted-foreground">Install the app for quick access from your phone or desktop.</p>
-          </div>
+          <button
+            onClick={() => setShowSlideshow(true)}
+            className="flex items-center gap-1.5 text-xs text-primary hover:underline shrink-0"
+          >
+            <HelpCircle className="w-3.5 h-3.5" /> How?
+          </button>
         </div>
         {isInstalled ? (
           <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/25 rounded-lg px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400">
@@ -167,12 +177,16 @@ export default function AccountSettings() {
             <Download className="w-4 h-4" /> Install App
           </Button>
         ) : (
-          <div className="text-xs text-muted-foreground bg-muted/30 rounded-lg px-3 py-2.5 leading-relaxed">
-            <strong>iOS:</strong> Tap the Share button in Safari, then "Add to Home Screen".<br />
-            <strong>Android/Desktop:</strong> Look for the install icon in your browser's address bar.
-          </div>
+          <button
+            onClick={() => setShowSlideshow(true)}
+            className="w-full min-h-[44px] rounded-lg border border-dashed border-primary/40 text-sm text-primary font-medium hover:bg-primary/5 transition-colors flex items-center justify-center gap-2"
+          >
+            <HelpCircle className="w-4 h-4" /> View Installation Guide
+          </button>
         )}
       </div>
+
+      <InstallSlideshow open={showSlideshow} onClose={() => setShowSlideshow(false)} />
 
       <GoldButton onClick={handleSave} disabled={saving} className="w-full min-h-[44px]">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("saveSettings")}
