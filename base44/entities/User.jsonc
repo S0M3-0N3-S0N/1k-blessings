@@ -11,50 +11,13 @@
       ],
       "default": "user"
     },
-    "profile_picture": {
+    "phone": {
       "type": "string",
-      "title": "Profile Picture URL"
+      "title": "Phone"
     },
-    "theme_preference": {
+    "birthday": {
       "type": "string",
-      "title": "Theme Preference",
-      "enum": [
-        "dark",
-        "light",
-        "system"
-      ],
-      "default": "dark"
-    },
-    "notifications": {
-      "type": "object",
-      "title": "Notification Preferences",
-      "properties": {
-        "new_message": {
-          "type": "boolean",
-          "default": true
-        },
-        "paystub_ready": {
-          "type": "boolean",
-          "default": true
-        },
-        "payment_due": {
-          "type": "boolean",
-          "default": true
-        },
-        "schedule_change": {
-          "type": "boolean",
-          "default": false
-        }
-      }
-    },
-    "weekly_goal": {
-      "type": "number",
-      "title": "Weekly Earnings Goal ($)",
-      "default": 0
+      "title": "Birthday (YYYY-MM-DD)"
     }
-  },
-  "required": [
-    "profile_picture",
-    "notifications"
-  ]
+  }
 }

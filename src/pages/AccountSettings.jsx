@@ -25,10 +25,10 @@ export default function AccountSettings() {
   const [isInstalled, setIsInstalled] = useState(false);
   const [showSlideshow, setShowSlideshow] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "" });
+  const [profileForm, setProfileForm] = useState({ full_name: "", phone: "", birthday: "" });
 
   useEffect(() => {
-    if (user) setProfileForm({ full_name: user.full_name || "", phone: user.phone || "" });
+    if (user) setProfileForm({ full_name: user.full_name || "", phone: user.phone || "", birthday: user.birthday || "" });
   }, [user]);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function AccountSettings() {
 
   const handleSaveProfile = async () => {
     setSaving(true);
-    await base44.auth.updateMe({ full_name: profileForm.full_name, phone: profileForm.phone });
+    await base44.auth.updateMe({ full_name: profileForm.full_name, phone: profileForm.phone, birthday: profileForm.birthday });
     toast({ title: t("settingsSaved") });
     setEditingProfile(false);
     setSaving(false);
@@ -121,6 +121,14 @@ export default function AccountSettings() {
               <Input value={profileForm.phone} onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))} placeholder="(555) 000-0000" className="min-h-[44px]" />
             ) : (
               <Input value={user?.phone || ""} disabled className="bg-muted/30 min-h-[44px]" placeholder="—" />
+            )}
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">🎂 {t("birthday") || "Birthday"}</label>
+            {editingProfile ? (
+              <Input type="date" value={profileForm.birthday} onChange={e => setProfileForm(f => ({ ...f, birthday: e.target.value }))} className="min-h-[44px]" />
+            ) : (
+              <Input value={user?.birthday || ""} disabled className="bg-muted/30 min-h-[44px]" placeholder="—" />
             )}
           </div>
           <div>

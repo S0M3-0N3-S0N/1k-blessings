@@ -29,9 +29,15 @@ export default function TeamCalendar() {
   const [monthOffset, setMonthOffset] = useState(0);
   const { t } = useLanguage();
 
+  const [users, setUsers] = useState([]);
+
   const loadData = useCallback(async () => {
-    const [e, r] = await Promise.all([base44.entities.CalendarEvent.list("-date"), base44.entities.Renter.list()]);
-    setEvents(e); setRenters(r); setLoading(false);
+    const [e, r, u] = await Promise.all([
+      base44.entities.CalendarEvent.list("-date"),
+      base44.entities.Renter.list(),
+      base44.entities.User.list(),
+    ]);
+    setEvents(e); setRenters(r); setUsers(u); setLoading(false);
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -55,9 +61,19 @@ export default function TeamCalendar() {
     setShowAdd(false); setForm(emptyForm); setSaving(false); loadData();
   };
 
+  // Birthday events: match month+day regardless of year
+  const birthdayEvents = users
+    .filter(u => u.birthday)
+    .map(u => {
+      const [, bMonth, bDay] = u.birthday.split("-");
+      return { id: `bday-${u.id}`, title: `🎂 ${u.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
+    });
+
   const getDayEvents = (day) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return monthEvents.filter(e => e.date === dateStr);
+    const calEvents = monthEvents.filter(e => e.date === dateStr);
+    const bdays = birthdayEvents.filter(b => b.bMonth === month + 1 && b.bDay === day);
+    return [...calEvents, ...bdays];
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -94,7 +110,10 @@ export default function TeamCalendar() {
                   <span className={cn("text-xs font-medium w-5 h-5 flex items-center justify-center rounded-full", isToday && "bg-primary text-primary-foreground")}>{day}</span>
                   <div className="mt-1 space-y-0.5">
                     {dayEvents.map(e => (
-                      <div key={e.id} className={cn("text-[9px] font-medium px-1 py-0.5 rounded truncate border", TYPE_COLORS[e.type] || TYPE_COLORS.day_off)}>
+                      <div key={e.id} className={cn(
+                        "text-[9px] font-medium px-1 py-0.5 rounded truncate border",
+                        e.isBirthday ? "bg-pink-500/20 text-pink-500 border-pink-500/30" : (TYPE_COLORS[e.type] || TYPE_COLORS.day_off)
+                      )}>
                         {e.title}
                       </div>
                     ))}
@@ -106,25 +125,40 @@ export default function TeamCalendar() {
         </div>
 
         {/* Event list */}
-        {monthEvents.length > 0 && (
-          <div className="space-y-2">
-            <h3 className="font-serif text-sm font-medium text-muted-foreground">{t("thisMonthEvents") || "This Month's Events"}</h3>
-            {monthEvents.sort((a,b) => a.date.localeCompare(b.date)).map(e => (
-              <div key={e.id} className="bg-card rounded-xl border border-border flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border", TYPE_COLORS[e.type])}>{e.type.replace("_", " ")}</span>
-                  <div>
-                    <p className="text-sm font-medium">{e.title}</p>
-                    <p className="text-xs text-muted-foreground">{e.date}{e.renter_id && ` · ${renterMap[e.renter_id]?.name || ""}`}</p>
+        {(() => {
+          const monthBdays = birthdayEvents.filter(b => b.bMonth === month + 1);
+          const allMonthItems = [
+            ...monthEvents.map(e => ({ ...e, sortKey: e.date })),
+            ...monthBdays.map(b => ({ ...b, sortKey: `${year}-${String(month + 1).padStart(2,"0")}-${String(b.bDay).padStart(2,"0")}` })),
+          ].sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+          if (!allMonthItems.length) return null;
+          return (
+            <div className="space-y-2">
+              <h3 className="font-serif text-sm font-medium text-muted-foreground">{t("thisMonthEvents") || "This Month's Events"}</h3>
+              {allMonthItems.map(e => (
+                <div key={e.id} className="bg-card rounded-xl border border-border flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className={cn(
+                      "text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border",
+                      e.isBirthday ? "bg-pink-500/20 text-pink-500 border-pink-500/30" : TYPE_COLORS[e.type]
+                    )}>
+                      {e.isBirthday ? "Birthday" : e.type.replace("_", " ")}
+                    </span>
+                    <div>
+                      <p className="text-sm font-medium">{e.title}</p>
+                      <p className="text-xs text-muted-foreground">{e.sortKey}{!e.isBirthday && e.renter_id && ` · ${renterMap[e.renter_id]?.name || ""}`}</p>
+                    </div>
                   </div>
+                  {!e.isBirthday && (
+                    <button onClick={() => base44.entities.CalendarEvent.delete(e.id).then(loadData)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
-                <button onClick={() => base44.entities.CalendarEvent.delete(e.id).then(loadData)} className="text-muted-foreground hover:text-destructive transition-colors">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       <Dialog open={showAdd} onOpenChange={setShowAdd}>
