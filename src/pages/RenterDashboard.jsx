@@ -205,9 +205,7 @@ export default function RenterDashboard() {
                     contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} 
                     cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1 }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: "20px" }} />
                   <Line type="monotone" dataKey="earnings" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ fill: "hsl(var(--primary))", r: 5 }} activeDot={{ r: 7 }} name={t("yourEarnings")} isAnimationActive={true} animationDuration={500} />
-                  {renter.payment_model === "commission" && <Line type="monotone" dataKey="owner" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ fill: "hsl(var(--muted-foreground))", r: 4 }} activeDot={{ r: 6 }} name={t("ownersCut")} strokeDasharray="5 5" isAnimationActive={true} animationDuration={500} />}
                 </LineChart>
               </ResponsiveContainer>
             </div>
