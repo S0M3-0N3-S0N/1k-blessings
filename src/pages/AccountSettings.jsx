@@ -20,32 +20,31 @@ export default function AccountSettings() {
   const { t, lang, setLanguage, LANGUAGES } = useLanguage();
   const { toast } = useToast();
   const [theme, setTheme] = useState(() => localStorage.getItem("1kb-theme") || "dark");
-  const [accentColor, setAccentColor] = useState(() => localStorage.getItem("1kb-accent") || "gold");
+  const [accentHue, setAccentHue] = useState(() => parseInt(localStorage.getItem("1kb-accent-hue") || "43"));
 
-  const ACCENTS = [
-    { id: "gold",   label: "Gold",   hsl: "43 72% 42%" },
-    { id: "rose",   label: "Rose",   hsl: "346 77% 49%" },
-    { id: "violet", label: "Violet", hsl: "262 83% 58%" },
-    { id: "teal",   label: "Teal",   hsl: "174 72% 38%" },
-    { id: "sky",    label: "Sky",    hsl: "199 89% 48%" },
-    { id: "slate",  label: "Slate",  hsl: "215 25% 40%" },
-  ];
-
-  const applyAccent = (id) => {
-    const found = ACCENTS.find(a => a.id === id);
-    if (!found) return;
-    setAccentColor(id);
-    localStorage.setItem("1kb-accent", id);
-    document.documentElement.style.setProperty("--primary", found.hsl);
-    document.documentElement.style.setProperty("--ring", found.hsl);
-    document.documentElement.style.setProperty("--gold", found.hsl);
+  const applyAccentHue = (hue) => {
+    const h = parseInt(hue);
+    setAccentHue(h);
+    localStorage.setItem("1kb-accent-hue", String(h));
+    document.documentElement.style.setProperty("--accent-h", String(h));
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem("1kb-accent");
-    if (saved) applyAccent(saved);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    const saved = localStorage.getItem("1kb-accent-hue");
+    if (saved) document.documentElement.style.setProperty("--accent-h", saved);
   }, []);
+
+  const hueToName = (h) => {
+    if (h < 15 || h >= 345) return "Red";
+    if (h < 45) return "Orange";
+    if (h < 65) return "Yellow";
+    if (h < 150) return "Green";
+    if (h < 195) return "Teal";
+    if (h < 255) return "Blue";
+    if (h < 285) return "Violet";
+    if (h < 315) return "Purple";
+    return "Pink";
+  };
   const [saving, setSaving] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -222,26 +221,40 @@ export default function AccountSettings() {
 
         {/* Accent color */}
         <div>
-          <p className="text-xs text-muted-foreground font-medium mb-2">Accent Color</p>
-          <div className="grid grid-cols-6 gap-2">
-            {ACCENTS.map(a => (
-              <button
-                key={a.id}
-                onClick={() => applyAccent(a.id)}
-                title={a.label}
-                className={cn(
-                  "w-full aspect-square rounded-xl border-2 transition-all flex items-center justify-center",
-                  accentColor === a.id ? "border-foreground scale-110" : "border-transparent hover:scale-105"
-                )}
-                style={{ background: `hsl(${a.hsl})` }}
-              >
-                {accentColor === a.id && <span className="text-white text-xs font-bold">✓</span>}
-              </button>
-            ))}
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-muted-foreground font-medium">Accent Color</p>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full border border-border shadow-sm" style={{ background: `hsl(${accentHue} 72% 42%)` }} />
+              <span className="text-xs font-semibold" style={{ color: `hsl(${accentHue} 72% 42%)` }}>{hueToName(accentHue)}</span>
+            </div>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            {ACCENTS.find(a => a.id === accentColor)?.label}
-          </p>
+          {/* Color wheel slider */}
+          <div className="relative">
+            <div
+              className="w-full h-8 rounded-xl border border-border shadow-inner"
+              style={{
+                background: "linear-gradient(to right, hsl(0,72%,42%), hsl(30,72%,42%), hsl(60,72%,42%), hsl(90,72%,42%), hsl(120,72%,42%), hsl(150,72%,42%), hsl(180,72%,42%), hsl(210,72%,42%), hsl(240,72%,42%), hsl(270,72%,42%), hsl(300,72%,42%), hsl(330,72%,42%), hsl(360,72%,42%))"
+              }}
+            />
+            <input
+              type="range"
+              min="0"
+              max="360"
+              value={accentHue}
+              onChange={e => applyAccentHue(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              style={{ margin: 0 }}
+            />
+            {/* Thumb indicator */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-2 border-white shadow-md pointer-events-none"
+              style={{
+                left: `calc(${(accentHue / 360) * 100}% - 12px)`,
+                background: `hsl(${accentHue} 72% 42%)`
+              }}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">Drag to pick any color</p>
         </div>
       </div>
 

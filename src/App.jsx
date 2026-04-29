@@ -30,6 +30,9 @@ const ThemeProvider = ({ children }) => {
     const savedTheme = localStorage.getItem("1kb-theme") || "dark";
     if (savedTheme === "light") document.documentElement.classList.remove("dark");
     else document.documentElement.classList.add("dark");
+
+    const savedHue = localStorage.getItem("1kb-accent-hue");
+    if (savedHue) document.documentElement.style.setProperty("--accent-h", savedHue);
   }, []);
   return children;
 };
