@@ -20,6 +20,32 @@ export default function AccountSettings() {
   const { t, lang, setLanguage, LANGUAGES } = useLanguage();
   const { toast } = useToast();
   const [theme, setTheme] = useState(() => localStorage.getItem("1kb-theme") || "dark");
+  const [accentColor, setAccentColor] = useState(() => localStorage.getItem("1kb-accent") || "gold");
+
+  const ACCENTS = [
+    { id: "gold",   label: "Gold",   hsl: "43 72% 42%" },
+    { id: "rose",   label: "Rose",   hsl: "346 77% 49%" },
+    { id: "violet", label: "Violet", hsl: "262 83% 58%" },
+    { id: "teal",   label: "Teal",   hsl: "174 72% 38%" },
+    { id: "sky",    label: "Sky",    hsl: "199 89% 48%" },
+    { id: "slate",  label: "Slate",  hsl: "215 25% 40%" },
+  ];
+
+  const applyAccent = (id) => {
+    const found = ACCENTS.find(a => a.id === id);
+    if (!found) return;
+    setAccentColor(id);
+    localStorage.setItem("1kb-accent", id);
+    document.documentElement.style.setProperty("--primary", found.hsl);
+    document.documentElement.style.setProperty("--ring", found.hsl);
+    document.documentElement.style.setProperty("--gold", found.hsl);
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem("1kb-accent");
+    if (saved) applyAccent(saved);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [saving, setSaving] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
@@ -192,6 +218,30 @@ export default function AccountSettings() {
           >
             <Moon className="w-4 h-4" /> {t("dark")}
           </button>
+        </div>
+
+        {/* Accent color */}
+        <div>
+          <p className="text-xs text-muted-foreground font-medium mb-2">Accent Color</p>
+          <div className="grid grid-cols-6 gap-2">
+            {ACCENTS.map(a => (
+              <button
+                key={a.id}
+                onClick={() => applyAccent(a.id)}
+                title={a.label}
+                className={cn(
+                  "w-full aspect-square rounded-xl border-2 transition-all flex items-center justify-center",
+                  accentColor === a.id ? "border-foreground scale-110" : "border-transparent hover:scale-105"
+                )}
+                style={{ background: `hsl(${a.hsl})` }}
+              >
+                {accentColor === a.id && <span className="text-white text-xs font-bold">✓</span>}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            {ACCENTS.find(a => a.id === accentColor)?.label}
+          </p>
         </div>
       </div>
 
