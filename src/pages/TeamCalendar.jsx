@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,6 +24,7 @@ const emptyForm = { title: "", description: "", type: "day_off", date: new Date(
 export default function TeamCalendar() {
   const [events, setEvents] = useState([]);
   const [renters, setRenters] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -31,14 +33,20 @@ export default function TeamCalendar() {
   const { t } = useLanguage();
 
   const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   const loadData = useCallback(async () => {
-    const [e, r] = await Promise.all([
+    const promises = [
       base44.entities.CalendarEvent.list("-date"),
       base44.entities.Renter.list(),
-    ]);
-    setEvents(e); setRenters(r); setLoading(false);
-  }, []);
+    ];
+    if (isAdmin) promises.push(base44.entities.User.list());
+    const [e, r, users] = await Promise.all(promises);
+    setEvents(e);
+    setRenters(r);
+    if (users) setAllUsers(users);
+    setLoading(false);
+  }, [isAdmin]);
   useEffect(() => { loadData(); }, [loadData]);
 
   const now = new Date();
@@ -61,22 +69,35 @@ export default function TeamCalendar() {
     setShowAdd(false); setForm(emptyForm); setSaving(false); loadData();
   };
 
-  // Birthday events: built from renters who have a birthday set
-  const birthdayEvents = renters
+  // Birthday events: built from renters + all users (for admins)
+  const renterBdays = renters
     .filter(r => r.birthday)
     .map(r => {
       const [, bMonth, bDay] = r.birthday.split("-");
-      return { id: `bday-${r.id}`, title: `🎂 ${r.name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
-    })
-    // Also include current user's birthday if set and not already covered by a renter
-    .concat(
-      user?.birthday && !renters.some(r => r.user_email === user.email && r.birthday)
-        ? (() => {
-            const [, bMonth, bDay] = user.birthday.split("-");
-            return [{ id: `bday-me`, title: `🎂 ${user.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true }];
-          })()
-        : []
-    );
+      return { id: `bday-renter-${r.id}`, title: `🎂 ${r.name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
+    });
+
+  // For admins: collect birthdays from all user accounts
+  // Avoid duplicates with renters (matched by user_email)
+  const renterEmails = new Set(renters.map(r => r.user_email).filter(Boolean));
+  const userBdays = isAdmin
+    ? allUsers
+        .filter(u => u.birthday && !renterEmails.has(u.email))
+        .map(u => {
+          const [, bMonth, bDay] = u.birthday.split("-");
+          return { id: `bday-user-${u.id}`, title: `🎂 ${u.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
+        })
+    : [];
+
+  // For non-admins: include their own birthday if not covered by a renter record
+  const selfBday = !isAdmin && user?.birthday && !renters.some(r => r.user_email === user.email && r.birthday)
+    ? (() => {
+        const [, bMonth, bDay] = user.birthday.split("-");
+        return [{ id: `bday-me`, title: `🎂 ${user.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true }];
+      })()
+    : [];
+
+  const birthdayEvents = [...renterBdays, ...userBdays, ...selfBday];
 
   const getDayEvents = (day) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
