@@ -85,7 +85,7 @@ const CONTENT = {
     android: [
       { emoji: "🌐", title: "在 Chrome 中打开", desc: "请确保在 Android 设备上使用 Chrome 浏览器以获得最佳体验。", detail: "Chrome 是 Android 推荐的浏览器。" },
       { emoji: "⋮", title: "点击菜单 (⋮)", desc: "点击 Chrome 右上角的三点菜单图标。", detail: "菜单图标位于浏览器右上角。" },
-      { emoji: "📲", title: '点击"添加到主屏幕"', desc: '在下拉菜单中找到并点击"添加到主屏幕"。', detail: "您也可能看到"安装应用"选项 — 两者均可使用！" },
+      { emoji: "📲", title: '点击"添加到主屏幕"', desc: '在下拉菜单中找到并点击"添加到主屏幕"。', detail: '您也可能看到"安装应用"选项 — 两者均可使用！' },
       { emoji: "✅", title: "确认", desc: '在确认对话框中点击"添加"。应用将出现在您的主屏幕上。', detail: "现在您可以随时像使用原生应用一样启动 1K Blessings！" },
     ],
   },
