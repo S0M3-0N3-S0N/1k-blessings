@@ -69,6 +69,10 @@
       "type": "string",
       "title": "Phone"
     },
+    "birthday": {
+      "type": "string",
+      "title": "Birthday (YYYY-MM-DD)"
+    },
     "start_date": {
       "type": "string",
       "title": "Start Date (YYYY-MM-DD)"

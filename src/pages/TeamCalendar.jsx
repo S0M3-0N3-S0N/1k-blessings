@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
+import { useAuth } from "@/lib/AuthContext";
 import { Loader2, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,15 +30,14 @@ export default function TeamCalendar() {
   const [monthOffset, setMonthOffset] = useState(0);
   const { t } = useLanguage();
 
-  const [users, setUsers] = useState([]);
+  const { user } = useAuth();
 
   const loadData = useCallback(async () => {
-    const [e, r, u] = await Promise.all([
+    const [e, r] = await Promise.all([
       base44.entities.CalendarEvent.list("-date"),
       base44.entities.Renter.list(),
-      base44.entities.User.list(),
     ]);
-    setEvents(e); setRenters(r); setUsers(u); setLoading(false);
+    setEvents(e); setRenters(r); setLoading(false);
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -61,13 +61,22 @@ export default function TeamCalendar() {
     setShowAdd(false); setForm(emptyForm); setSaving(false); loadData();
   };
 
-  // Birthday events: match month+day regardless of year
-  const birthdayEvents = users
-    .filter(u => u.birthday)
-    .map(u => {
-      const [, bMonth, bDay] = u.birthday.split("-");
-      return { id: `bday-${u.id}`, title: `🎂 ${u.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
-    });
+  // Birthday events: built from renters who have a birthday set
+  const birthdayEvents = renters
+    .filter(r => r.birthday)
+    .map(r => {
+      const [, bMonth, bDay] = r.birthday.split("-");
+      return { id: `bday-${r.id}`, title: `🎂 ${r.name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true };
+    })
+    // Also include current user's birthday if set and not already covered by a renter
+    .concat(
+      user?.birthday && !renters.some(r => r.user_email === user.email && r.birthday)
+        ? (() => {
+            const [, bMonth, bDay] = user.birthday.split("-");
+            return [{ id: `bday-me`, title: `🎂 ${user.full_name}`, bMonth: parseInt(bMonth), bDay: parseInt(bDay), isBirthday: true }];
+          })()
+        : []
+    );
 
   const getDayEvents = (day) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
