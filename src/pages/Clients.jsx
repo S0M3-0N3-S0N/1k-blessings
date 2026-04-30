@@ -35,7 +35,7 @@ export default function Clients() {
       setLoading(false);
     }
   }, []);
-  useEffect(() => {loadData();}, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -76,15 +76,15 @@ export default function Clients() {
       <AlertCircle className="w-8 h-8 text-destructive" />
       <p className="text-sm text-destructive text-center">{error}</p>
       <button onClick={loadData} className="text-xs text-primary underline">{t("retry")}</button>
-    </div>);
-
-
-  const filtered = clients.filter((c) =>
-  c.name?.toLowerCase().includes(search.toLowerCase()) ||
-  c.phone?.toLowerCase().includes(search.toLowerCase()) ||
-  c.email?.toLowerCase().includes(search.toLowerCase())
+    </div>
   );
-  const newThisMonth = clients.filter((c) => {
+
+  const filtered = clients.filter(c =>
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase())
+  );
+  const newThisMonth = clients.filter(c => {
     const visitDate = c.last_visit_date ? new Date(c.last_visit_date) : null;
     const now = new Date();
     return visitDate && visitDate.getMonth() === now.getMonth() && visitDate.getFullYear() === now.getFullYear();
@@ -95,7 +95,7 @@ export default function Clients() {
   // Birthday this month check
   const now = new Date();
   const currentMonth = String(now.getMonth() + 1).padStart(2, "0");
-  const birthdaysThisMonth = clients.filter((c) => c.birthday?.slice(5, 7) === currentMonth);
+  const birthdaysThisMonth = clients.filter(c => c.birthday?.slice(5, 7) === currentMonth);
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -105,7 +105,7 @@ export default function Clients() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("clients")}</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{t("clientDirectory")}</h1>
           </div>
-          <GoldButton onClick={() => {setForm(emptyForm);setShowAdd(true);}}><Plus className="w-4 h-4" />{t("addClient")}</GoldButton>
+          <GoldButton onClick={() => { setForm(emptyForm); setShowAdd(true); }}><Plus className="w-4 h-4" />{t("addClient")}</GoldButton>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -116,40 +116,40 @@ export default function Clients() {
         </div>
 
         {/* Birthdays this month */}
-        {birthdaysThisMonth.length > 0 &&
-        <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
+        {birthdaysThisMonth.length > 0 && (
+          <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-3">
             <Gift className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-semibold text-primary mb-1">Birthdays this month 🎂</p>
-              <p className="text-xs text-foreground/80">{birthdaysThisMonth.map((c) => c.name).join(", ")}</p>
+              <p className="text-xs text-foreground/80">{birthdaysThisMonth.map(c => c.name).join(", ")}</p>
             </div>
           </div>
-        }
+        )}
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder={t("searchClients")}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 min-h-[44px]" />
-          
+            onChange={e => setSearch(e.target.value)}
+            className="pl-9 min-h-[44px]"
+          />
         </div>
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          {filtered.length === 0 ?
-          <div className="text-center py-12 space-y-2">
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 space-y-2">
               <p className="text-sm text-muted-foreground">{t("noClientsFound")}</p>
               {search && <button onClick={() => setSearch("")} className="text-xs text-primary underline">{t("clearSearch")}</button>}
-            </div> :
-
-          <div className="divide-y divide-border">
-              {filtered.map((c) => {
-              const loyalty = (c.visit_count || 0) >= 10 ? "Gold" : (c.visit_count || 0) >= 5 ? "Silver" : "Bronze";
-              const loyaltyColor = loyalty === "Gold" ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400" : loyalty === "Silver" ? "bg-slate-500/15 text-slate-600 dark:text-slate-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400";
-              const hasBirthdayThisMonth = c.birthday?.slice(5, 7) === currentMonth;
-              return (
-                <div key={c.id} className="px-5 py-4 flex items-start justify-between hover:bg-muted/20 gap-3 flex-wrap">
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {filtered.map(c => {
+                const loyalty = (c.visit_count || 0) >= 10 ? "Gold" : (c.visit_count || 0) >= 5 ? "Silver" : "Bronze";
+                const loyaltyColor = loyalty === "Gold" ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400" : loyalty === "Silver" ? "bg-slate-500/15 text-slate-600 dark:text-slate-400" : "bg-amber-500/15 text-amber-600 dark:text-amber-400";
+                const hasBirthdayThisMonth = c.birthday?.slice(5, 7) === currentMonth;
+                return (
+                  <div key={c.id} className="px-5 py-4 flex items-start justify-between hover:bg-muted/20 gap-3 flex-wrap">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-sm">{c.name}</p>
@@ -166,16 +166,16 @@ export default function Clients() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => {setForm(c);setShowAdd(true);}}>{t("edit")}</Button>
+                      <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => { setForm(c); setShowAdd(true); }}>{t("edit")}</Button>
                       <button onClick={() => handleDelete(c.id)} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 min-h-[44px] min-w-[44px] flex items-center justify-center">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  </div>);
-
-            })}
+                  </div>
+                );
+              })}
             </div>
-          }
+          )}
         </div>
       </div>
 
@@ -183,14 +183,14 @@ export default function Clients() {
         <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{form.id ? t("editClient") : t("addClient")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
-            <Input placeholder={`${t("fullName")} *`} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="min-h-[44px]" autoFocus />
-            <Input placeholder={t("phone")} value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="min-h-[44px]" />
-            <Input type="email" placeholder={t("email")} value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("fullName")} *`} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="min-h-[44px]" autoFocus />
+            <Input placeholder={t("phone")} value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} className="min-h-[44px]" />
+            <Input type="email" placeholder={t("email")} value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="min-h-[44px]" />
             <div>
               <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Birthday (optional)</label>
-              <Input type="date" value={form.birthday} onChange={(e) => setForm((f) => ({ ...f, birthday: e.target.value }))} className="min-h-[44px]" />
+              <Input type="date" value={form.birthday} onChange={e => setForm(f => ({ ...f, birthday: e.target.value }))} className="min-h-[44px]" />
             </div>
-            <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
+            <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowAdd(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.name}>
@@ -200,6 +200,6 @@ export default function Clients() {
           </div>
         </DialogContent>
       </Dialog>
-    </PullToRefresh>);
-
+    </PullToRefresh>
+  );
 }
