@@ -193,7 +193,10 @@ export default function Payments() {
                       <p className="text-sm font-medium">{r.name}</p>
                       <p className="text-xs text-muted-foreground">{r.role} · {freqLabel(r.frequency)}</p>
                       {r.payment?.payment_method && r.status === "paid" && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{t("paid")} via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} · {r.payment.paid_date ? new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {t("paid")} via {PAYMENT_METHOD_LABELS[r.payment.payment_method]}
+                          {r.payment.paid_date ? ` · ${new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })} at ${new Date(r.payment.paid_date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" })}` : ""}
+                        </p>
                       )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap justify-end">
