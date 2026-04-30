@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency } from "@/lib/utils";
-import { Loader2, ArrowUpRight, Copy, Check } from "lucide-react";
+import { formatCurrency, getDueDate } from "@/lib/utils";
+import { Loader2, ArrowUpRight, Copy, Check, CheckCircle2 } from "lucide-react";
 
 const METHOD_META = {
   cashapp: {
@@ -42,7 +42,7 @@ const METHOD_META = {
   },
   applepay: {
     label: "Apple Pay",
-    sub: "Tap to pay",
+    sub: "Copy handle → open Wallet",
     bgCard: "bg-zinc-900 dark:bg-zinc-800",
     textCard: "text-white",
     logo: (
@@ -64,16 +64,12 @@ const METHOD_META = {
   },
 };
 
-export default function PaymentLinksPanel({ renter, amount }) {
+export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(null);
-
-  const handleCopy = (text, key) => {
-    navigator.clipboard.writeText(text);
-    setCopied(key);
-    setTimeout(() => setCopied(null), 2000);
-  };
+  const [logging, setLogging] = useState(null);
+  const [logged, setLogged] = useState(false);
 
   useEffect(() => {
     base44.entities.SalonNote.filter({ title: "__payment_settings__" }).then(res => {
@@ -83,6 +79,49 @@ export default function PaymentLinksPanel({ renter, amount }) {
       setLoading(false);
     });
   }, []);
+
+  const handleCopy = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  // Log that the renter initiated a payment — creates/updates Payment record as "pending"
+  const logPaymentInitiated = async (method) => {
+    if (!renter?.id || !amount) return;
+    setLogging(method);
+    try {
+      const now = new Date();
+      const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const existing = await base44.entities.Payment.filter({ renter_id: renter.id });
+      const thisMonth = existing.find(p => p.period?.startsWith(monthStr));
+
+      const paymentData = {
+        renter_id: renter.id,
+        amount: amount,
+        period: monthStr,
+        status: "pending",
+        payment_method: method,
+        due_date: getDueDate(monthStr, renter.frequency),
+        notes: `Renter initiated via ${METHOD_META[method]?.label || method} on ${now.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+      };
+
+      if (thisMonth && thisMonth.status !== "paid") {
+        await base44.entities.Payment.update(thisMonth.id, {
+          payment_method: method,
+          notes: paymentData.notes,
+        });
+      } else if (!thisMonth) {
+        await base44.entities.Payment.create(paymentData);
+      }
+      setLogged(true);
+      if (onPaymentLogged) onPaymentLogged();
+    } catch (err) {
+      console.error("Failed to log payment:", err);
+    } finally {
+      setLogging(null);
+    }
+  };
 
   if (loading) return (
     <div className="flex justify-center py-8">
@@ -110,9 +149,7 @@ export default function PaymentLinksPanel({ renter, amount }) {
     settings.venmo_handle && {
       key: "venmo",
       handle: settings.venmo_handle,
-      // Use the venmo:// deep link scheme for mobile; falls back to web
       url: `venmo://paycharge?txn=pay&recipients=${encodeURIComponent(settings.venmo_handle.replace(/^@/, ""))}&amount=${amtFormatted}&note=${noteEnc}`,
-      fallbackUrl: `https://venmo.com/${settings.venmo_handle.replace(/^@/, "")}`,
     },
     settings.zelle_handle && {
       key: "zelle",
@@ -122,7 +159,6 @@ export default function PaymentLinksPanel({ renter, amount }) {
     settings.applepay_handle && {
       key: "applepay",
       handle: settings.applepay_handle,
-      // Apple Pay P2P has no public web deep link — open Wallet app
       url: `shoebox://`,
       copyHandle: true,
     },
@@ -144,7 +180,15 @@ export default function PaymentLinksPanel({ renter, amount }) {
         <div className="bg-primary/10 rounded-xl px-5 py-4 text-center border border-primary/20">
           <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Amount Due</p>
           <p className="font-mono text-4xl font-bold text-primary tracking-tight">{formatCurrency(amount)}</p>
-          <p className="text-xs text-muted-foreground mt-1">Weekly rent · {renter?.frequency || ""}</p>
+          <p className="text-xs text-muted-foreground mt-1">{renter?.frequency ? `${renter.frequency} rent` : "Rent due"}</p>
+        </div>
+      )}
+
+      {/* Sent confirmation banner */}
+      {logged && (
+        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Payment logged — the owner will confirm once received.</p>
         </div>
       )}
 
@@ -154,14 +198,16 @@ export default function PaymentLinksPanel({ renter, amount }) {
       <div className="grid grid-cols-2 gap-2.5">
         {methods.map(m => {
           const meta = METHOD_META[m.key];
+          const isLogging = logging === m.key;
+
           if (m.copyHandle) {
-            // Apple Pay: show handle to copy + open Wallet
+            // Apple Pay: copy handle + open Wallet
             return (
               <div key={m.key} className={`relative flex flex-col gap-3 p-4 rounded-2xl ${meta.bgCard} ${meta.textCard} shadow-sm`}>
                 <div className="flex items-start justify-between">
                   {meta.logo}
                   <button
-                    onClick={() => handleCopy(m.handle, m.key)}
+                    onClick={() => { handleCopy(m.handle, m.key); logPaymentInitiated(m.key); }}
                     className="opacity-70 hover:opacity-100 transition-opacity"
                   >
                     {copied === m.key ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
@@ -170,22 +216,27 @@ export default function PaymentLinksPanel({ renter, amount }) {
                 <div>
                   <p className="font-bold text-sm leading-tight">{meta.label}</p>
                   <p className="text-[11px] opacity-70 mt-0.5 truncate">{m.handle}</p>
-                  <p className="text-[10px] opacity-50 mt-1">Tap copy, then open Wallet</p>
+                  <p className="text-[10px] opacity-50 mt-1">Tap to copy, then open Wallet</p>
                 </div>
               </div>
             );
           }
+
           return (
             <a
               key={m.key}
               href={m.url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => logPaymentInitiated(m.key)}
               className={`relative flex flex-col gap-3 p-4 rounded-2xl transition-all active:scale-95 ${meta.bgCard} ${meta.textCard} shadow-sm hover:shadow-md`}
             >
               <div className="flex items-start justify-between">
                 {meta.logo}
-                <ArrowUpRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                {isLogging
+                  ? <Loader2 className="w-3.5 h-3.5 opacity-60 animate-spin shrink-0" />
+                  : <ArrowUpRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                }
               </div>
               <div>
                 <p className="font-bold text-sm leading-tight">{meta.label}</p>

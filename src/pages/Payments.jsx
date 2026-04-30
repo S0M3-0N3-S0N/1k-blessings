@@ -199,9 +199,14 @@ export default function Payments() {
                       <p className="text-sm font-medium">{r.name}</p>
                       <p className="text-xs text-muted-foreground">{r.role} · {freqLabel(r.frequency)}</p>
                       {r.payment?.payment_method && r.status === "paid" && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {t("paid")} via {PAYMENT_METHOD_LABELS[r.payment.payment_method]}
+                        <p className="text-xs text-emerald-500 mt-0.5 font-medium">
+                          ✓ {t("paid")} via {PAYMENT_METHOD_LABELS[r.payment.payment_method]}
                           {r.payment.paid_date ? ` · ${new Date(r.payment.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" })} at ${new Date(r.payment.paid_date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "America/New_York" })}` : ""}
+                        </p>
+                      )}
+                      {r.payment?.payment_method && r.status === "pending" && r.payment.notes?.includes("Renter initiated") && (
+                        <p className="text-xs text-amber-500 mt-0.5 font-medium">
+                          ⏳ Sent via {PAYMENT_METHOD_LABELS[r.payment.payment_method]} — awaiting confirmation
                         </p>
                       )}
                     </div>

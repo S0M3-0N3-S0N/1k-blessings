@@ -249,7 +249,7 @@ export default function RenterDashboard() {
           <DialogHeader>
             <DialogTitle className="font-serif text-xl font-light">Pay Rent</DialogTitle>
           </DialogHeader>
-          <PaymentLinksPanel renter={renter} amount={weeklyRent} />
+          <PaymentLinksPanel renter={renter} amount={weeklyRent} onPaymentLogged={() => { setShowPayment(false); loadData(); }} />
         </DialogContent>
       </Dialog>
     </PullToRefresh>
