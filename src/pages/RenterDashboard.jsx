@@ -3,9 +3,12 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, cn } from "@/lib/utils";
-import { Loader2, Scissors, DollarSign, TrendingUp } from "lucide-react";
+import { Loader2, Scissors, DollarSign, TrendingUp, CreditCard } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
+import PaymentLinksPanel from "@/components/payments/PaymentLinksPanel.jsx";
+import { useState as useLocalState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { Link } from "react-router-dom";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Legend } from "recharts";
@@ -16,6 +19,7 @@ export default function RenterDashboard() {
   const { t } = useLanguage();
   const [renter, setRenter] = useState(null);
   const [services, setServices] = useState([]);
+  const [showPayment, setShowPayment] = useLocalState(false);
 
   const [loading, setLoading] = useState(true);
 
@@ -212,6 +216,25 @@ export default function RenterDashboard() {
           </div>
         )}
 
+        {/* Pay Rent Button (rent model only) */}
+        {renter.payment_model === "rent" && (
+          <button
+            onClick={() => setShowPayment(true)}
+            className="w-full py-4 px-5 rounded-xl border border-primary/40 bg-primary/8 hover:bg-primary/15 transition-all flex items-center justify-between min-h-[60px]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
+                <CreditCard className="w-4 h-4 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-primary">Pay Rent</p>
+                <p className="text-xs text-muted-foreground">{formatCurrency(weeklyRent)} due · Tap to pay</p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold text-primary bg-primary/15 px-3 py-1.5 rounded-lg">Pay Now →</span>
+          </button>
+        )}
+
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:flex md:gap-2 gap-2">
           <Link to="/paystub" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center">{t("paystub")}</Link>
@@ -219,6 +242,16 @@ export default function RenterDashboard() {
           <Link to="/messages" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center md:flex-1">{t("messages")}</Link>
         </div>
       </div>
+
+      {/* Pay Rent Dialog */}
+      <Dialog open={showPayment} onOpenChange={setShowPayment}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-serif text-xl font-light">Pay Rent</DialogTitle>
+          </DialogHeader>
+          <PaymentLinksPanel renter={renter} amount={weeklyRent} />
+        </DialogContent>
+      </Dialog>
     </PullToRefresh>
   );
 }

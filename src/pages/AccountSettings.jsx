@@ -11,6 +11,7 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
 import { Loader2, Moon, Sun, Trash2, LogOut, Download, Smartphone, HelpCircle, Pencil, Check, X } from "lucide-react";
+import PaymentSettingsAdmin from "@/components/payments/PaymentSettingsAdmin.jsx";
 import InstallSlideshow from "@/components/InstallSlideshow";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
@@ -300,6 +301,9 @@ export default function AccountSettings() {
       </div>
 
       <InstallSlideshow open={showSlideshow} onClose={() => setShowSlideshow(false)} />
+
+      {/* Payment Settings — admin only */}
+      {user?.role === "admin" && <PaymentSettingsAdmin />}
 
       <GoldButton onClick={handleSave} disabled={saving} className="w-full min-h-[44px]">
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("saveSettings")}
