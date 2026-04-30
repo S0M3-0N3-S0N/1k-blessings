@@ -120,10 +120,7 @@ export default function Expenses() {
             <button onClick={openAdd} className="flex items-center gap-2 px-4 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
               <Plus className="w-4 h-4" />{t("addExpense")}
             </button>
-            <div className="w-px bg-white/20" />
-            <button onClick={() => { setDialogTab("recurring"); setShowDialog(true); }} className="flex items-center gap-1.5 px-3 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
+
           </div>
         </div>
 
