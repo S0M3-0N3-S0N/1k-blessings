@@ -256,7 +256,7 @@ export default function MonthlyReports() {
                             const weekSvcs = services.filter(s => s.service_date >= wStr && s.service_date <= weStr);
                             const wComm = weekSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
                             const wSvcRev = weekSvcs.reduce((s, e) => s + (e.amount || 0), 0);
-                            const wRent = payments.filter(p => p.status === "paid" && p.period >= wStr && p.period <= weStr).reduce((s, p) => s + (p.amount || 0), 0);
+                            const wRent = payments.filter(p => p.status === "paid" && p.period?.slice(0, 7) === m).reduce((s, p) => s + (p.amount || 0), 0) / mondays.length;
                             const wExp = expenses.filter(e => e.expense_date >= wStr && e.expense_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
                             const wNet = wComm + wRent - wExp;
                             return (
