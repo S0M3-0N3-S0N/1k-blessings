@@ -52,6 +52,8 @@
         "waxing",
         "lashes",
         "massage",
+        "makeup",
+        "brows",
         "other"
       ],
       "default": "hair"
@@ -64,6 +66,7 @@
         "card",
         "zelle",
         "cashapp",
+        "venmo",
         "other"
       ],
       "default": "cash"

@@ -2,6 +2,10 @@
   "name": "SalonNote",
   "type": "object",
   "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
     "content": {
       "type": "string",
       "title": "Content"
@@ -18,14 +22,10 @@
         "general",
         "reminder",
         "policy",
-        "goal"
+        "goal",
+        "idea"
       ],
       "default": "general"
-    },
-    "is_pinned": {
-      "type": "boolean",
-      "title": "Is Pinned",
-      "default": false
     },
     "is_shared": {
       "type": "boolean",

@@ -69,12 +69,14 @@ export const CATEGORY_CONFIG = {
   waxing:     { label: "Waxing",     className: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/30" },
   lashes:     { label: "Lashes",     className: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" },
   massage:    { label: "Massage",    className: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30" },
+  makeup:     { label: "Makeup",     className: "bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-500/30" },
+  brows:      { label: "Brows",      className: "bg-stone-500/15 text-stone-600 dark:text-stone-400 border-stone-500/30" },
   other:      { label: "Other",      className: "bg-muted text-muted-foreground border-border" },
 };
 export function categoryBadge(cat) { return CATEGORY_CONFIG[cat] || CATEGORY_CONFIG.other; }
 
 export const PAYMENT_METHOD_LABELS = {
-  cash: "Cash", card: "Card", zelle: "Zelle", cashapp: "CashApp", other: "Other"
+  cash: "Cash", card: "Card", zelle: "Zelle", cashapp: "CashApp", venmo: "Venmo", other: "Other"
 };
 
 export function computeEarnings(amount, renter) {

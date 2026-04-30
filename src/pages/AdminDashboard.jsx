@@ -141,10 +141,10 @@ export default function AdminDashboard() {
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <KpiCard label={t("monthlyRent")} value={formatCurrency(monthlyRentProjected)} icon={DollarSign} accent glow sub={t("projected")} />
-          <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} sub={t("thisMonth")} />
+          <KpiCard label={t("collected")} value={formatCurrency(collectedThisMonth)} icon={TrendingUp} accent glow sub={t("thisMonth")} />
           <KpiCard label={t("ourCommission")} value={formatCurrency(weekOwnerCommission)} icon={Scissors} sub={t("thisWeek")} />
           <KpiCard label={t("activeStylists")} value={activeRenters.length} icon={Users} sub={`${rentRenters.length} ${t("rent")} · ${commissionRenters.length} ${t("commission")}`} />
+          <KpiCard label={t("overdue")} value={overdueCount} icon={AlertCircle} className={overdueCount > 0 ? "border-red-500/40 bg-red-500/5" : ""} sub={overdueCount > 0 ? "needs attention" : "all clear"} />
         </div>
 
         {/* Rent Collection Progress */}

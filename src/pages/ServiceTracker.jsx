@@ -389,6 +389,11 @@ export default function ServiceTracker() {
                   <SelectItem value="hair">{t("hair")}</SelectItem>
                   <SelectItem value="nails">{t("nails")}</SelectItem>
                   <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
+                  <SelectItem value="waxing">Waxing</SelectItem>
+                  <SelectItem value="lashes">Lashes</SelectItem>
+                  <SelectItem value="massage">Massage</SelectItem>
+                  <SelectItem value="makeup">Makeup</SelectItem>
+                  <SelectItem value="brows">Brows</SelectItem>
                   <SelectItem value="other">{t("other")}</SelectItem>
                 </SelectContent>
               </Select>

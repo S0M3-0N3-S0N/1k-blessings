@@ -17,9 +17,10 @@ general:  { className: "bg-muted text-muted-foreground border-border" },
 reminder: { className: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
 policy:   { className: "bg-stone-500/15 text-stone-600 dark:text-stone-400 border-stone-500/30" },
 goal:     { className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+idea:     { className: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30" },
 };
 
-const emptyForm = { content: "", category: "general", pinned: false };
+const emptyForm = { title: "", content: "", category: "general", pinned: false };
 
 export default function Notes() {
   const [notes, setNotes] = useState([]);
@@ -39,10 +40,10 @@ export default function Notes() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const openAdd = () => { setForm(emptyForm); setEditNote(null); setShowDialog(true); };
-  const openEdit = (n) => { setForm({ content: n.content, category: n.category || "general", pinned: n.pinned || false }); setEditNote(n); setShowDialog(true); };
+  const openEdit = (n) => { setForm({ title: n.title || "", content: n.content, category: n.category || "general", pinned: n.pinned || false }); setEditNote(n); setShowDialog(true); };
 
   const handleSave = async () => {
-    if (!form.content.trim()) return;
+    if (!form.content.trim() && !form.title.trim()) return;
     setSaving(true);
     if (editNote) {
       await base44.entities.SalonNote.update(editNote.id, form);
@@ -83,7 +84,7 @@ export default function Notes() {
 
         {/* Category Filter */}
         <div className="flex gap-1.5 flex-wrap">
-          {["all", "general", "reminder", "policy", "goal"].map(f => (
+          {["all", "general", "reminder", "policy", "goal", "idea"].map(f => (
             <button key={f} onClick={() => setFilterCat(f)} className={cn("px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors min-h-[44px]", filterCat === f ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:text-foreground")}>
               {f === "all" ? t("all") : t(f)}
             </button>
@@ -103,7 +104,7 @@ export default function Notes() {
                 <div key={n.id} className={cn("bg-card rounded-xl border border-border p-4 flex flex-col gap-3 relative", n.pinned && "ring-1 ring-primary/30")}>
                   <div className="flex items-start justify-between gap-2">
                     <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border", cat.className)}>
-                      {n.pinned && "📌 "}{t(n.category)}
+                      {n.pinned && "📌 "}{n.category}
                     </span>
                     <div className="flex items-center gap-1">
                       <button onClick={() => togglePin(n)} className={cn("p-1.5 rounded-lg hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors", n.pinned && "text-primary")}>
@@ -117,7 +118,8 @@ export default function Notes() {
                       </button>
                     </div>
                   </div>
-                  <p className="text-sm leading-relaxed flex-1 whitespace-pre-wrap">{n.content}</p>
+                  {n.title && <p className="font-semibold text-sm">{n.title}</p>}
+                  <p className="text-sm leading-relaxed flex-1 whitespace-pre-wrap text-muted-foreground">{n.content}</p>
                   <p className="text-[10px] text-muted-foreground/60">
                     {n.created_date ? new Date(n.created_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : ""}
                   </p>
@@ -132,10 +134,17 @@ export default function Notes() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{editNote ? t("edit") : t("addNote")}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
+            <Input
+              placeholder="Title (optional)"
+              value={form.title}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              className="min-h-[44px]"
+              autoFocus
+            />
             <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
               <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {Object.keys(CAT_CONFIG).map(v => <SelectItem key={v} value={v}>{t(v)}</SelectItem>)}
+                {Object.keys(CAT_CONFIG).map(v => <SelectItem key={v} value={v} className="capitalize">{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <textarea
@@ -143,7 +152,6 @@ export default function Notes() {
               value={form.content}
               onChange={e => setForm(f => ({ ...f, content: e.target.value }))}
               className="w-full min-h-[120px] rounded-lg border border-border bg-transparent px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring placeholder:text-muted-foreground"
-              autoFocus
             />
             <div className="flex items-center gap-3">
               <Switch checked={form.pinned} onCheckedChange={v => setForm(f => ({ ...f, pinned: v }))} id="pin-toggle" />
@@ -151,7 +159,7 @@ export default function Notes() {
             </div>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
-              <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.content.trim()}>
+              <GoldButton className="flex-1" onClick={handleSave} disabled={saving || (!form.content.trim() && !form.title.trim())}>
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
             </div>
