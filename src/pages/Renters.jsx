@@ -48,7 +48,7 @@ function RenterFormFields({ form, setForm }) {
           <Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} placeholder={t("phonePlaceholder")} className="min-h-[44px]" />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("date")}</label>
+          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Start Date</label>
           <Input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} className="min-h-[44px]" />
         </div>
       </div>
