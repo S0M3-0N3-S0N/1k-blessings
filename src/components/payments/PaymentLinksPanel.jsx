@@ -1,44 +1,74 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency } from "@/lib/utils";
-import { ExternalLink, Loader2 } from "lucide-react";
+import { Loader2, ArrowUpRight } from "lucide-react";
 
-// SVG icons for each payment method
-const CashAppIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-    <rect width="40" height="40" rx="10" fill="#00D64F"/>
-    <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">$</text>
-  </svg>
-);
-const ZelleIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-    <rect width="40" height="40" rx="10" fill="#6D1ED4"/>
-    <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">Z</text>
-  </svg>
-);
-const VenmoIcon = () => (
-  <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-    <rect width="40" height="40" rx="10" fill="#008CFF"/>
-    <text x="50%" y="58%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="13" fontWeight="bold">V</text>
-  </svg>
-);
-const ApplePayIcon = () => (
-  <svg viewBox="0 0 50 20" className="h-5" fill="currentColor">
-    <text x="0" y="16" fontSize="14" fontFamily="-apple-system, sans-serif" fontWeight="600"> Pay</text>
-  </svg>
-);
-const GooglePayIcon = () => (
-  <svg viewBox="0 0 60 24" className="h-5">
-    <text x="0" y="18" fontSize="14" fontFamily="sans-serif" fontWeight="500" fill="currentColor">G Pay</text>
-  </svg>
-);
+const METHOD_META = {
+  cashapp: {
+    label: "Cash App",
+    sub: "Send via $CashTag",
+    bgCard: "bg-[#00D64F]",
+    textCard: "text-white",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8">
+        <rect width="40" height="40" rx="10" fill="rgba(255,255,255,0.2)"/>
+        <text x="50%" y="57%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="22" fontWeight="bold">$</text>
+      </svg>
+    ),
+  },
+  venmo: {
+    label: "Venmo",
+    sub: "Send via @handle",
+    bgCard: "bg-[#008CFF]",
+    textCard: "text-white",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8">
+        <rect width="40" height="40" rx="10" fill="rgba(255,255,255,0.2)"/>
+        <text x="50%" y="57%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="20" fontWeight="bold">V</text>
+      </svg>
+    ),
+  },
+  zelle: {
+    label: "Zelle",
+    sub: "Send to phone/email",
+    bgCard: "bg-[#6D1ED4]",
+    textCard: "text-white",
+    logo: (
+      <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8">
+        <rect width="40" height="40" rx="10" fill="rgba(255,255,255,0.2)"/>
+        <text x="50%" y="57%" dominantBaseline="middle" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold">Z</text>
+      </svg>
+    ),
+  },
+  applepay: {
+    label: "Apple Pay",
+    sub: "Tap to pay",
+    bgCard: "bg-zinc-900 dark:bg-zinc-800",
+    textCard: "text-white",
+    logo: (
+      <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+        <span className="text-white font-bold text-[10px] leading-none"> Pay</span>
+      </div>
+    ),
+  },
+  googlepay: {
+    label: "Google Pay",
+    sub: "Tap to pay",
+    bgCard: "bg-white border border-gray-200",
+    textCard: "text-gray-800",
+    logo: (
+      <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+        <span className="font-bold text-sm" style={{background:"linear-gradient(135deg,#4285F4,#EA4335,#FBBC04,#34A853)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>G</span>
+      </div>
+    ),
+  },
+};
 
 export default function PaymentLinksPanel({ renter, amount }) {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load payment settings from a well-known SalonNote used as config store
     base44.entities.SalonNote.filter({ title: "__payment_settings__" }).then(res => {
       if (res[0]?.content) {
         try { setSettings(JSON.parse(res[0].content)); } catch {}
@@ -47,112 +77,97 @@ export default function PaymentLinksPanel({ renter, amount }) {
     });
   }, []);
 
-  if (loading) return <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-primary" /></div>;
+  if (loading) return (
+    <div className="flex justify-center py-8">
+      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+    </div>
+  );
+
   if (!settings) return (
-    <div className="text-center py-4 text-sm text-muted-foreground">
-      Payment links not configured yet. Ask the salon owner to set them up.
+    <div className="text-center py-8 space-y-1">
+      <p className="text-sm font-medium">Not configured yet</p>
+      <p className="text-xs text-muted-foreground">Ask the salon owner to set up payment links.</p>
     </div>
   );
 
   const amtFormatted = amount ? amount.toFixed(2) : "";
-  const note = `Rent%20from%20${encodeURIComponent(renter?.name || "Stylist")}`;
+  const note = `Rent from ${renter?.name || "Stylist"}`;
+  const noteEnc = encodeURIComponent(note);
 
   const methods = [
     settings.cashapp_handle && {
       key: "cashapp",
-      label: "Cash App",
-      icon: <CashAppIcon />,
-      bg: "bg-[#00D64F]/10 hover:bg-[#00D64F]/20 border-[#00D64F]/30",
-      textColor: "text-[#00D64F]",
+      handle: settings.cashapp_handle,
       url: `https://cash.app/$${settings.cashapp_handle.replace(/^\$/, "")}/${amtFormatted}`,
     },
     settings.venmo_handle && {
       key: "venmo",
-      label: "Venmo",
-      icon: <VenmoIcon />,
-      bg: "bg-[#008CFF]/10 hover:bg-[#008CFF]/20 border-[#008CFF]/30",
-      textColor: "text-[#008CFF]",
-      url: `https://venmo.com/${settings.venmo_handle.replace(/^@/, "")}?txn=pay&amount=${amtFormatted}&note=${note}`,
+      handle: settings.venmo_handle,
+      url: `https://venmo.com/${settings.venmo_handle.replace(/^@/, "")}?txn=pay&amount=${amtFormatted}&note=${noteEnc}`,
     },
     settings.zelle_handle && {
       key: "zelle",
-      label: "Zelle",
-      icon: <ZelleIcon />,
-      bg: "bg-[#6D1ED4]/10 hover:bg-[#6D1ED4]/20 border-[#6D1ED4]/30",
-      textColor: "text-[#6D1ED4]",
-      url: `https://enroll.zellepay.com/qr-codes?data=${encodeURIComponent(JSON.stringify({ name: settings.zelle_handle, token: settings.zelle_handle, action: "pay" }))}`,
+      handle: settings.zelle_handle,
+      url: `https://enroll.zellepay.com/`,
     },
     settings.applepay_handle && {
       key: "applepay",
-      label: "Apple Pay",
-      icon: null,
-      isApple: true,
-      bg: "bg-black/10 hover:bg-black/15 border-black/20 dark:bg-white/10 dark:hover:bg-white/15 dark:border-white/20",
-      textColor: "text-foreground",
+      handle: settings.applepay_handle,
       url: `https://applepay.apple.com/`,
-      note: settings.applepay_handle,
     },
     settings.googlepay_handle && {
       key: "googlepay",
-      label: "Google Pay",
-      icon: null,
-      isGoogle: true,
-      bg: "bg-muted hover:bg-muted/80 border-border",
-      textColor: "text-foreground",
-      url: `https://pay.google.com/payments/home`,
-      note: settings.googlepay_handle,
+      handle: settings.googlepay_handle,
+      url: `https://pay.google.com/`,
     },
   ].filter(Boolean);
 
   if (methods.length === 0) return (
-    <div className="text-center py-4 text-sm text-muted-foreground">
-      No payment methods configured yet.
-    </div>
+    <div className="text-center py-8 text-sm text-muted-foreground">No payment methods configured yet.</div>
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Amount header */}
       {amount > 0 && (
-        <div className="text-center">
-          <p className="text-xs text-muted-foreground mb-0.5">Amount due</p>
-          <p className="font-mono text-2xl font-bold text-primary">{formatCurrency(amount)}</p>
+        <div className="bg-primary/10 rounded-xl px-5 py-4 text-center border border-primary/20">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Amount Due</p>
+          <p className="font-mono text-4xl font-bold text-primary tracking-tight">{formatCurrency(amount)}</p>
+          <p className="text-xs text-muted-foreground mt-1">Weekly rent · {renter?.frequency || ""}</p>
         </div>
       )}
-      <p className="text-xs text-muted-foreground text-center">Tap a method below to pay</p>
-      <div className="grid gap-2">
-        {methods.map(m => (
-          <a
-            key={m.key}
-            href={m.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`flex items-center justify-between px-4 py-3.5 rounded-xl border transition-all min-h-[56px] ${m.bg}`}
-          >
-            <div className="flex items-center gap-3">
-              {m.isApple ? (
-                <div className="w-10 h-10 rounded-lg bg-black dark:bg-white flex items-center justify-center shrink-0">
-                  <span className="text-white dark:text-black font-semibold text-xs"> Pay</span>
-                </div>
-              ) : m.isGoogle ? (
-                <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center shrink-0">
-                  <span className="font-bold text-xs" style={{background:"linear-gradient(90deg,#4285F4,#EA4335,#FBBC04,#34A853)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>G</span>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                  {m.icon}
-                </div>
-              )}
-              <div>
-                <p className={`font-semibold text-sm ${m.textColor}`}>{m.label}</p>
-                {m.note && <p className="text-xs text-muted-foreground">{m.note}</p>}
+
+      <p className="text-xs text-muted-foreground text-center font-medium">Choose how you'd like to pay</p>
+
+      {/* Payment method cards — 2 col grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        {methods.map(m => {
+          const meta = METHOD_META[m.key];
+          return (
+            <a
+              key={m.key}
+              href={m.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`relative flex flex-col gap-3 p-4 rounded-2xl transition-all active:scale-95 ${meta.bgCard} ${meta.textCard} shadow-sm hover:shadow-md`}
+            >
+              <div className="flex items-start justify-between">
+                {meta.logo}
+                <ArrowUpRight className="w-3.5 h-3.5 opacity-60 shrink-0" />
               </div>
-            </div>
-            <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
-          </a>
-        ))}
+              <div>
+                <p className="font-bold text-sm leading-tight">{meta.label}</p>
+                <p className="text-[11px] opacity-70 mt-0.5 truncate">{m.handle}</p>
+              </div>
+            </a>
+          );
+        })}
       </div>
+
       {settings.payment_note && (
-        <p className="text-xs text-muted-foreground text-center pt-1 italic">{settings.payment_note}</p>
+        <div className="bg-muted/40 rounded-xl px-4 py-3 text-center">
+          <p className="text-xs text-muted-foreground">💬 {settings.payment_note}</p>
+        </div>
       )}
     </div>
   );
