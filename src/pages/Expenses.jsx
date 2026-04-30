@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,6 +30,7 @@ export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [showRecurring, setShowRecurring] = useState(false);
   const [editExpense, setEditExpense] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -113,7 +114,12 @@ export default function Expenses() {
             <KpiCard label={t("lastMonthTotal")} value={formatCurrency(lastMonth)} />
             <KpiCard label={t("ytd")} value={formatCurrency(ytd)} />
           </div>
-          <GoldButton onClick={openAdd} className="shrink-0"><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
+          <div className="flex gap-2 shrink-0">
+            <Button variant="outline" className="min-h-[44px] gap-2" onClick={() => setShowRecurring(true)}>
+              <RefreshCw className="w-4 h-4" /> Recurring
+            </Button>
+            <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
+          </div>
         </div>
 
         {catBreakdown.length > 0 && (
@@ -129,8 +135,6 @@ export default function Expenses() {
             </div>
           </div>
         )}
-
-        <RecurringExpenses currentMonth={currentM} onApplied={loadData} />
 
         <div className="space-y-3">
           {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses")}</p>}
@@ -187,6 +191,13 @@ export default function Expenses() {
           })}
         </div>
       </div>
+
+      <Dialog open={showRecurring} onOpenChange={setShowRecurring}>
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Recurring Expenses</DialogTitle></DialogHeader>
+          <RecurringExpenses currentMonth={currentM} onApplied={() => { loadData(); }} />
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent className="max-w-sm">

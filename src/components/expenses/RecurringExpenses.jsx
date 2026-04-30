@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Plus, Trash2, RefreshCw, ChevronDown, ChevronUp, Loader2, Check } from "lucide-react";
+import { Plus, Trash2, RefreshCw, Loader2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,7 +24,6 @@ const emptyTemplate = { description: "", amount: "", category: "other", paid_by:
 export default function RecurringExpenses({ currentMonth, onApplied }) {
   const [templates, setTemplates] = useState([]);
   const [expenses, setExpenses] = useState([]);
-  const [open, setOpen] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyTemplate);
   const [saving, setSaving] = useState(false);
@@ -106,113 +105,93 @@ export default function RecurringExpenses({ currentMonth, onApplied }) {
   const monthLabel = new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/20 transition-colors min-h-[56px]"
-        onClick={() => setOpen(o => !o)}
-      >
-        <div className="flex items-center gap-2.5">
-          <RefreshCw className="w-4 h-4 text-primary" />
-          <p className="font-medium text-sm">Recurring Expenses</p>
-          {templates.length > 0 && (
-            <span className="text-[10px] font-bold bg-primary/15 text-primary px-2 py-0.5 rounded-full">
-              {templates.length}
-            </span>
-          )}
+    <div className="space-y-0">
+      {/* Apply all banner */}
+      {templates.length > 0 && (
+        <div className="py-3 bg-primary/5 rounded-xl border border-primary/20 px-4 flex items-center justify-between gap-3 mb-3">
+          <p className="text-xs text-muted-foreground">Apply all to <span className="font-semibold text-foreground">{monthLabel}</span></p>
+          <GoldButton size="sm" onClick={applyAll}>
+            <RefreshCw className="w-3.5 h-3.5" /> Apply All
+          </GoldButton>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-      </button>
+      )}
 
-      {open && (
-        <div className="border-t border-border">
-          {/* Apply all banner */}
-          {templates.length > 0 && (
-            <div className="px-5 py-3 bg-primary/5 border-b border-border flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground">Apply all recurring to <span className="font-semibold text-foreground">{monthLabel}</span></p>
-              <GoldButton size="sm" onClick={applyAll}>
-                <RefreshCw className="w-3.5 h-3.5" /> Apply All
-              </GoldButton>
-            </div>
-          )}
-
-          {/* Template list */}
-          <div className="divide-y divide-border">
-            {templates.length === 0 && !showAdd && (
-              <p className="text-xs text-muted-foreground text-center py-6">No recurring expenses yet</p>
-            )}
-            {templates.map(t => (
-              <div key={t.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/10 min-h-[52px]">
-                <div className="flex items-center gap-3">
-                  <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[t.category] || CAT_COLORS.other)}>
-                    {t.category}
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium">{t.description}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{formatCurrency(t.amount)} / mo</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => applyToMonth(t)}
-                    disabled={applying === t.id}
-                    className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors min-h-[36px]"
-                  >
-                    {applying === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    Apply
-                  </button>
-                  <button
-                    onClick={() => handleDelete(t.id)}
-                    className="text-muted-foreground hover:text-destructive p-1.5 rounded-lg hover:bg-destructive/10 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Add template form */}
-          {showAdd ? (
-            <div className="px-5 py-4 border-t border-border space-y-3 bg-muted/10">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">New Recurring Expense</p>
-              <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
-              <div className="grid grid-cols-2 gap-2">
-                <Input type="number" placeholder="Amount *" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
-                <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
-                  <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-                  <SelectContent>{CATS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Day of month</label>
-                  <Input type="number" min="1" max="28" value={form.day_of_month} onChange={e => setForm(f => ({ ...f, day_of_month: e.target.value }))} className="min-h-[44px] font-mono" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Paid by</label>
-                  <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
-                    <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="salon">Salon</SelectItem>
-                      <SelectItem value="owner">Owner</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => { setShowAdd(false); setForm(emptyTemplate); }}>Cancel</Button>
-                <GoldButton className="flex-1" onClick={handleAdd} disabled={saving || !form.description || !form.amount}>
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
-                </GoldButton>
+      {/* Template list */}
+      <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+        {templates.length === 0 && !showAdd && (
+          <p className="text-xs text-muted-foreground text-center py-6">No recurring expenses yet</p>
+        )}
+        {templates.map(t => (
+          <div key={t.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/10 min-h-[52px] bg-card">
+            <div className="flex items-center gap-3">
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[t.category] || CAT_COLORS.other)}>
+                {t.category}
+              </span>
+              <div>
+                <p className="text-sm font-medium">{t.description}</p>
+                <p className="text-xs text-muted-foreground font-mono">{formatCurrency(t.amount)} / mo</p>
               </div>
             </div>
-          ) : (
-            <div className="px-5 py-3 border-t border-border">
-              <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium min-h-[40px]">
-                <Plus className="w-4 h-4" /> Add recurring expense
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => applyToMonth(t)}
+                disabled={applying === t.id}
+                className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg transition-colors min-h-[36px]"
+              >
+                {applying === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                Apply
+              </button>
+              <button
+                onClick={() => handleDelete(t.id)}
+                className="text-muted-foreground hover:text-destructive p-1.5 rounded-lg hover:bg-destructive/10 transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
-          )}
+          </div>
+        ))}
+      </div>
+
+      {/* Add template form */}
+      {showAdd ? (
+        <div className="pt-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">New Recurring Expense</p>
+          <Input placeholder="Description *" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
+          <div className="grid grid-cols-2 gap-2">
+            <Input type="number" placeholder="Amount *" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
+            <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Day of month</label>
+              <Input type="number" min="1" max="28" value={form.day_of_month} onChange={e => setForm(f => ({ ...f, day_of_month: e.target.value }))} className="min-h-[44px] font-mono" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Paid by</label>
+              <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
+                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="salon">Salon</SelectItem>
+                  <SelectItem value="owner">Owner</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => { setShowAdd(false); setForm(emptyTemplate); }}>Cancel</Button>
+            <GoldButton className="flex-1" onClick={handleAdd} disabled={saving || !form.description || !form.amount}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save"}
+            </GoldButton>
+          </div>
+        </div>
+      ) : (
+        <div className="pt-3">
+          <button onClick={() => setShowAdd(true)} className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 font-medium min-h-[40px]">
+            <Plus className="w-4 h-4" /> Add recurring expense
+          </button>
         </div>
       )}
     </div>
