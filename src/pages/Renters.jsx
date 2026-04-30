@@ -19,7 +19,7 @@ import UserLinker from "@/components/renters/UserLinker";
 
 const emptyForm = {
   name: "", role: "Stylist", payment_model: "rent", rent_amount: "",
-  frequency: "weekly", commission_owner: 40, base_salary: "", base_salary_frequency: "weekly",
+  frequency: "weekly", due_day: "Saturday", commission_owner: 40, base_salary: "", base_salary_frequency: "weekly",
   status: "active", phone: "", start_date: "", notes: "", user_email: ""
 };
 
@@ -70,7 +70,20 @@ function RenterFormFields({ form, setForm }) {
             </Select>
           </div>
         </div>
-      }
+        {form.frequency !== "monthly" && (
+          <div>
+            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Due Day</label>
+            <Select value={form.due_day || "Saturday"} onValueChange={(v) => setForm((f) => ({ ...f, due_day: v }))}>
+              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map(d => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      
       {form.payment_model === "commission" &&
       <div className="space-y-3">
           <div>
@@ -153,7 +166,7 @@ export default function Renters() {
   useEffect(() => {loadData();}, [loadData]);
 
   const openAdd = () => {setForm(emptyForm);setEditRenter(null);setShowDialog(true);};
-  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, base_salary: r.base_salary || "", base_salary_frequency: r.base_salary_frequency || "weekly" });setEditRenter(r);setShowDialog(true);};
+  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, base_salary: r.base_salary || "", base_salary_frequency: r.base_salary_frequency || "weekly", due_day: r.due_day || "Saturday" });setEditRenter(r);setShowDialog(true);};
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -310,6 +323,12 @@ export default function Renters() {
                           <span className="text-muted-foreground">{t("rent")}</span>
                           <span className="font-mono font-semibold">{formatCurrency(r.rent_amount)} / {freqLabel(r.frequency)}</span>
                         </div>
+                        {r.due_day && r.frequency !== "monthly" && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Due every</span>
+                            <span className="font-medium">{r.due_day}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">≈ {t("monthly")}</span>
                           <span className="font-mono text-muted-foreground">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
