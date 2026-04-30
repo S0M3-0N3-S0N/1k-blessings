@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import GoldButton from "@/components/ui/GoldButton.jsx";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
@@ -30,7 +31,7 @@ export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
-  const [showRecurring, setShowRecurring] = useState(false);
+  const [dialogTab, setDialogTab] = useState("add");
   const [editExpense, setEditExpense] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
@@ -45,10 +46,11 @@ export default function Expenses() {
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
-  const openAdd = () => { setEditExpense(null); setForm(emptyForm); setShowDialog(true); };
+  const openAdd = () => { setEditExpense(null); setForm(emptyForm); setDialogTab("add"); setShowDialog(true); };
   const openEdit = (e) => {
     setEditExpense(e);
     setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "" });
+    setDialogTab("add");
     setShowDialog(true);
   };
 
@@ -119,7 +121,7 @@ export default function Expenses() {
               <Plus className="w-4 h-4" />{t("addExpense")}
             </button>
             <div className="w-px bg-white/20" />
-            <button onClick={() => setShowRecurring(true)} className="flex items-center gap-1.5 px-3 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
+            <button onClick={() => { setDialogTab("recurring"); setShowDialog(true); }} className="flex items-center gap-1.5 px-3 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -195,44 +197,49 @@ export default function Expenses() {
         </div>
       </div>
 
-      <Dialog open={showRecurring} onOpenChange={setShowRecurring}>
-        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Recurring Expenses</DialogTitle></DialogHeader>
-          <RecurringExpenses currentMonth={currentM} onApplied={() => { loadData(); }} />
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>{editExpense ? t("edit") : t("addExpense")}</DialogTitle></DialogHeader>
-          <div className="space-y-3 pt-2">
-            <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
-            <div className="grid grid-cols-2 gap-2">
-              <Input type="number" placeholder={`${t("amount")} *`} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
-              <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
-                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-                <SelectContent>{CATS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <Input type="date" value={form.expense_date} onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))} className="min-h-[44px]" />
-              <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
-                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="salon">{t("paidBySalon")}</SelectItem>
-                  <SelectItem value="owner">{t("paidByOwner2")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
-            <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
-            <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
-              <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
-              </GoldButton>
-            </div>
-          </div>
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+          <Tabs value={dialogTab} onValueChange={setDialogTab}>
+            <DialogHeader>
+              <TabsList className="w-full">
+                <TabsTrigger value="add" className="flex-1">{editExpense ? t("edit") : t("addExpense")}</TabsTrigger>
+                <TabsTrigger value="recurring" className="flex-1 gap-1.5"><RefreshCw className="w-3.5 h-3.5" /> Recurring</TabsTrigger>
+              </TabsList>
+            </DialogHeader>
+            <TabsContent value="add" className="mt-0">
+              <div className="space-y-3 pt-2">
+                <Input placeholder={`${t("description")} *`} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="min-h-[44px]" autoFocus />
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="number" placeholder={`${t("amount")} *`} value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} className="min-h-[44px] font-mono" min="0" step="0.01" />
+                  <Select value={form.category} onValueChange={v => setForm(f => ({ ...f, category: v }))}>
+                    <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>{CATS.map(c => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input type="date" value={form.expense_date} onChange={e => setForm(f => ({ ...f, expense_date: e.target.value }))} className="min-h-[44px]" />
+                  <Select value={form.paid_by} onValueChange={v => setForm(f => ({ ...f, paid_by: v }))}>
+                    <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="salon">{t("paidBySalon")}</SelectItem>
+                      <SelectItem value="owner">{t("paidByOwner2")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
+                <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
+                  <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>
+                    {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
+                  </GoldButton>
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="recurring" className="mt-0 pt-2">
+              <RecurringExpenses currentMonth={currentM} onApplied={() => { loadData(); }} />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </PullToRefresh>
