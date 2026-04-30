@@ -23,7 +23,7 @@ const CAT_COLORS = {
   other: "bg-muted text-muted-foreground border-border",
 };
 
-const emptyForm = { description: "", amount: "", category: "other", expense_date: new Date().toISOString().split("T")[0], paid_by: "salon", receipt_note: "", notes: "" };
+const emptyForm = { description: "", amount: "", category: "other", expense_date: new Date().toISOString().split("T")[0], paid_by: "salon", receipt_note: "", notes: "", is_recurring: false };
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
@@ -46,7 +46,7 @@ export default function Expenses() {
   const openAdd = () => { setEditExpense(null); setForm(emptyForm); setShowDialog(true); };
   const openEdit = (e) => {
     setEditExpense(e);
-    setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "" });
+    setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "", is_recurring: e.is_recurring || false });
     setShowDialog(true);
   };
 
@@ -209,6 +209,19 @@ export default function Expenses() {
             </div>
             <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={e => setForm(f => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
             <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
+            <button
+              type="button"
+              onClick={() => setForm(f => ({ ...f, is_recurring: !f.is_recurring }))}
+              className={cn(
+                "w-full flex items-center justify-between px-4 py-3 rounded-lg border text-sm font-medium transition-colors min-h-[44px]",
+                form.is_recurring ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted text-muted-foreground"
+              )}
+            >
+              <span>Recurring Expense</span>
+              <div className={cn("w-9 h-5 rounded-full transition-colors flex items-center px-0.5", form.is_recurring ? "bg-primary" : "bg-muted-foreground/30")}>
+                <div className={cn("w-4 h-4 rounded-full bg-white shadow transition-transform", form.is_recurring ? "translate-x-4" : "translate-x-0")} />
+              </div>
+            </button>
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.description || !form.amount || !form.expense_date}>
