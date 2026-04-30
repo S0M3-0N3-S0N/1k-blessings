@@ -435,7 +435,7 @@ function PerStylistBreakdown({ services, payments, renters }) {
               <div key={r.id} className="flex items-center justify-between py-1.5">
                 <span className="font-medium text-sm">{r.name}</span>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-mono">{formatCurrency(rs.reduce((s, e) => s + (e.amount || 0), 0))}</span>
+                  <span className="font-mono">{formatCurrency(p?.amount || r.rent_amount || 0)}</span>
                   <span className={cn("px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider text-[10px]",
                     p?.status === "paid" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" : "bg-amber-500/15 text-amber-600 border-amber-500/30")}>
                     {p?.status || "pending"}
