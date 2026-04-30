@@ -22,7 +22,7 @@ export default function Payments() {
   const [filter, setFilter] = useState("all");
   const [monthOffset, setMonthOffset] = useState(0);
   const [markDialog, setMarkDialog] = useState(null); // { renter, existing }
-  const [markForm, setMarkForm] = useState({ amount: "", payment_method: "cash", notes: "" });
+  const [markForm, setMarkForm] = useState({ amount: "", payment_method: "cash", notes: "", paid_time: "" });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -71,7 +71,8 @@ export default function Payments() {
 
   const openMarkPaid = (renter) => {
     const { payment } = getRenterStatus(renter);
-    setMarkForm({ amount: renter.rent_amount || "", payment_method: "cash", notes: "" });
+    const nowNY = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" });
+    setMarkForm({ amount: renter.rent_amount || "", payment_method: "cash", notes: "", paid_time: nowNY });
     setMarkDialog({ renter, existing: payment });
   };
 
@@ -85,9 +86,14 @@ export default function Payments() {
         setSaving(false);
         return;
       }
+      // Build paid_date from today's NY date + the manually entered time
+      const todayNY = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); // YYYY-MM-DD
+      const paidDateTime = markForm.paid_time
+        ? new Date(`${todayNY}T${markForm.paid_time}:00`).toISOString()
+        : new Date().toISOString();
       const data = {
         status: "paid",
-        paid_date: new Date().toISOString(),
+        paid_date: paidDateTime,
         due_date: getDueDate(monthStr, renter.frequency),
         amount,
         payment_method: markForm.payment_method,
@@ -248,6 +254,10 @@ export default function Payments() {
                   {Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Time Paid (NY Time)</label>
+              <Input type="time" value={markForm.paid_time} onChange={e => setMarkForm(f => ({ ...f, paid_time: e.target.value }))} className="min-h-[44px] font-mono" />
             </div>
             <Input placeholder={`${t("notes")} (${t("optional")})`} value={markForm.notes} onChange={e => setMarkForm(f => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <div className="flex gap-2 pt-1">
