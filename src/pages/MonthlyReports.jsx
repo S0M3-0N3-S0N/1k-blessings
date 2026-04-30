@@ -128,7 +128,7 @@ export default function MonthlyReports() {
                 <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{t("income")}</p>
                 <p className="font-mono text-sm md:text-xl font-semibold text-primary">{formatCurrency(ytdIncome)}</p>
               </div>
-              <div className="p-3 md:p-4">
+              <div className="px-3 py-3 md:p-4">
                 <p className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">{t("expenses")}</p>
                 <p className="font-mono text-sm md:text-xl font-semibold text-destructive">−{formatCurrency(ytdExpenses)}</p>
               </div>
