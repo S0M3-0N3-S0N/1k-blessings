@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, getDueDate } from "@/lib/utils";
 import { Loader2, ArrowUpRight, Copy, Check, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 const METHOD_META = {
   cashapp: {
@@ -65,6 +66,7 @@ const METHOD_META = {
 };
 
 export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
+  const { t } = useLanguage();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(null);
@@ -131,8 +133,8 @@ export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
 
   if (!settings) return (
     <div className="text-center py-8 space-y-1">
-      <p className="text-sm font-medium">Not configured yet</p>
-      <p className="text-xs text-muted-foreground">Ask the salon owner to set up payment links.</p>
+      <p className="text-sm font-medium">{t("notConfigured")}</p>
+      <p className="text-xs text-muted-foreground">{t("notConfiguredDesc")}</p>
     </div>
   );
 
@@ -170,7 +172,7 @@ export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
   ].filter(Boolean);
 
   if (methods.length === 0) return (
-    <div className="text-center py-8 text-sm text-muted-foreground">No payment methods configured yet.</div>
+    <div className="text-center py-8 text-sm text-muted-foreground">{t("noPaymentMethods")}</div>
   );
 
   return (
@@ -178,7 +180,7 @@ export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
       {/* Amount header */}
       {amount > 0 && (
         <div className="bg-primary/10 rounded-xl px-5 py-4 text-center border border-primary/20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Amount Due</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-1">{t("amountDue")}</p>
           <p className="font-mono text-4xl font-bold text-primary tracking-tight">{formatCurrency(amount)}</p>
           <p className="text-xs text-muted-foreground mt-1">{renter?.frequency ? `${renter.frequency} rent` : "Rent due"}</p>
         </div>
@@ -188,11 +190,11 @@ export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
       {logged && (
         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3">
           <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Payment logged — the owner will confirm once received.</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{t("paymentLoggedBanner")}</p>
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground text-center font-medium">Choose how you'd like to pay</p>
+      <p className="text-xs text-muted-foreground text-center font-medium">{t("choosePayment")}</p>
 
       {/* Payment method cards — 2 col grid */}
       <div className="grid grid-cols-2 gap-2.5">
@@ -216,7 +218,7 @@ export default function PaymentLinksPanel({ renter, amount, onPaymentLogged }) {
                 <div>
                   <p className="font-bold text-sm leading-tight">{meta.label}</p>
                   <p className="text-[11px] opacity-70 mt-0.5 truncate">{m.handle}</p>
-                  <p className="text-[10px] opacity-50 mt-1">Tap to copy, then open Wallet</p>
+                  <p className="text-[10px] opacity-50 mt-1">{t("tapToCopyOpenWallet")}</p>
                 </div>
               </div>
             );

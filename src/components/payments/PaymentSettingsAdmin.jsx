@@ -5,6 +5,7 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import { Loader2, Check } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/lib/i18n";
 
 const DEFAULT = {
   cashapp_handle: "",
@@ -82,6 +83,7 @@ const METHODS = [
 ];
 
 export default function PaymentSettingsAdmin() {
+  const { t } = useLanguage();
   const [form, setForm] = useState(DEFAULT);
   const [noteId, setNoteId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -125,9 +127,9 @@ export default function PaymentSettingsAdmin() {
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Rent Collection</p>
-        <h2 className="font-serif text-base font-medium mt-0.5">Payment Links</h2>
-        <p className="text-xs text-muted-foreground mt-1">Add your handles so renters can tap to pay directly from their dashboard.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">{t("rentCollection")}</p>
+        <h2 className="font-serif text-base font-medium mt-0.5">{t("paymentSettings")}</h2>
+        <p className="text-xs text-muted-foreground mt-1">{t("paymentSettingsDesc")}</p>
       </div>
 
       {/* Method rows */}
@@ -171,7 +173,7 @@ export default function PaymentSettingsAdmin() {
       {/* Footer */}
       <div className="px-5 py-4 border-t border-border bg-muted/20">
         <GoldButton onClick={handleSave} disabled={saving} className="w-full">
-          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4" /> Saved!</> : "Save Payment Settings"}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <><Check className="w-4 h-4" /> {t("save")}!</> : t("savePaymentSettings")}
         </GoldButton>
       </div>
     </div>
