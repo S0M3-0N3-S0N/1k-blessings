@@ -52,37 +52,40 @@ function RenterFormFields({ form, setForm }) {
           <Input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} className="min-h-[44px]" />
         </div>
       </div>
-      {form.payment_model === "rent" &&
-      <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("rentAmount") || "Rent Amount"}</label>
-            <Input type="number" value={form.rent_amount} onChange={(e) => setForm((f) => ({ ...f, rent_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
+      {form.payment_model === "rent" && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("rentAmount") || "Rent Amount"}</label>
+              <Input type="number" value={form.rent_amount} onChange={(e) => setForm((f) => ({ ...f, rent_amount: e.target.value }))} className="font-mono min-h-[44px]" min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("frequency")}</label>
+              <Select value={form.frequency} onValueChange={(v) => setForm((f) => ({ ...f, frequency: v }))}>
+                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">{t("weekly")}</SelectItem>
+                  <SelectItem value="biweekly">{t("biweekly")}</SelectItem>
+                  <SelectItem value="monthly">{t("monthly")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("frequency")}</label>
-            <Select value={form.frequency} onValueChange={(v) => setForm((f) => ({ ...f, frequency: v }))}>
-              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="weekly">{t("weekly")}</SelectItem>
-                <SelectItem value="biweekly">{t("biweekly")}</SelectItem>
-                <SelectItem value="monthly">{t("monthly")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {form.frequency !== "monthly" && (
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Due Day</label>
+              <Select value={form.due_day || "Saturday"} onValueChange={(v) => setForm((f) => ({ ...f, due_day: v }))}>
+                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map(d => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
-        {form.frequency !== "monthly" && (
-          <div>
-            <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Due Day</label>
-            <Select value={form.due_day || "Saturday"} onValueChange={(v) => setForm((f) => ({ ...f, due_day: v }))}>
-              <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map(d => (
-                  <SelectItem key={d} value={d}>{d}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+      )}
       
       {form.payment_model === "commission" &&
       <div className="space-y-3">
