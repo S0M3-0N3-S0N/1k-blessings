@@ -11,6 +11,7 @@ import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
+import RecurringExpenses from "@/components/expenses/RecurringExpenses";
 
 const CATS = ["supplies", "cleaning", "software", "utilities", "marketing", "equipment", "other"];
 const CAT_COLORS = {
@@ -128,6 +129,8 @@ export default function Expenses() {
             </div>
           </div>
         )}
+
+        <RecurringExpenses currentMonth={currentM} onApplied={loadData} />
 
         <div className="space-y-3">
           {sortedMonths.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">{t("noExpenses")}</p>}
