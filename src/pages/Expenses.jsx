@@ -158,7 +158,10 @@ export default function Expenses() {
                             {e.category}
                           </span>
                           <div>
+                            <div className="flex items-center gap-1.5">
                             <p className="text-sm font-medium">{e.description}</p>
+                            {e.is_recurring && <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_2px_rgba(52,211,153,0.6)] shrink-0" />}
+                          </div>
                             <p className="text-xs text-muted-foreground">
                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                               {e.notes && ` · ${e.notes}`}
