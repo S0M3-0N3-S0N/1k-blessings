@@ -435,7 +435,7 @@ export default function ServiceTracker() {
             }
 
             <div className="flex gap-2 pt-1">
-              <Button variant="outline" className="bg-transparent px-5 py-2 text-sm font-medium rounded-md inline-flex items-center justify-center gap-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-input shadow-sm hover:bg-accent hover:text-accent-foreground h-9 flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setShowDialog(false)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={handleSave} disabled={saving || !form.amount || isAdmin && !form.renter_id}>
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("save")}
               </GoldButton>
