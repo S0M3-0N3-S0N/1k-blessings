@@ -114,11 +114,14 @@ export default function Expenses() {
             <KpiCard label={t("lastMonthTotal")} value={formatCurrency(lastMonth)} />
             <KpiCard label={t("ytd")} value={formatCurrency(ytd)} />
           </div>
-          <div className="flex gap-2 shrink-0">
-            <Button variant="outline" className="min-h-[44px] gap-2" onClick={() => setShowRecurring(true)}>
-              <RefreshCw className="w-4 h-4" /> Recurring
-            </Button>
-            <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />{t("addExpense")}</GoldButton>
+          <div className="flex shrink-0 rounded-lg overflow-hidden btn-gold">
+            <button onClick={openAdd} className="flex items-center gap-2 px-4 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
+              <Plus className="w-4 h-4" />{t("addExpense")}
+            </button>
+            <div className="w-px bg-white/20" />
+            <button onClick={() => setShowRecurring(true)} className="flex items-center gap-1.5 px-3 h-[44px] text-sm font-semibold hover:brightness-110 transition-all">
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 
