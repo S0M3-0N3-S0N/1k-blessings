@@ -152,26 +152,26 @@ export default function Expenses() {
                 {isOpen && (
                   <div className="border-t border-border divide-y divide-border">
                     {items.map(e => (
-                      <div key={e.id} className="flex items-center justify-between px-5 py-3 hover:bg-muted/20 min-h-[52px]">
-                        <div className="flex items-center gap-3">
-                          <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", CAT_COLORS[e.category] || CAT_COLORS.other)}>
+                      <div key={e.id} className="flex items-start justify-between px-4 py-3 hover:bg-muted/20 gap-2">
+                        <div className="flex items-start gap-2 min-w-0 flex-1">
+                          <span className={cn("text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border shrink-0 mt-0.5", CAT_COLORS[e.category] || CAT_COLORS.other)}>
                             {e.category}
                           </span>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <p className="text-sm font-medium">{e.description}</p>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <p className="text-sm font-medium leading-tight">{e.description}</p>
                               {e.is_recurring && (
                                 <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border bg-violet-500/15 text-violet-500 border-violet-500/30 shrink-0">↻ Recurring</span>
                               )}
                             </div>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {e.expense_date ? new Date(e.expense_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
                               {e.notes && ` · ${e.notes}`}
                               {e.paid_by === "owner" && ` · ${t("paidByOwner")}`}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 shrink-0">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
                           <button onClick={() => openEdit(e)} className="text-muted-foreground hover:text-primary min-h-[44px] min-w-[36px] flex items-center justify-center">
                             <Pencil className="w-3.5 h-3.5" />
