@@ -1,4 +1,4 @@
-import { formatCurrency, freqMultiplier, freqLabel, getInitials, getAvatarColor, cn } from "@/lib/utils";
+import { formatCurrency, freqLabel, getInitials, getAvatarColor, cn, calcMonthlyRent, isPaymentOverdue } from "@/lib/utils";
 import { CalendarDays, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 export default function PaymentSchedule({ renters, payments, currency }) {
@@ -13,7 +13,6 @@ export default function PaymentSchedule({ renters, payments, currency }) {
     );
   }
 
-  // Determine payment status for each renter
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
@@ -24,16 +23,15 @@ export default function PaymentSchedule({ renters, payments, currency }) {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4">
         {activeRenters.map((r, i) => {
-          const renterPayments = payments.filter(p => p.renter_id === r.id && p.period === currentMonth);
-          const latestPayment = renterPayments[0];
-          const isPaid = latestPayment?.status === 'paid';
-          const isOverdue = !isPaid && now.getDate() > 5; // Overdue after 5th of month
-          const monthlyTotal = (r.rent_amount || 0) * freqMultiplier(r.frequency);
+          const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonth));
+          const isPaid = payment?.status === 'paid';
+          const overdue = isPaymentOverdue(payment, r);
+          const monthlyTotal = calcMonthlyRent(r, currentMonth);
           const avatar = getAvatarColor(i);
 
-          const StatusIcon = isPaid ? CheckCircle2 : isOverdue ? AlertCircle : Clock;
-          const statusLabel = isPaid ? 'Paid' : isOverdue ? 'Overdue' : 'Pending';
-          const statusColor = isPaid ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : isOverdue ? 'text-red-600 bg-red-50 border-red-200' : 'text-amber-600 bg-amber-50 border-amber-200';
+          const StatusIcon = isPaid ? CheckCircle2 : overdue ? AlertCircle : Clock;
+          const statusLabel = isPaid ? 'Paid' : overdue ? 'Overdue' : 'Pending';
+          const statusColor = isPaid ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : overdue ? 'text-red-600 bg-red-50 border-red-200' : 'text-amber-600 bg-amber-50 border-amber-200';
 
           return (
             <div key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/40 border border-border">
@@ -47,7 +45,7 @@ export default function PaymentSchedule({ renters, payments, currency }) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-mono font-semibold">{formatCurrency(r.rent_amount || 0, currency)}</p>
+                <p className="text-sm font-mono font-semibold">{formatCurrency(monthlyTotal, currency)}/mo</p>
                 <div className={cn("inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-md border mt-1", statusColor)}>
                   <StatusIcon className="w-3 h-3" />
                   {statusLabel}

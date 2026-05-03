@@ -1,35 +1,25 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { formatCurrency, freqMultiplier } from "@/lib/utils";
+import { formatCurrency, calcMonthlyRent, freqMultiplier } from "@/lib/utils";
 
-export default function RevenueChart({ renters, charges, currency }) {
-  // Build last 6 months of data
-  const months = [];
+export default function RevenueChart({ renters, charges, payments, services, currency }) {
   const now = new Date();
+
+  // Build last 6 months of real data
+  const data = [];
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({
-      name: d.toLocaleDateString('en-US', { month: 'short' }),
-      month: d.getMonth(),
-      year: d.getFullYear()
-    });
+    const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const name = d.toLocaleDateString('en-US', { month: 'short' });
+
+    // Rent: sum calcMonthlyRent for renters who paid this month
+    const paidRenterIds = new Set((payments || []).filter(p => p.status === "paid" && p.period?.startsWith(monthStr)).map(p => p.renter_id));
+    const rent = renters.filter(r => r.status === "active" && paidRenterIds.has(r.id)).reduce((s, r) => s + calcMonthlyRent(r, monthStr), 0);
+
+    // Commission: sum owner_earnings from services this month
+    const commission = (services || []).filter(s => s.service_date?.startsWith(monthStr)).reduce((s, e) => s + (e.owner_earnings || 0), 0);
+
+    data.push({ name, rent, commission });
   }
-
-  const totalMonthlyRent = renters.
-  filter((r) => r.status === 'active').
-  reduce((sum, r) => sum + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
-
-  const totalMonthlyCharges = charges.
-  reduce((sum, c) => sum + (c.amount || 0) * freqMultiplier(c.frequency), 0);
-
-  const data = months.map((m, i) => {
-    // Simulate slight variation for past months, current month exact
-    const factor = i === months.length - 1 ? 1 : 0.85 + Math.random() * 0.3;
-    return {
-      name: m.name,
-      rent: Math.round(totalMonthlyRent * factor * 100) / 100,
-      charges: Math.round(totalMonthlyCharges * factor * 100) / 100
-    };
-  });
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload) return null;
@@ -71,7 +61,7 @@ export default function RevenueChart({ renters, charges, currency }) {
             
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="rent" name="Rent" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="charges" name="Charges" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="commission" name="Commission" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
