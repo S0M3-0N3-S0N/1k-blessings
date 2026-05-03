@@ -131,6 +131,21 @@ export function isPaymentOverdue(payment, renter) {
   return false;
 }
 
+// Returns the correct monthly rent total for a renter based on actual weeks in the given month
+export function calcMonthlyRent(renter, monthStr) {
+  const [yr, mo] = monthStr.split("-").map(Number);
+  // Count Mondays in the month to determine number of weeks
+  let weeks = 0;
+  const d = new Date(yr, mo - 1, 1);
+  while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+  while (d.getMonth() === mo - 1) { weeks++; d.setDate(d.getDate() + 7); }
+
+  const amt = renter.rent_amount || 0;
+  if (renter.frequency === "weekly") return amt * weeks;
+  if (renter.frequency === "biweekly") return amt * Math.ceil(weeks / 2);
+  return amt; // monthly
+}
+
 export function getDueDate(periodStart, frequency) {
   const d = new Date(periodStart);
   if (frequency === 'weekly') d.setDate(d.getDate() + 7);

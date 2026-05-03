@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { Link } from "react-router-dom";
-import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue, getDueDate, isBeforeStartDate } from "@/lib/utils";
+import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, toWeekly, freqMultiplier, categoryBadge, getInitials, getAvatarColor, cn, isPaymentOverdue, getDueDate, isBeforeStartDate, calcMonthlyRent } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, DollarSign, Users, Scissors, TrendingUp, CheckCircle2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import GoldButton from "@/components/ui/GoldButton.jsx";
@@ -75,8 +75,9 @@ export default function AdminDashboard() {
   const hourlyRenters = []; // removed hourly model
 
   // KPIs
-  const monthlyRentProjected = rentRenters.reduce((s, r) => s + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0);
-  const collectedThisMonth = payments.filter(p => p.status === "paid" && p.period?.startsWith(currentMonthStr)).reduce((s, p) => s + (p.amount || 0), 0);
+  const monthlyRentProjected = rentRenters.reduce((s, r) => s + calcMonthlyRent(r, currentMonthStr), 0);
+  const paidRenterIds = new Set(payments.filter(p => p.status === "paid" && p.period?.startsWith(currentMonthStr)).map(p => p.renter_id));
+  const collectedThisMonth = rentRenters.filter(r => paidRenterIds.has(r.id)).reduce((s, r) => s + calcMonthlyRent(r, currentMonthStr), 0);
 
   const ws = getWeekStart(new Date(), weekOffset);
   const we = getWeekEnd(ws);
@@ -113,7 +114,7 @@ export default function AdminDashboard() {
       if (existing) {
         await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
       } else {
-        await base44.entities.Payment.create({ renter_id: renter.id, amount: renter.rent_amount, period: currentMonthStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
+        await base44.entities.Payment.create({ renter_id: renter.id, amount: calcMonthlyRent(renter, currentMonthStr), period: currentMonthStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
       }
       loadData();
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate } from "@/lib/utils";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate, calcMonthlyRent } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
@@ -72,7 +72,7 @@ export default function Payments() {
   const openMarkPaid = (renter) => {
     const { payment } = getRenterStatus(renter);
     const nowNY = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" });
-    setMarkForm({ amount: renter.rent_amount || "", payment_method: "cash", notes: "", paid_time: nowNY });
+    setMarkForm({ amount: calcMonthlyRent(renter, monthStr) || "", payment_method: "cash", notes: "", paid_time: nowNY });
     setMarkDialog({ renter, existing: payment });
   };
 
@@ -145,7 +145,7 @@ export default function Payments() {
   const paidCount = rows.filter(r => r.status === "paid").length;
   const pendingCount = rows.filter(r => r.status === "pending").length;
   const overdueCount = rows.filter(r => r.status === "overdue").length;
-  const collectedAmt = rows.filter(r => r.status === "paid").reduce((s, r) => s + (r.payment?.amount || r.rent_amount || 0), 0);
+  const collectedAmt = rows.filter(r => r.status === "paid").reduce((s, r) => s + calcMonthlyRent(r, monthStr), 0);
 
   return (
     <PullToRefresh onRefresh={loadData}>
