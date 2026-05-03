@@ -99,12 +99,12 @@ export default function AdminDashboard() {
   const rentRows = renters
     .filter(r => r.payment_model === "rent" && r.status === "active" && !isBeforeStartDate(currentMonthStr, r))
     .map(r => {
-      const weeklyAmt = toWeekly(r.rent_amount || 0, r.frequency);
+      const monthlyAmt = calcMonthlyRent(r, currentMonthStr);
       const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
       const isPaid = payment?.status === "paid";
       const overdue = !isPaid && isPaymentOverdue(payment, r);
       const status = isPaid ? "paid" : overdue ? "overdue" : "pending";
-      return { ...r, weeklyAmt, paid: isPaid, status };
+      return { ...r, monthlyAmt, paid: isPaid, status };
     });
 
   const markPaid = async (renter) => {
@@ -116,7 +116,9 @@ export default function AdminDashboard() {
       } else {
         await base44.entities.Payment.create({ renter_id: renter.id, amount: calcMonthlyRent(renter, currentMonthStr), period: currentMonthStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
       }
-      loadData();
+      await loadData();
+      // Refresh overdue count
+      setOverdueCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Mark paid error:', err);
     } finally {
@@ -217,7 +219,7 @@ export default function AdminDashboard() {
                     <p className="text-xs text-muted-foreground">{r.role}</p>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
-                    <span className="font-mono text-sm font-semibold">{formatCurrency(r.weeklyAmt)}</span>
+                    <span className="font-mono text-sm font-semibold">{formatCurrency(r.monthlyAmt)}</span>
                     <StatusBadge status={r.status} />
                     {!r.paid && (
                       <GoldButton size="sm" onClick={() => markPaid(r)} disabled={markingId === r.id}>

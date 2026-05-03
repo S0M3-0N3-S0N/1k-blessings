@@ -119,7 +119,14 @@ export function getMonthsInRange(count = 12) {
 }
 
 export function isPaymentOverdue(payment, renter) {
-  if (!payment || payment.status === 'paid') return false;
+  // No payment record at all — check if the current month has passed its due threshold
+  if (!payment) {
+    // Consider overdue if we're past the 10th of the month (enough time to have paid)
+    const now = new Date();
+    if (now.getDate() > 10) return true;
+    return false;
+  }
+  if (payment.status === 'paid') return false;
   // If a due_date exists, use it
   if (payment.due_date) return new Date(payment.due_date) < new Date();
   // Fallback: if no due_date, use 7 days after the period start date

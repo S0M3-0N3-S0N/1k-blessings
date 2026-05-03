@@ -1,9 +1,11 @@
-import { formatCurrency, freqMultiplier, freqLabel } from "@/lib/utils";
+import { formatCurrency, freqMultiplier, freqLabel, calcMonthlyRent } from "@/lib/utils";
 
 export default function BreakdownCard({ renters, charges, currency }) {
+  const now = new Date();
+  const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const activeRenters = renters.filter(r => r.status === 'active');
   const chargesTotal = charges.reduce((s, c) => s + (c.amount || 0) * freqMultiplier(c.frequency), 0);
-  const grandTotal = activeRenters.reduce((s, r) => s + (r.rent_amount || 0) * freqMultiplier(r.frequency), 0) + chargesTotal;
+  const grandTotal = activeRenters.reduce((s, r) => s + calcMonthlyRent(r, currentMonthStr), 0) + chargesTotal;
 
   return (
     <div className="bg-card rounded-xl border border-border animate-fade-in">
@@ -22,7 +24,7 @@ export default function BreakdownCard({ renters, charges, currency }) {
                   <span className="text-xs opacity-60 ml-1">({freqLabel(r.frequency)})</span>
                 </span>
                 <span className="text-sm font-mono font-medium">
-                  {formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency), currency)}/mo
+                  {formatCurrency(calcMonthlyRent(r, currentMonthStr), currency)}/mo
                 </span>
               </div>
             ))}
