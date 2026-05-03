@@ -282,34 +282,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Today's Schedule */}
-        {todayServices.length > 0 && (
-          <div className="bg-card rounded-xl border border-border overflow-hidden">
-            <div className="px-5 py-4 border-b border-border">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Today's Schedule</p>
-              <p className="font-serif text-base font-medium mt-0.5">{todayServices.length} service{todayServices.length !== 1 ? "s" : ""} today</p>
-            </div>
-            <div className="divide-y divide-border">
-              {todayServices.map(s => {
-                const cat = categoryBadge(s.category);
-                const stylist = renterMap[s.renter_id];
-                return (
-                  <div key={s.id} className="flex items-center justify-between px-5 py-3 gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", cat.className)}>{cat.label}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{s.client_name || "Client"}</p>
-                        <p className="text-xs text-muted-foreground">{stylist?.name}{s.service_time ? ` · ${s.service_time}` : ""}</p>
-                      </div>
-                    </div>
-                    <span className="font-mono text-sm font-semibold shrink-0">{formatCurrency(s.amount)}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Recent Services */}
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
