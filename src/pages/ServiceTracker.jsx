@@ -326,7 +326,8 @@ export default function ServiceTracker() {
                             const cat = categoryBadge(s.category);
                             const r = renterMap[s.renter_id];
                             const isComm = r?.payment_model === "commission";
-                            const timeStr = s.service_time || (s.created_date ? new Date(s.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }) : "");
+                            const rawTime = s.service_time || (s.created_date ? new Date(s.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" }) : "");
+                            const timeStr = rawTime ? (() => { try { const [h, m] = rawTime.split(":"); const d = new Date(); d.setHours(+h, +m); return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return rawTime; } })() : "";
                             return (
                               <tr key={s.id} className="hover:bg-muted/20">
                                 <td className="px-5 py-3 text-muted-foreground text-xs whitespace-nowrap">
@@ -377,7 +378,8 @@ export default function ServiceTracker() {
                         const cat = categoryBadge(s.category);
                         const r = renterMap[s.renter_id];
                         const isComm = r?.payment_model === "commission";
-                        const timeStr = s.service_time || (s.created_date ? new Date(s.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }) : "");
+                        const rawTime = s.service_time || (s.created_date ? new Date(s.created_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" }) : "");
+                        const timeStr = rawTime ? (() => { try { const [h, m] = rawTime.split(":"); const d = new Date(); d.setHours(+h, +m); return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }); } catch { return rawTime; } })() : "";
                         return (
                           <div key={s.id} className="px-4 py-3.5 flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0 space-y-1">
