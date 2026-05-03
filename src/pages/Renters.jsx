@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, getInitials, getAvatarColor, freqLabel, freqMultiplier, cn } from "@/lib/utils";
+import { formatCurrency, getInitials, getAvatarColor, freqLabel, calcMonthlyRent, cn } from "@/lib/utils";
 import { Loader2, Plus, Trash2, Pencil, Info, X, Search, Copy, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -334,7 +334,7 @@ export default function Renters() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">≈ {t("monthly")}</span>
-                          <span className="font-mono text-muted-foreground">{formatCurrency((r.rent_amount || 0) * freqMultiplier(r.frequency))}</span>
+                          <span className="font-mono text-muted-foreground">{formatCurrency(calcMonthlyRent(r, new Date().toISOString().slice(0, 7)))}</span>
                         </div>
                       </div>
                     }
@@ -493,7 +493,7 @@ function ChargesSection({ charges, renters, renterMap, onRefresh }) {
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden hidden">
+    <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <h2 className="font-serif text-base font-medium">{t("chargesLedger")}</h2>
         <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowAdd((s) => !s)}>

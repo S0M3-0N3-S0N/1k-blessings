@@ -6,6 +6,10 @@
       "type": "string",
       "title": "Renter ID"
     },
+    "client_id": {
+      "type": "string",
+      "title": "Client ID (linked)"
+    },
     "client_name": {
       "type": "string",
       "title": "Client Name"

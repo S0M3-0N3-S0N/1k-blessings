@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Search, AlertCircle, Gift } from "lucide-react";
+import { Loader2, Plus, Trash2, Search, AlertCircle, Gift, Pencil, Check, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,20 +16,28 @@ const emptyForm = { name: "", phone: "", email: "", birthday: "", preferred_rent
 
 export default function Clients() {
   const [clients, setClients] = useState([]);
+  const [renters, setRenters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
+  const [filterStylist, setFilterStylist] = useState("all");
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [noteText, setNoteText] = useState("");
   const { toast } = useToast();
   const { t } = useLanguage();
 
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const c = await base44.entities.Client.list("-last_visit_date");
+      const [c, r] = await Promise.all([
+        base44.entities.Client.list("-last_visit_date"),
+        base44.entities.Renter.filter({ status: "active" }),
+      ]);
       setClients(c);
+      setRenters(r);
       setLoading(false);
     } catch (err) {
       setError('Failed to load clients. Pull down to retry.');
@@ -79,11 +88,21 @@ export default function Clients() {
     </div>
   );
 
-  const filtered = clients.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
+
+  const saveNote = async (clientId) => {
+    await base44.entities.Client.update(clientId, { notes: noteText });
+    setClients(prev => prev.map(c => c.id === clientId ? { ...c, notes: noteText } : c));
+    setEditingNoteId(null);
+  };
+
+  const filtered = clients
+    .filter(c =>
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.toLowerCase().includes(search.toLowerCase()) ||
+      c.email?.toLowerCase().includes(search.toLowerCase())
+    )
+    .filter(c => filterStylist === "all" || c.preferred_renter_id === filterStylist);
   const newThisMonth = clients.filter(c => {
     const visitDate = c.last_visit_date ? new Date(c.last_visit_date) : null;
     const now = new Date();
@@ -126,14 +145,25 @@ export default function Clients() {
           </div>
         )}
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder={t("searchClients")}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 min-h-[44px]"
-          />
+        <div className="flex gap-2 flex-wrap">
+          <div className="relative flex-1 min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={t("searchClients")}
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 min-h-[44px]"
+            />
+          </div>
+          {renters.length > 0 && (
+            <Select value={filterStylist} onValueChange={setFilterStylist}>
+              <SelectTrigger className="w-40 min-h-[44px]"><SelectValue placeholder="All Stylists" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Stylists</SelectItem>
+                {renters.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
@@ -163,9 +193,30 @@ export default function Clients() {
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full border", loyaltyColor)}>{loyalty}</span>
                         {c.last_visit_date && <span className="text-[10px] text-muted-foreground">{c.visit_count || 0} visits · {formatCurrency(c.total_spent)}</span>}
+                        {c.preferred_renter_id && renterMap[c.preferred_renter_id] && (
+                          <span className="text-[10px] bg-muted px-2 py-0.5 rounded-full text-muted-foreground">✂ {renterMap[c.preferred_renter_id].name}</span>
+                        )}
                       </div>
+                      {/* Notes */}
+                      {editingNoteId === c.id ? (
+                        <div className="mt-2 space-y-1">
+                          <textarea value={noteText} onChange={e => setNoteText(e.target.value)} className="w-full text-xs border border-border rounded-lg p-2 bg-muted/30 resize-none min-h-[60px]" />
+                          <div className="flex gap-1">
+                            <button onClick={() => saveNote(c.id)} className="text-xs text-primary hover:underline flex items-center gap-1"><Check className="w-3 h-3" /> Save</button>
+                            <button onClick={() => setEditingNoteId(null)} className="text-xs text-muted-foreground hover:underline flex items-center gap-1"><X className="w-3 h-3" /> Cancel</button>
+                          </div>
+                        </div>
+                      ) : c.notes ? (
+                        <div className="mt-2 bg-muted/30 rounded-lg p-2 text-xs text-muted-foreground border border-border/50 flex items-start justify-between gap-2">
+                          <span className="leading-relaxed">{c.notes}</span>
+                          <button onClick={() => { setEditingNoteId(c.id); setNoteText(c.notes); }} className="shrink-0 text-muted-foreground hover:text-primary"><Pencil className="w-3 h-3" /></button>
+                        </div>
+                      ) : null}
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 shrink-0">
+                      {!c.notes && editingNoteId !== c.id && (
+                        <button onClick={() => { setEditingNoteId(c.id); setNoteText(""); }} className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><Pencil className="w-3.5 h-3.5" /></button>
+                      )}
                       <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={() => { setForm(c); setShowAdd(true); }}>{t("edit")}</Button>
                       <button onClick={() => handleDelete(c.id)} className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/5 min-h-[44px] min-w-[44px] flex items-center justify-center">
                         <Trash2 className="w-3.5 h-3.5" />

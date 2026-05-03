@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, getWeeklyBaseSalary, cn } from "@/lib/utils";
-import { Loader2, ChevronLeft, ChevronRight, Copy, Check } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight, Copy, Check, Share2 } from "lucide-react";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/lib/i18n";
@@ -116,9 +116,24 @@ export default function Paystub() {
               <p className={cn("font-mono text-5xl font-bold tracking-tight mt-2", netPay < 0 && "text-destructive")}>{formatCurrency(netPay)}</p>
               <p className="text-xs text-muted-foreground mt-2">{formatDateRange(ws)}</p>
             </div>
-            <button onClick={copyPaySummary} className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors">
-              {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={copyPaySummary} className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors" title="Copy Summary">
+                {copied ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button onClick={async () => {
+                const emoji = renter.payment_model === "rent"
+                  ? `✂️ Weekly Pay Summary\n📅 ${formatDateRange(ws)}\n👤 ${renter.name}\n\n💰 Revenue: ${formatCurrency(grossRevenue)}\n🏠 Rent: -${formatCurrency(weeklyRent)}${tipTotal > 0 ? `\n🎁 Tips: +${formatCurrency(tipTotal)}` : ""}\n📊 Net Pay: ${formatCurrency(netPay)}`
+                  : `✂️ Weekly Pay Summary\n📅 ${formatDateRange(ws)}\n👤 ${renter.name}\n\n💰 Revenue: ${formatCurrency(grossRevenue)}\n💵 Earnings: ${formatCurrency(myEarnings)}${weeklyBaseSalary > 0 ? `\n💼 Base: +${formatCurrency(weeklyBaseSalary)}` : ""}${tipTotal > 0 ? `\n🎁 Tips: +${formatCurrency(tipTotal)}` : ""}\n📊 Net Pay: ${formatCurrency(netPay)}`;
+                if (navigator.share) {
+                  await navigator.share({ text: emoji });
+                } else {
+                  navigator.clipboard.writeText(emoji);
+                  toast({ title: "Copied to clipboard" });
+                }
+              }} className="p-2 rounded-lg border border-border hover:bg-muted text-muted-foreground min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors" title="Share">
+                <Share2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 

@@ -14,9 +14,12 @@ import PullToRefresh from "@/components/PullToRefresh";
 import { useLanguage } from "@/lib/i18n";
 
 const TYPE_COLORS = {
-  callout: "bg-red-500/20 text-red-500 border-red-500/30",
-  day_off: "bg-blue-500/20 text-blue-500 border-blue-500/30",
+  callout:    "bg-red-500/20 text-red-500 border-red-500/30",
+  day_off:    "bg-blue-500/20 text-blue-500 border-blue-500/30",
   shop_event: "bg-amber-500/20 text-amber-500 border-amber-500/30",
+  vacation:   "bg-emerald-500/20 text-emerald-500 border-emerald-500/30",
+  training:   "bg-violet-500/20 text-violet-500 border-violet-500/30",
+  closed:     "bg-gray-500/20 text-gray-500 border-gray-500/30",
 };
 
 const emptyForm = { title: "", description: "", type: "day_off", date: new Date().toISOString().split("T")[0], end_date: "", renter_id: "" };
@@ -202,6 +205,9 @@ export default function TeamCalendar() {
                 <SelectItem value="callout">{t("callout") || "Callout"}</SelectItem>
                 <SelectItem value="day_off">{t("dayOff") || "Day Off"}</SelectItem>
                 <SelectItem value="shop_event">{t("shopEvent") || "Shop Event"}</SelectItem>
+                <SelectItem value="vacation">Vacation</SelectItem>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="closed">Salon Closed</SelectItem>
               </SelectContent>
             </Select>
             <Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />

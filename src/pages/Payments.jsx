@@ -29,19 +29,20 @@ export default function Payments() {
 
   const [services, setServices] = useState([]);
   const [weekOffset, setWeekOffset] = useState(0);
-
   const [charges, setCharges] = useState([]);
+  const [commPayouts, setCommPayouts] = useState([]);
 
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [r, p, s, c] = await Promise.all([
+      const [r, p, s, c, cp] = await Promise.all([
         base44.entities.Renter.list(),
         base44.entities.Payment.list("-period"),
         base44.entities.ServiceEntry.list("-service_date", 300),
-        base44.entities.Charge.list()
+        base44.entities.Charge.list(),
+        base44.entities.CommissionPayout.list("-period"),
       ]);
-      setRenters(r); setPayments(p); setServices(s); setCharges(c); setLoading(false);
+      setRenters(r); setPayments(p); setServices(s); setCharges(c); setCommPayouts(cp); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
       setError("Failed to load data. Pull down to retry.");
@@ -106,6 +107,7 @@ export default function Payments() {
       }
       setMarkDialog(null);
       toast({ title: `${renter.name} — ${t("markPaid")}` });
+      window.dispatchEvent(new CustomEvent('overdueCountChanged'));
       loadData();
     } catch (err) {
       console.error('Mark paid error:', err);
@@ -121,6 +123,7 @@ export default function Payments() {
       if (payment) {
         await base44.entities.Payment.update(payment.id, { status: "pending", paid_date: null });
         toast({ title: t("pending") });
+        window.dispatchEvent(new CustomEvent('overdueCountChanged'));
         loadData();
       }
     } catch (err) {
@@ -146,6 +149,7 @@ export default function Payments() {
   const pendingCount = rows.filter(r => r.status === "pending").length;
   const overdueCount = rows.filter(r => r.status === "overdue").length;
   const collectedAmt = rows.filter(r => r.status === "paid").reduce((s, r) => s + calcMonthlyRent(r, monthStr), 0);
+  const totalOwed = rows.filter(r => r.status !== "paid").reduce((s, r) => s + calcMonthlyRent(r, monthStr), 0);
 
   return (
     <PullToRefresh onRefresh={loadData}>
@@ -168,7 +172,7 @@ export default function Payments() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <KpiCard label={t("collected")} value={formatCurrency(collectedAmt)} accent glow />
           <KpiCard label={t("paid")} value={paidCount} />
-          <KpiCard label={t("pending")} value={pendingCount} />
+          <KpiCard label="Total Owed" value={formatCurrency(totalOwed)} className={totalOwed > 0 ? "border-amber-500/30" : ""} />
           <KpiCard label={t("overdue")} value={overdueCount} />
         </div>
 
@@ -231,7 +235,7 @@ export default function Payments() {
         )}
 
         {/* Commission Stylists - Combined View */}
-        <CommissionSection renters={renters} services={services} monthStr={monthStr} weekOffset={weekOffset} setWeekOffset={setWeekOffset} />
+        <CommissionSection renters={renters} services={services} monthStr={monthStr} weekOffset={weekOffset} setWeekOffset={setWeekOffset} commPayouts={commPayouts} onRefresh={loadData} />
 
         {/* Payment History (last 3 months) */}
         <PaymentHistory renters={rentRenters} allPayments={payments} currentMonth={monthStr} />
@@ -278,7 +282,7 @@ export default function Payments() {
   );
 }
 
-function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOffset }) {
+function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOffset, commPayouts, onRefresh }) {
   const { t } = useLanguage();
   const [view, setView] = useState("monthly");
   // Only active commission renters whose start date is not after current period
@@ -327,16 +331,32 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
             const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
             const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
             const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+            const existingPayout = commPayouts?.find(p => p.renter_id === r.id && p.period === monthStr);
             return (
               <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap">
                 <div>
                   <p className="text-sm font-medium">{r.name}</p>
                   <p className="text-xs text-muted-foreground">{r.role} · {rs.length} {t("services")} · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% {t("split")}</p>
+                  {existingPayout?.status === "paid" && (
+                    <p className="text-xs text-emerald-500 mt-0.5">✓ Payout sent · {new Date(existingPayout.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                  )}
                 </div>
                 <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
                   <div className="text-right"><p className="text-muted-foreground">{t("revenue")}</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
                   <div className="text-right"><p className="text-muted-foreground">{t("stylist")}</p><p className="font-mono">{formatCurrency(stylistCut)}</p></div>
                   <div className="text-right"><p className="text-muted-foreground">{t("owner")}</p><p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p></div>
+                  {existingPayout?.status !== "paid" && stylistCut > 0 && (
+                    <GoldButton size="sm" onClick={async () => {
+                      if (existingPayout) {
+                        await base44.entities.CommissionPayout.update(existingPayout.id, { status: "paid", paid_date: new Date().toISOString(), amount: stylistCut });
+                      } else {
+                        await base44.entities.CommissionPayout.create({ renter_id: r.id, period: monthStr, amount: stylistCut, status: "paid", paid_date: new Date().toISOString() });
+                      }
+                      onRefresh();
+                    }}>
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Mark Payout Sent
+                    </GoldButton>
+                  )}
                 </div>
               </div>
             );

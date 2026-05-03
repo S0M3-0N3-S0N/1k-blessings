@@ -119,23 +119,17 @@ export function getMonthsInRange(count = 12) {
 }
 
 export function isPaymentOverdue(payment, renter) {
-  // No payment record at all — check if the current month has passed its due threshold
-  if (!payment) {
-    // Consider overdue if we're past the 10th of the month (enough time to have paid)
+  if (payment?.status === 'paid') return false;
+  if (payment?.due_date) return new Date(payment.due_date) < new Date();
+  // No payment record — compute due date from renter settings
+  if (renter?.frequency) {
     const now = new Date();
-    if (now.getDate() > 10) return true;
-    return false;
+    const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const dueDate = new Date(getDueDate(currentMonthStr, renter.frequency));
+    return dueDate < now;
   }
-  if (payment.status === 'paid') return false;
-  // If a due_date exists, use it
-  if (payment.due_date) return new Date(payment.due_date) < new Date();
-  // Fallback: if no due_date, use 7 days after the period start date
-  if (payment.period) {
-    const due = new Date(payment.period);
-    due.setDate(due.getDate() + 7);
-    return due < new Date();
-  }
-  return false;
+  // Final fallback: 10th of month
+  return new Date().getDate() > 10;
 }
 
 // Returns the correct monthly rent total for a renter based on actual weeks in the given month

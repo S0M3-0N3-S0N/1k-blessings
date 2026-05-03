@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [renters, setRenters] = useState([]);
   const [services, setServices] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [clients, setClients] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -37,12 +38,13 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [r, s, p] = await Promise.all([
+      const [r, s, p, c] = await Promise.all([
         base44.entities.Renter.list(),
         base44.entities.ServiceEntry.list("-service_date", 100),
         base44.entities.Payment.list("-period"),
+        base44.entities.Client.list(),
       ]);
-      setRenters(r); setServices(s); setPayments(p); setLoading(false);
+      setRenters(r); setServices(s); setPayments(p); setClients(c); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
       setError("Failed to load data. Pull down to retry.");
@@ -128,6 +130,20 @@ export default function AdminDashboard() {
 
 
 
+  // Birthday reminders (next 7 days)
+  const upcomingBirthdays = [...renters, ...clients].filter(p => {
+    if (!p.birthday) return false;
+    const [, bMo, bDay] = p.birthday.split('-').map(Number);
+    const today = new Date();
+    const thisYear = new Date(today.getFullYear(), bMo - 1, bDay);
+    const diff = (thisYear - today) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  });
+
+  // Today's schedule
+  const todayDateStr = now.toISOString().split("T")[0];
+  const todayServices = services.filter(s => s.service_date === todayDateStr);
+
   // Recent services (last 5)
   const recentServices = services.slice(0, 5);
   const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
@@ -141,6 +157,38 @@ export default function AdminDashboard() {
           <h1 className="font-serif text-3xl md:text-4xl font-light tracking-wide">{greeting} ✦</h1>
           <p className="text-sm text-muted-foreground mt-1">{todayStr}</p>
         </div>
+
+        {/* Overdue alert */}
+        {overdueCount > 0 && (
+          <div className="bg-red-500/8 border border-red-500/30 rounded-xl px-5 py-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">{overdueCount} overdue payment{overdueCount > 1 ? "s" : ""}</p>
+                <p className="text-xs text-muted-foreground">Rent is past due for {overdueCount} stylist{overdueCount > 1 ? "s" : ""}</p>
+              </div>
+            </div>
+            <Link to="/payments" className="text-xs font-semibold text-red-500 bg-red-500/10 px-3 py-1.5 rounded-lg hover:bg-red-500/20 transition-colors shrink-0">Review →</Link>
+          </div>
+        )}
+
+        {/* Birthday reminders */}
+        {upcomingBirthdays.length > 0 && (
+          <div className="bg-primary/10 border border-primary/20 rounded-xl px-4 py-3 space-y-1">
+            <p className="text-xs font-semibold text-primary">🎂 Upcoming Birthdays</p>
+            {upcomingBirthdays.map((p, i) => {
+              const [, bMo, bDay] = p.birthday.split('-').map(Number);
+              const today = new Date();
+              const thisYear = new Date(today.getFullYear(), bMo - 1, bDay);
+              const diff = Math.round((thisYear - today) / (1000 * 60 * 60 * 24));
+              return (
+                <p key={i} className="text-xs text-foreground/80">
+                  {p.name} · {p.role || "Client"} · {diff === 0 ? "🎉 Today!" : `in ${diff} day${diff !== 1 ? "s" : ""}`}
+                </p>
+              );
+            })}
+          </div>
+        )}
 
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -230,6 +278,34 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Today's Schedule */}
+        {todayServices.length > 0 && (
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">Today's Schedule</p>
+              <p className="font-serif text-base font-medium mt-0.5">{todayServices.length} service{todayServices.length !== 1 ? "s" : ""} today</p>
+            </div>
+            <div className="divide-y divide-border">
+              {todayServices.map(s => {
+                const cat = categoryBadge(s.category);
+                const stylist = renterMap[s.renter_id];
+                return (
+                  <div key={s.id} className="flex items-center justify-between px-5 py-3 gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0", cat.className)}>{cat.label}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{s.client_name || "Client"}</p>
+                        <p className="text-xs text-muted-foreground">{stylist?.name}{s.service_time ? ` · ${s.service_time}` : ""}</p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-sm font-semibold shrink-0">{formatCurrency(s.amount)}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

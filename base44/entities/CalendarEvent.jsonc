@@ -18,7 +18,8 @@
         "day_off",
         "shop_event",
         "vacation",
-        "training"
+        "training",
+        "closed"
       ],
       "default": "day_off"
     },

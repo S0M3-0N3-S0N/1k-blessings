@@ -1,38 +1,22 @@
 {
-  "name": "Payment",
+  "name": "CommissionPayout",
   "type": "object",
   "properties": {
     "renter_id": {
       "type": "string",
       "title": "Renter ID"
     },
+    "period": {
+      "type": "string",
+      "title": "Period (YYYY-MM)"
+    },
     "amount": {
       "type": "number",
       "title": "Amount"
     },
-    "period": {
-      "type": "string",
-      "title": "Period (YYYY-MM-DD)"
-    },
-    "status": {
-      "type": "string",
-      "title": "Status",
-      "enum": [
-        "paid",
-        "pending",
-        "overdue",
-        "absent"
-      ],
-      "default": "pending"
-    },
     "paid_date": {
       "type": "string",
       "title": "Paid Date",
-      "format": "date-time"
-    },
-    "due_date": {
-      "type": "string",
-      "title": "Due Date",
       "format": "date-time"
     },
     "payment_method": {
@@ -50,11 +34,21 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "pending",
+        "paid"
+      ],
+      "default": "pending"
     }
   },
   "required": [
     "renter_id",
     "amount",
+    "period",
     "status"
   ]
 }

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { formatCurrency, categoryBadge, computeEarnings, PAYMENT_METHOD_LABELS, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, AlertCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,20 +43,29 @@ export default function ServiceTracker() {
   const { toast } = useToast();
   const { t } = useLanguage();
 
+  const [error, setError] = useState(null);
+
   const loadData = useCallback(async () => {
-    const [r, s] = await Promise.all([
-      base44.entities.Renter.list(),
-      base44.entities.ServiceEntry.list("-service_date", 500)
-    ]);
-    setRenters(r);
-    if (!isAdmin && user?.email) {
-      const me = r.find(x => x.user_email === user.email);
-      setMyRenter(me || null);
-      setServices(me ? s.filter(x => x.renter_id === me.id) : []);
-    } else {
-      setServices(s);
+    try {
+      setError(null);
+      const [r, s] = await Promise.all([
+        base44.entities.Renter.list(),
+        base44.entities.ServiceEntry.list("-service_date", 500)
+      ]);
+      setRenters(r);
+      if (!isAdmin && user?.email) {
+        const me = r.find(x => x.user_email === user.email);
+        setMyRenter(me || null);
+        setServices(me ? s.filter(x => x.renter_id === me.id) : []);
+      } else {
+        setServices(s);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Load error:', err);
+      setError('Failed to load services. Pull down to retry.');
+      setLoading(false);
     }
-    setLoading(false);
   }, [isAdmin, user?.email]);
   useEffect(() => { loadData(); }, [loadData]);
 
@@ -87,31 +96,47 @@ export default function ServiceTracker() {
   const handleSave = async () => {
     if (!form.amount || !form.service_date) return;
     setSaving(true);
-    const renterId = isAdmin ? form.renter_id : myRenter?.id;
-    if (!renterId) { setSaving(false); return; }
-    const renter = renterMap[renterId];
-    const amt = parseFloat(form.amount) || 0;
-    const tip = parseFloat(form.tip_amount) || 0;
-    const earnings = computeEarnings(amt, renter);
-    const data = {
-      ...form,
-      renter_id: renterId,
-      amount: amt,
-      tip_amount: tip,
-      ...earnings,
-      last_edited_at: new Date().toISOString()
-    };
-    if (editService) {
-      await base44.entities.ServiceEntry.update(editService.id, data);
-      toast({ title: t("save") });
-    } else {
-      await base44.entities.ServiceEntry.create(data);
-      toast({ title: t("serviceLogged") });
+    try {
+      const renterId = isAdmin ? form.renter_id : myRenter?.id;
+      if (!renterId) { setSaving(false); return; }
+      const renter = renterMap[renterId];
+      const amt = parseFloat(form.amount) || 0;
+      const tip = parseFloat(form.tip_amount) || 0;
+      const earnings = computeEarnings(amt, renter);
+      const data = {
+        ...form,
+        renter_id: renterId,
+        amount: amt,
+        tip_amount: tip,
+        ...earnings,
+        last_edited_at: new Date().toISOString()
+      };
+      if (editService) {
+        await base44.entities.ServiceEntry.update(editService.id, data);
+        toast({ title: t("save") });
+      } else {
+        await base44.entities.ServiceEntry.create(data);
+        // Update client stats if client_name provided
+        if (data.client_name) {
+          const clients = await base44.entities.Client.filter({ name: data.client_name });
+          if (clients[0]) {
+            await base44.entities.Client.update(clients[0].id, {
+              last_visit_date: data.service_date,
+              visit_count: (clients[0].visit_count || 0) + 1,
+              total_spent: (clients[0].total_spent || 0) + amt,
+            });
+          }
+        }
+        toast({ title: t("serviceLogged") });
+      }
+      setShowDialog(false);
+      setForm(emptyForm);
+      loadData();
+    } catch (err) {
+      toast({ title: t("saveFailed"), description: err.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
     }
-    setShowDialog(false);
-    setForm(emptyForm);
-    setSaving(false);
-    loadData();
   };
 
   const handleDelete = async (id) => {
@@ -122,6 +147,14 @@ export default function ServiceTracker() {
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <AlertCircle className="w-8 h-8 text-destructive" />
+      <p className="text-sm text-destructive text-center">{error}</p>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium">{t("retry")}</button>
+    </div>
+  );
 
   // Get available months from services
   const allMonths = [...new Set(services.map(s => s.service_date?.slice(0, 7)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
@@ -162,7 +195,24 @@ export default function ServiceTracker() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("services")}</p>
             <h1 className="font-serif text-3xl font-light tracking-wide">{t("serviceTracker")}</h1>
           </div>
+          <div className="flex gap-2">
+          {isAdmin && (
+            <button onClick={() => {
+              const headers = ["Date","Time","Stylist","Client","Description","Category","Method","Amount","Tip","Stylist Earnings","Owner Commission"];
+              const rows = filtered.map(s => [
+                s.service_date, s.service_time || "", renterMap[s.renter_id]?.name || "", s.client_name || "",
+                s.description || "", s.category || "", s.payment_method || "",
+                (s.amount || 0).toFixed(2), (s.tip_amount || 0).toFixed(2),
+                (s.renter_earnings || 0).toFixed(2), (s.owner_earnings || 0).toFixed(2)
+              ]);
+              const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+              const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "services.csv"; a.click();
+            }} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:bg-muted min-h-[44px]">
+              <Download className="w-3.5 h-3.5" /> Export
+            </button>
+          )}
           <GoldButton onClick={openAdd}><Plus className="w-4 h-4" />{t("logService")}</GoldButton>
+        </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -208,6 +258,11 @@ export default function ServiceTracker() {
                 <SelectItem value="hair">{t("hair")}</SelectItem>
                 <SelectItem value="nails">{t("nails")}</SelectItem>
                 <SelectItem value="aesthetics">{t("aesthetics")}</SelectItem>
+                <SelectItem value="waxing">Waxing</SelectItem>
+                <SelectItem value="lashes">Lashes</SelectItem>
+                <SelectItem value="massage">Massage</SelectItem>
+                <SelectItem value="makeup">Makeup</SelectItem>
+                <SelectItem value="brows">Brows</SelectItem>
                 <SelectItem value="other">{t("other")}</SelectItem>
               </SelectContent>
             </Select>

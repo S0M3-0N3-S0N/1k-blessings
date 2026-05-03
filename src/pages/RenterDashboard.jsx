@@ -3,11 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
 import { formatCurrency, getWeekStart, getWeekEnd, formatDateRange, categoryBadge, toWeekly, cn } from "@/lib/utils";
-import { Loader2, Scissors, DollarSign, TrendingUp, CreditCard } from "lucide-react";
+import { Loader2, Scissors, DollarSign, TrendingUp, CreditCard, ChevronDown, ChevronUp } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import PaymentLinksPanel from "@/components/payments/PaymentLinksPanel.jsx";
-import { useState as useLocalState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import { Link } from "react-router-dom";
@@ -19,7 +18,9 @@ export default function RenterDashboard() {
   const { t } = useLanguage();
   const [renter, setRenter] = useState(null);
   const [services, setServices] = useState([]);
-  const [showPayment, setShowPayment] = useLocalState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [recentPayments, setRecentPayments] = useState([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +52,11 @@ export default function RenterDashboard() {
     setRenter(r);
     if (r) {
       setServices(allServices.filter(s => s.renter_id === r.id));
+      if (r.payment_model === "rent") {
+        base44.entities.Payment.filter({ renter_id: r.id }).then(pmts => {
+          setRecentPayments(pmts.sort((a, b) => (b.period || "").localeCompare(a.period || "")).slice(0, 3));
+        }).catch(() => {});
+      }
     }
     setLoading(false);
   }, [user?.email]);
@@ -104,6 +110,19 @@ export default function RenterDashboard() {
       <p className="text-xs text-muted-foreground">{t("linkEmailNote")}</p>
     </div>
   );
+
+  // All-time stats
+  const allTimeRevenue = services.reduce((s, e) => s + (e.amount || 0), 0);
+  const allTimeEarnings = services.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+  const allTimeTips = services.reduce((s, e) => s + (e.tip_amount || 0), 0);
+  const avgServiceValue = services.length > 0 ? allTimeRevenue / services.length : 0;
+  // Best week
+  const weekMap = {};
+  services.forEach(s => {
+    const ws = getWeekStart(new Date(s.service_date + "T12:00:00")).toISOString().split("T")[0];
+    weekMap[ws] = (weekMap[ws] || 0) + (s.renter_earnings || 0);
+  });
+  const bestWeek = Math.max(0, ...Object.values(weekMap));
 
   const heroLabel = renter.payment_model === "rent" ? t("thisWeekNetRevenue") : t("thisWeekEarnings");
 
@@ -233,6 +252,60 @@ export default function RenterDashboard() {
             </div>
             <span className="text-xs font-semibold text-primary bg-primary/15 px-3 py-1.5 rounded-lg">Pay Now →</span>
           </button>
+        )}
+
+        {/* All-time Stats */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <button onClick={() => setShowStats(s => !s)} className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/20 min-h-[52px]">
+            <p className="text-sm font-semibold">My Stats</p>
+            {showStats ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </button>
+          {showStats && (
+            <div className="border-t border-border px-5 py-4 grid grid-cols-2 gap-3 text-sm">
+              {[
+                { label: "Total Services", value: services.length },
+                { label: "Total Revenue", value: formatCurrency(allTimeRevenue) },
+                { label: "Total Earnings", value: formatCurrency(allTimeEarnings) },
+                { label: "Total Tips", value: formatCurrency(allTimeTips) },
+                { label: "Best Week", value: formatCurrency(bestWeek) },
+                { label: "Avg Service", value: formatCurrency(avgServiceValue) },
+              ].map(({ label, value }) => (
+                <div key={label} className="bg-muted/30 rounded-lg p-3">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{label}</p>
+                  <p className="font-mono font-semibold mt-1">{value}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Payment History (rent model) */}
+        {renter.payment_model === "rent" && recentPayments.length > 0 && (
+          <div className="bg-card rounded-xl border border-border overflow-hidden">
+            <div className="px-5 py-3 border-b border-border">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Recent Payments</p>
+            </div>
+            <div className="divide-y divide-border">
+              {recentPayments.map(p => {
+                const [yr, mo] = (p.period || "").split("-").map(Number);
+                const label = yr ? new Date(yr, mo - 1, 1).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—";
+                return (
+                  <div key={p.id} className="flex items-center justify-between px-5 py-3">
+                    <div>
+                      <p className="text-sm font-medium">{label}</p>
+                      {p.paid_date && <p className="text-xs text-muted-foreground">{new Date(p.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm">{formatCurrency(p.amount)}</span>
+                      <span className={cn("text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                        p.status === "paid" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" : "bg-amber-500/15 text-amber-600 border-amber-500/30"
+                      )}>{p.status}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
 
         {/* Quick Links */}

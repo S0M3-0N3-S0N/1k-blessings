@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
 import { formatCurrency, cn } from "@/lib/utils";
-import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -23,7 +23,7 @@ const CAT_COLORS = {
   other: "bg-muted text-muted-foreground border-border"
 };
 
-const emptyForm = { description: "", amount: "", category: "other", expense_date: new Date().toISOString().split("T")[0], paid_by: "salon", receipt_note: "", notes: "", is_recurring: false };
+const emptyForm = { description: "", amount: "", category: "other", expense_date: new Date().toISOString().split("T")[0], paid_by: "salon", receipt_note: "", notes: "", is_recurring: false, receipt_url: "" };
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
@@ -34,6 +34,7 @@ export default function Expenses() {
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState({});
   const [monthOffset, setMonthOffset] = useState(0);
+  const [receiptView, setReceiptView] = useState(null);
   const { toast } = useToast();
   const { t } = useLanguage();
 
@@ -46,7 +47,7 @@ export default function Expenses() {
   const openAdd = () => {setEditExpense(null);setForm(emptyForm);setShowDialog(true);};
   const openEdit = (e) => {
     setEditExpense(e);
-    setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "", is_recurring: e.is_recurring || false });
+    setForm({ description: e.description || "", amount: String(e.amount || ""), category: e.category || "other", expense_date: e.expense_date || "", paid_by: e.paid_by || "salon", receipt_note: e.receipt_note || "", notes: e.notes || "", is_recurring: e.is_recurring || false, receipt_url: e.receipt_url || "" });
     setShowDialog(true);
   };
 
@@ -173,6 +174,11 @@ export default function Expenses() {
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="font-mono text-sm font-semibold text-destructive">−{formatCurrency(e.amount)}</span>
+                          {e.receipt_url && (
+                            <button onClick={() => setReceiptView(e.receipt_url)} className="text-muted-foreground hover:text-primary min-h-[44px] min-w-[36px] flex items-center justify-center">
+                              <Camera className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                           <button onClick={() => openEdit(e)} className="text-muted-foreground hover:text-primary min-h-[44px] min-w-[36px] flex items-center justify-center">
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
@@ -212,6 +218,7 @@ export default function Expenses() {
                 </SelectContent>
               </Select>
             </div>
+            <Input placeholder="Receipt Image URL (optional)" value={form.receipt_url} onChange={(e) => setForm((f) => ({ ...f, receipt_url: e.target.value }))} className="min-h-[44px]" />
             <Input placeholder={`${t("receiptNote")} (${t("optional")})`} value={form.receipt_note} onChange={(e) => setForm((f) => ({ ...f, receipt_note: e.target.value }))} className="min-h-[44px]" />
             <Input placeholder={`${t("notes")} (${t("optional")})`} value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="min-h-[44px]" />
             <button
@@ -234,6 +241,13 @@ export default function Expenses() {
               </GoldButton>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+      {/* Receipt image dialog */}
+      <Dialog open={!!receiptView} onOpenChange={() => setReceiptView(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Receipt</DialogTitle></DialogHeader>
+          {receiptView && <img src={receiptView} alt="Receipt" className="w-full rounded-lg" />}
         </DialogContent>
       </Dialog>
     </PullToRefresh>);

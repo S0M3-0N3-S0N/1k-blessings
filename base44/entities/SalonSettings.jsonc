@@ -1,0 +1,54 @@
+{
+  "name": "SalonSettings",
+  "type": "object",
+  "properties": {
+    "salon_name": {
+      "type": "string",
+      "title": "Salon Name",
+      "default": "1K Blessings"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "hours_open": {
+      "type": "string",
+      "title": "Opening Time (HH:MM)",
+      "default": "09:00"
+    },
+    "hours_close": {
+      "type": "string",
+      "title": "Closing Time (HH:MM)",
+      "default": "20:00"
+    },
+    "default_commission_split": {
+      "type": "number",
+      "title": "Default Owner Commission %",
+      "default": 40
+    },
+    "late_fee_amount": {
+      "type": "number",
+      "title": "Late Fee Amount ($)",
+      "default": 0
+    },
+    "currency": {
+      "type": "string",
+      "title": "Currency Symbol",
+      "default": "$"
+    },
+    "timezone": {
+      "type": "string",
+      "title": "Timezone",
+      "default": "America/New_York"
+    }
+  },
+  "required": []
+}

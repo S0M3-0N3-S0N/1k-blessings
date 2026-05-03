@@ -26,8 +26,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [overdueCount, setOverdueCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
+  const refetchOverdue = () => {
     if (!isAdmin) return;
     const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
@@ -39,7 +40,27 @@ export default function Layout() {
       });
       setOverdueCount(count);
     });
+  };
+
+  useEffect(() => {
+    refetchOverdue();
   }, [isAdmin]);
+
+  useEffect(() => {
+    const handler = () => refetchOverdue();
+    window.addEventListener('overdueCountChanged', handler);
+    return () => window.removeEventListener('overdueCountChanged', handler);
+  }, []);
+
+  useEffect(() => {
+    if (!user?.email) return;
+    base44.entities.Message.filter({ is_read: false }).then(msgs => {
+      const mine = isAdmin
+        ? msgs.filter(m => m.receiver_email === user.email)
+        : msgs.filter(m => m.receiver_email === user.email);
+      setUnreadCount(mine.length);
+    }).catch(() => {});
+  }, [user?.email, isAdmin]);
 
   const adminNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
@@ -105,7 +126,8 @@ export default function Layout() {
       <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: "none" }}>
         {nav.map(({ path, label, icon: Icon }) => {
           const active = location.pathname === path;
-          const showBadge = path === "/payments" && overdueCount > 0;
+          const showOverdue = path === "/payments" && overdueCount > 0;
+          const showUnread = path === "/messages" && unreadCount > 0;
           return (
             <Link
               key={path}
@@ -119,8 +141,11 @@ export default function Layout() {
             >
               <Icon className="w-4 h-4 shrink-0" />
               {label}
-              {showBadge && (
+              {showOverdue && (
                 <span className="ml-auto bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{overdueCount}</span>
+              )}
+              {showUnread && (
+                <span className="ml-auto bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{unreadCount}</span>
               )}
             </Link>
           );
@@ -181,7 +206,8 @@ export default function Layout() {
         <div className="relative flex w-full mx-3 mb-3 bg-sidebar/90 backdrop-blur-xl border border-sidebar-border rounded-2xl shadow-lg overflow-hidden">
           {bottomTabs.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path;
-            const showBadge = path === "/payments" && overdueCount > 0;
+            const showOverdue = path === "/payments" && overdueCount > 0;
+            const showUnread = path === "/messages" && unreadCount > 0;
             return (
               <Link
                 key={path}
@@ -200,8 +226,8 @@ export default function Layout() {
                 )}
                 <div className="relative">
                   <Icon className="w-[18px] h-[18px] relative z-10" />
-                  {showBadge && (
-                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[13px] h-3.5 flex items-center justify-center px-0.5 z-20">{overdueCount}</span>
+                  {(showOverdue || showUnread) && (
+                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[13px] h-3.5 flex items-center justify-center px-0.5 z-20">{showOverdue ? overdueCount : unreadCount}</span>
                   )}
                 </div>
               </Link>
@@ -253,7 +279,7 @@ export default function Layout() {
                   <X className="w-4 h-4 text-sidebar-foreground/50" />
                 </button>
               </div>
-              <div className="px-4 pb-4 grid grid-cols-3 gap-2.5">
+              <div className="px-4 pb-4 grid grid-cols-3 gap-2.5 max-h-[60vh] overflow-y-auto">
                 {morePages.map(({ path, label, icon: Icon }) => {
                   const active = location.pathname === path;
                   return (

@@ -41,20 +41,36 @@ export default function MonthlyReports() {
   const [expanded, setExpanded] = useState({});
   const [activeTab, setActiveTab] = useState("overview");
 
+  const [error, setError] = useState(null);
+
   const loadData = useCallback(async () => {
-    const [s, p, e, r] = await Promise.all([
-      base44.entities.ServiceEntry.list(),
-      base44.entities.Payment.list(),
-      base44.entities.Expense.list(),
-      base44.entities.Renter.list(),
-    ]);
-    setServices(s); setPayments(p); setExpenses(e); setRenters(r); setLoading(false);
+    try {
+      setError(null);
+      const [s, p, e, r] = await Promise.all([
+        base44.entities.ServiceEntry.list(),
+        base44.entities.Payment.list(),
+        base44.entities.Expense.list(),
+        base44.entities.Renter.list(),
+      ]);
+      setServices(s); setPayments(p); setExpenses(e); setRenters(r); setLoading(false);
+    } catch (err) {
+      console.error('Load error:', err);
+      setError('Failed to load reports. Please try again.');
+      setLoading(false);
+    }
   }, []);
   useEffect(() => { loadData(); }, [loadData]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-[60vh]">
       <Loader2 className="w-5 h-5 animate-spin text-primary" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] gap-3">
+      <p className="text-sm text-destructive text-center">{error}</p>
+      <button onClick={loadData} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-medium">Retry</button>
     </div>
   );
 

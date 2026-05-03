@@ -3,7 +3,7 @@ import { LanguageProvider } from '@/lib/i18n';
 import { Toaster } from "@/components/ui/toaster";
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClientInstance } from '@/lib/query-client';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -59,11 +59,11 @@ const AuthenticatedApp = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
-        <Route path="/renters" element={isAdmin ? <Renters /> : <AdminRoute>{null}</AdminRoute>} />
-        <Route path="/clients" element={!isAdmin ? <Clients /> : <AdminRoute>{null}</AdminRoute>} />
-        <Route path="/payments" element={isAdmin ? <Payments /> : <AdminRoute>{null}</AdminRoute>} />
-        <Route path="/reports" element={isAdmin ? <MonthlyReports /> : <AdminRoute>{null}</AdminRoute>} />
-        <Route path="/expenses" element={isAdmin ? <Expenses /> : <AdminRoute>{null}</AdminRoute>} />
+        <Route path="/renters" element={isAdmin ? <Renters /> : <Navigate to="/" replace />} />
+        <Route path="/clients" element={!isAdmin ? <Clients /> : <Navigate to="/" replace />} />
+        <Route path="/payments" element={isAdmin ? <Payments /> : <Navigate to="/" replace />} />
+        <Route path="/reports" element={isAdmin ? <MonthlyReports /> : <Navigate to="/" replace />} />
+        <Route path="/expenses" element={isAdmin ? <Expenses /> : <Navigate to="/" replace />} />
         <Route path="/services" element={<ServiceTracker />} />
         <Route path="/calendar" element={<TeamCalendar />} />
         <Route path="/paystub" element={<Paystub />} />
