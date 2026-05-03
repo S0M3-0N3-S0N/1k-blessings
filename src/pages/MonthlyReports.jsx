@@ -71,12 +71,25 @@ export default function MonthlyReports() {
     const monthPmts = payments.filter(p => p.status === "paid" && p.period?.startsWith(m));
     const monthSvcs = services.filter(s => s.service_date?.startsWith(m));
     const monthExp = expenses.filter(e => e.expense_date?.startsWith(m));
-    const rentIncome = monthPmts.reduce((s, p) => s + (p.amount || 0), 0);
+
+    // Count actual weeks (Sundays/Mondays) in this month for weekly renters
+    const weeksInMonth = getMondaysInMonth(yr, mo).length;
+
+    // For each paid renter, compute their true monthly rent based on frequency
+    const paidRenterIds = new Set(monthPmts.map(p => p.renter_id));
+    const rentIncome = renters
+      .filter(r => r.payment_model === "rent" && paidRenterIds.has(r.id))
+      .reduce((sum, r) => {
+        if (r.frequency === "weekly") return sum + (r.rent_amount || 0) * weeksInMonth;
+        if (r.frequency === "biweekly") return sum + (r.rent_amount || 0) * Math.ceil(weeksInMonth / 2);
+        return sum + (r.rent_amount || 0); // monthly
+      }, 0);
+
     const commissionIncome = monthSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
     const totalIncome = rentIncome + commissionIncome;
     const totalExpenses = monthExp.reduce((s, e) => s + (e.amount || 0), 0);
     const netProfit = totalIncome - totalExpenses;
-    return { rentIncome, commissionIncome, totalIncome, totalExpenses, netProfit, monthSvcs, monthPmts, monthExp, yr, mo };
+    return { rentIncome, commissionIncome, totalIncome, totalExpenses, netProfit, monthSvcs, monthPmts, monthExp, yr, mo, weeksInMonth };
   };
 
   const renterMap = Object.fromEntries(renters.map(r => [r.id, r]));
@@ -256,7 +269,8 @@ export default function MonthlyReports() {
                             const weekSvcs = services.filter(s => s.service_date >= wStr && s.service_date <= weStr);
                             const wComm = weekSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
                             const wSvcRev = weekSvcs.reduce((s, e) => s + (e.amount || 0), 0);
-                            const wRent = payments.filter(p => p.status === "paid" && p.period?.slice(0, 7) === m).reduce((s, p) => s + (p.amount || 0), 0) / mondays.length;
+                            // Distribute monthly rent income evenly across weeks
+                            const wRent = rentIncome / mondays.length;
                             const wExp = expenses.filter(e => e.expense_date >= wStr && e.expense_date <= weStr).reduce((s, e) => s + (e.amount || 0), 0);
                             const wNet = wComm + wRent - wExp;
                             return (
