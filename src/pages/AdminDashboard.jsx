@@ -8,6 +8,10 @@ import GoldButton from "@/components/ui/GoldButton.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
 import PullToRefresh from "@/components/PullToRefresh";
 import { useLanguage } from "@/lib/i18n";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { PAYMENT_METHOD_LABELS } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function AdminDashboard() {
   const { t } = useLanguage();
@@ -21,6 +25,9 @@ export default function AdminDashboard() {
   const [weekOffset, setWeekOffset] = useState(0);
   const [markingId, setMarkingId] = useState(null);
   const [overdueCount, setOverdueCount] = useState(0);
+  const [markDialog, setMarkDialog] = useState(null); // { renter }
+  const [markPayType, setMarkPayType] = useState("full");
+  const [markMethod, setMarkMethod] = useState("cash");
 
   useEffect(() => {
     const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
@@ -109,18 +116,41 @@ export default function AdminDashboard() {
       return { ...r, monthlyAmt, paid: isPaid, status };
     });
 
-  const markPaid = async (renter) => {
+  const getWeeklyRentAmount = (renter) => {
+    if (renter.frequency === "weekly" || renter.frequency === "biweekly") return renter.rent_amount || 0;
+    return parseFloat(((renter.rent_amount || 0) / (52 / 12)).toFixed(2));
+  };
+
+  const confirmMarkPaid = async () => {
+    if (!markDialog) return;
+    const renter = markDialog.renter;
     setMarkingId(renter.id);
     try {
       const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(currentMonthStr));
-      if (existing) {
-        await base44.entities.Payment.update(existing.id, { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
+      if (markPayType === "weekly") {
+        const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+        await base44.entities.Payment.create({
+          renter_id: renter.id,
+          period: `${currentMonthStr}-w${weekLabel}`,
+          status: "paid",
+          paid_date: new Date().toISOString(),
+          due_date: getDueDate(currentMonthStr, renter.frequency),
+          amount: getWeeklyRentAmount(renter),
+          payment_method: markMethod,
+          notes: `Weekly payment — week of ${weekLabel}`,
+        });
       } else {
-        await base44.entities.Payment.create({ renter_id: renter.id, amount: calcMonthlyRent(renter, currentMonthStr), period: currentMonthStr, status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency) });
+        const data = { status: "paid", paid_date: new Date().toISOString(), due_date: getDueDate(currentMonthStr, renter.frequency), amount: calcMonthlyRent(renter, currentMonthStr), payment_method: markMethod };
+        if (existing) {
+          await base44.entities.Payment.update(existing.id, data);
+        } else {
+          await base44.entities.Payment.create({ renter_id: renter.id, period: currentMonthStr, ...data });
+        }
+        setOverdueCount(prev => Math.max(0, prev - 1));
+        window.dispatchEvent(new CustomEvent('overdueCountChanged'));
       }
+      setMarkDialog(null);
       await loadData();
-      // Refresh overdue count
-      setOverdueCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Mark paid error:', err);
     } finally {
@@ -270,7 +300,7 @@ export default function AdminDashboard() {
                     <span className="font-mono text-sm font-semibold">{formatCurrency(r.monthlyAmt)}</span>
                     <StatusBadge status={r.status} />
                     {!r.paid && (
-                      <GoldButton size="sm" onClick={() => markPaid(r)} disabled={markingId === r.id}>
+                      <GoldButton size="sm" onClick={() => { setMarkPayType("full"); setMarkMethod("cash"); setMarkDialog({ renter: r }); }} disabled={markingId === r.id}>
                         {markingId === r.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
                         {t("markPaid")}
                       </GoldButton>
@@ -334,6 +364,45 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Mark Paid Dialog */}
+      <Dialog open={!!markDialog} onOpenChange={() => setMarkDialog(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Mark Paid — {markDialog?.renter?.name}</DialogTitle></DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Payment Type</label>
+              <div className="flex gap-1 bg-muted/40 rounded-lg p-1">
+                {[{ v: "full", label: "Full Month" }, { v: "weekly", label: "This Week Only" }].map(({ v, label }) => (
+                  <button key={v} onClick={() => setMarkPayType(v)} className={cn("flex-1 py-2 rounded-md text-xs font-semibold transition-all", markPayType === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {markPayType === "weekly" && <p className="text-[11px] text-amber-500 mt-1">⚠ Records a partial weekly payment only — month stays unpaid.</p>}
+            </div>
+            <div className="bg-muted/30 rounded-lg px-4 py-3">
+              <p className="text-xs text-muted-foreground">Amount</p>
+              <p className="font-mono font-bold text-lg">
+                {markDialog && formatCurrency(markPayType === "weekly" ? getWeeklyRentAmount(markDialog.renter) : calcMonthlyRent(markDialog.renter, currentMonthStr))}
+              </p>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Payment Method</label>
+              <Select value={markMethod} onValueChange={setMarkMethod}>
+                <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
+                <SelectContent>{Object.entries(PAYMENT_METHOD_LABELS).map(([v, l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setMarkDialog(null)}>Cancel</Button>
+              <GoldButton className="flex-1" onClick={confirmMarkPaid} disabled={markingId !== null}>
+                {markingId !== null ? <Loader2 className="w-4 h-4 animate-spin" /> : markPayType === "weekly" ? "Mark Week Paid" : t("markPaid")}
+              </GoldButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </PullToRefresh>
   );
 }

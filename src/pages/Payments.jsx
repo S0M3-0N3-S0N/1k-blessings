@@ -22,7 +22,7 @@ export default function Payments() {
   const [filter, setFilter] = useState("all");
   const [monthOffset, setMonthOffset] = useState(0);
   const [markDialog, setMarkDialog] = useState(null); // { renter, existing }
-  const [markForm, setMarkForm] = useState({ amount: "", payment_method: "cash", notes: "", paid_time: "" });
+  const [markForm, setMarkForm] = useState({ amount: "", payment_method: "cash", notes: "", paid_time: "", pay_type: "full" });
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -70,10 +70,17 @@ export default function Payments() {
     return { status: isOverdue ? "overdue" : "pending", payment: existing };
   };
 
+  const getWeeklyRentAmount = (renter) => {
+    // For weekly renters, one week's rent. For biweekly, half. For monthly, divide by ~4.33
+    if (renter.frequency === "weekly") return renter.rent_amount || 0;
+    if (renter.frequency === "biweekly") return renter.rent_amount || 0;
+    return parseFloat(((renter.rent_amount || 0) / (52 / 12)).toFixed(2));
+  };
+
   const openMarkPaid = (renter) => {
     const { payment } = getRenterStatus(renter);
     const nowNY = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" });
-    setMarkForm({ amount: calcMonthlyRent(renter, monthStr) || "", payment_method: "cash", notes: "", paid_time: nowNY });
+    setMarkForm({ amount: calcMonthlyRent(renter, monthStr) || "", payment_method: "cash", notes: "", paid_time: nowNY, pay_type: "full" });
     setMarkDialog({ renter, existing: payment });
   };
 
@@ -87,27 +94,44 @@ export default function Payments() {
         setSaving(false);
         return;
       }
-      // Build paid_date from today's NY date + the manually entered time
-      const todayNY = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }); // YYYY-MM-DD
+      const todayNY = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
       const paidDateTime = markForm.paid_time
         ? new Date(`${todayNY}T${markForm.paid_time}:00`).toISOString()
         : new Date().toISOString();
-      const data = {
-        status: "paid",
-        paid_date: paidDateTime,
-        due_date: getDueDate(monthStr, renter.frequency),
-        amount,
-        payment_method: markForm.payment_method,
-        notes: markForm.notes
-      };
-      if (existing) {
-        await base44.entities.Payment.update(existing.id, data);
+
+      if (markForm.pay_type === "weekly") {
+        // Create a separate payment record for this week only — does NOT mark full month as paid
+        const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+        await base44.entities.Payment.create({
+          renter_id: renter.id,
+          period: `${monthStr}-w${weekLabel}`,
+          status: "paid",
+          paid_date: paidDateTime,
+          due_date: getDueDate(monthStr, renter.frequency),
+          amount,
+          payment_method: markForm.payment_method,
+          notes: markForm.notes || `Weekly payment — week of ${weekLabel}`,
+        });
+        setMarkDialog(null);
+        toast({ title: `${renter.name} — Weekly payment recorded` });
       } else {
-        await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
+        const data = {
+          status: "paid",
+          paid_date: paidDateTime,
+          due_date: getDueDate(monthStr, renter.frequency),
+          amount,
+          payment_method: markForm.payment_method,
+          notes: markForm.notes,
+        };
+        if (existing) {
+          await base44.entities.Payment.update(existing.id, data);
+        } else {
+          await base44.entities.Payment.create({ renter_id: renter.id, period: monthStr, ...data });
+        }
+        setMarkDialog(null);
+        toast({ title: `${renter.name} — ${t("markPaid")}` });
+        window.dispatchEvent(new CustomEvent('overdueCountChanged'));
       }
-      setMarkDialog(null);
-      toast({ title: `${renter.name} — ${t("markPaid")}` });
-      window.dispatchEvent(new CustomEvent('overdueCountChanged'));
       loadData();
     } catch (err) {
       console.error('Mark paid error:', err);
@@ -251,6 +275,31 @@ export default function Payments() {
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>{t("markPaid")} — {markDialog?.renter?.name}</DialogTitle></DialogHeader>
           <div className="space-y-3 pt-2">
+            {/* Weekly vs Full Month toggle */}
+            <div>
+              <label className="text-xs text-muted-foreground font-medium mb-1.5 block">Payment Type</label>
+              <div className="flex gap-1 bg-muted/40 rounded-lg p-1">
+                {[
+                  { v: "full", label: "Full Month" },
+                  { v: "weekly", label: "This Week Only" },
+                ].map(({ v, label }) => (
+                  <button
+                    key={v}
+                    onClick={() => {
+                      const renter = markDialog?.renter;
+                      const amt = v === "weekly" ? getWeeklyRentAmount(renter) : calcMonthlyRent(renter, monthStr);
+                      setMarkForm(f => ({ ...f, pay_type: v, amount: amt || "" }));
+                    }}
+                    className={cn("flex-1 py-2 rounded-md text-xs font-semibold transition-all", markForm.pay_type === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {markForm.pay_type === "weekly" && (
+                <p className="text-[11px] text-amber-500 mt-1">⚠ This marks a partial weekly payment — the month will remain unpaid overall.</p>
+              )}
+            </div>
             <div>
               <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("amount")}</label>
               <Input type="number" value={markForm.amount} onChange={e => setMarkForm(f => ({ ...f, amount: e.target.value }))} className="font-mono min-h-[44px]" />
@@ -272,7 +321,7 @@ export default function Payments() {
             <div className="flex gap-2 pt-1">
               <Button variant="outline" className="flex-1 min-h-[44px]" onClick={() => setMarkDialog(null)}>{t("cancel")}</Button>
               <GoldButton className="flex-1" onClick={confirmMarkPaid} disabled={saving}>
-                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : t("markPaid")}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : markForm.pay_type === "weekly" ? "Mark Week Paid" : t("markPaid")}
               </GoldButton>
             </div>
           </div>
