@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate, calcMonthlyRent } from "@/lib/utils";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate, isAfterEndDate, calcMonthlyRent } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
@@ -56,10 +56,10 @@ export default function Payments() {
   const monthStr = `${displayDate.getFullYear()}-${String(displayDate.getMonth() + 1).padStart(2, "0")}`;
   const monthLabel = displayDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
-  // Only show active rent renters whose start date is not after current month
+  // Only show rent renters who were active during this month (not before start, not after end)
   const rentRenters = renters.filter(r =>
     r.payment_model === "rent" &&
-    r.status === "active" &&
+    (r.status === "active" || (r.status === "inactive" && !isAfterEndDate(monthStr, r))) &&
     !isBeforeStartDate(monthStr, r)
   );
 
@@ -100,18 +100,26 @@ export default function Payments() {
         : new Date().toISOString();
 
       if (markForm.pay_type === "weekly") {
-        // Create a separate payment record for this week only — does NOT mark full month as paid
+        // Create a separate payment record for this specific week only — does NOT mark full month as paid
+        const todayNYDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+        const weekStartDate = getWeekStart(new Date(), 0).toISOString().split("T")[0];
+        const weekPeriodKey = `${monthStr}-week-${weekStartDate}`;
+        // Check if there's already a payment for this exact week
+        const existingWeekPayment = payments.find(p => p.renter_id === renter.id && p.period === weekPeriodKey);
         const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
-        await base44.entities.Payment.create({
-          renter_id: renter.id,
-          period: `${monthStr}-w${weekLabel}`,
+        const weekData = {
           status: "paid",
           paid_date: paidDateTime,
-          due_date: getDueDate(monthStr, renter.frequency),
+          due_date: getDueDate(weekStartDate, "weekly"),
           amount,
           payment_method: markForm.payment_method,
           notes: markForm.notes || `Weekly payment — week of ${weekLabel}`,
-        });
+        };
+        if (existingWeekPayment) {
+          await base44.entities.Payment.update(existingWeekPayment.id, weekData);
+        } else {
+          await base44.entities.Payment.create({ renter_id: renter.id, period: weekPeriodKey, ...weekData });
+        }
         setMarkDialog(null);
         toast({ title: `${renter.name} — Weekly payment recorded` });
       } else {
@@ -334,10 +342,11 @@ export default function Payments() {
 function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOffset, commPayouts, onRefresh }) {
   const { t } = useLanguage();
   const [view, setView] = useState("monthly");
-  // Only active commission renters whose start date is not after current period
+  // Commission renters active during this month (not inactive after their end date, not before start)
   const commissionRenters = renters.filter(r =>
     r.payment_model === "commission" &&
-    r.status === "active"
+    (r.status === "active" || (r.status === "inactive" && !isAfterEndDate(monthStr, r))) &&
+    !isBeforeStartDate(monthStr, r)
   );
   if (commissionRenters.length === 0) return null;
 

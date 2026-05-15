@@ -108,6 +108,18 @@ export function isBeforeStartDate(periodStr, renter) {
   return periodStr < renter.start_date.slice(0, 7);
 }
 
+// Check if a period (YYYY-MM) is after the renter's end date — no future charges after termination
+export function isAfterEndDate(periodStr, renter) {
+  if (!renter?.end_date) return false;
+  return periodStr > renter.end_date.slice(0, 7);
+}
+
+// Check if a specific week (YYYY-MM-DD) is after the renter's end date
+export function isWeekAfterEndDate(weekStartStr, renter) {
+  if (!renter?.end_date) return false;
+  return weekStartStr > renter.end_date;
+}
+
 export function getMonthsInRange(count = 12) {
   const months = [];
   const now = new Date();

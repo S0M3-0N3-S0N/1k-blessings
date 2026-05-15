@@ -91,6 +91,10 @@
       "type": "string",
       "title": "Start Date (YYYY-MM-DD)"
     },
+    "end_date": {
+      "type": "string",
+      "title": "End Date / Last Day Worked (YYYY-MM-DD)"
+    },
     "notes": {
       "type": "string",
       "title": "Notes"

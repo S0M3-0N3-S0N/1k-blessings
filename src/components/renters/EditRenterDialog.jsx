@@ -19,6 +19,7 @@ export default function EditRenterDialog({ renter, open, onClose, onUpdated }) {
         frequency: renter.frequency || 'monthly',
         status: renter.status || 'active',
         commission_owner: renter.commission_owner ?? 100,
+        end_date: renter.end_date || '',
       });
     }
   }, [renter]);
@@ -70,7 +71,7 @@ export default function EditRenterDialog({ renter, open, onClose, onUpdated }) {
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Status</Label>
-            <Select value={form.status || 'active'} onValueChange={v => setForm({ ...form, status: v })}>
+            <Select value={form.status || 'active'} onValueChange={v => setForm({ ...form, status: v, end_date: v === 'active' ? '' : form.end_date })}>
               <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
@@ -78,6 +79,12 @@ export default function EditRenterDialog({ renter, open, onClose, onUpdated }) {
               </SelectContent>
             </Select>
           </div>
+          {form.status === 'inactive' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">End Date / Last Day Worked *</Label>
+              <Input type="date" value={form.end_date || ''} onChange={e => setForm({ ...form, end_date: e.target.value })} className="h-9" required />
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs">Commission Split</Label>
             <div className="flex items-center gap-2">

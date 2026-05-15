@@ -20,7 +20,7 @@ import UserLinker from "@/components/renters/UserLinker";
 const emptyForm = {
   name: "", role: "Stylist", payment_model: "rent", rent_amount: "",
   frequency: "weekly", due_day: "Saturday", commission_owner: 40, base_salary: "", base_salary_frequency: "weekly",
-  status: "active", phone: "", start_date: "", notes: "", user_email: ""
+  status: "active", phone: "", start_date: "", end_date: "", notes: "", user_email: ""
 };
 
 function RenterFormFields({ form, setForm }) {
@@ -118,7 +118,7 @@ function RenterFormFields({ form, setForm }) {
       }
       <div>
         <label className="text-xs text-muted-foreground font-medium mb-1.5 block">{t("status")}</label>
-        <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
+        <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v, end_date: v === "active" ? "" : f.end_date }))}>
           <SelectTrigger className="min-h-[44px]"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="active">{t("active")}</SelectItem>
@@ -126,6 +126,12 @@ function RenterFormFields({ form, setForm }) {
           </SelectContent>
         </Select>
       </div>
+      {form.status === "inactive" && (
+        <div>
+          <label className="text-xs text-muted-foreground font-medium mb-1.5 block">End Date / Last Day Worked *</label>
+          <Input type="date" value={form.end_date || ""} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} className="min-h-[44px]" required />
+        </div>
+      )}
       <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} placeholder={`${t("notes")} (${t("optional")})`} className="min-h-[44px]" />
     </div>);
 
@@ -169,7 +175,7 @@ export default function Renters() {
   useEffect(() => {loadData();}, [loadData]);
 
   const openAdd = () => {setForm(emptyForm);setEditRenter(null);setShowDialog(true);};
-  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, base_salary: r.base_salary || "", base_salary_frequency: r.base_salary_frequency || "weekly", due_day: r.due_day || "Saturday" });setEditRenter(r);setShowDialog(true);};
+  const openEdit = (r) => {setForm({ ...emptyForm, ...r, rent_amount: r.rent_amount || "", commission_owner: r.commission_owner ?? 40, base_salary: r.base_salary || "", base_salary_frequency: r.base_salary_frequency || "weekly", due_day: r.due_day || "Saturday", end_date: r.end_date || "" });setEditRenter(r);setShowDialog(true);};
 
   const handleSave = async () => {
     if (!form.name) return;
@@ -312,6 +318,7 @@ export default function Renters() {
                           <p className="font-medium">{r.name}</p>
                           <p className="text-xs text-muted-foreground">{r.role || "Stylist"}</p>
                           {r.start_date && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{t("since")} {new Date(r.start_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", year: "numeric" })}</p>}
+                          {r.end_date && r.status === "inactive" && <p className="text-[10px] text-destructive/70 mt-0.5">Ended {new Date(r.end_date + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>}
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap justify-end">
