@@ -47,9 +47,9 @@ export default function MonthlyReports() {
     try {
       setError(null);
       const [s, p, e, r] = await Promise.all([
-        base44.entities.ServiceEntry.list(),
-        base44.entities.Payment.list(),
-        base44.entities.Expense.list(),
+        base44.entities.ServiceEntry.list("-service_date", 1000),
+        base44.entities.Payment.list("-period", 500),
+        base44.entities.Expense.list("-expense_date", 500),
         base44.entities.Renter.list(),
       ]);
       setServices(s); setPayments(p); setExpenses(e); setRenters(r); setLoading(false);
@@ -76,7 +76,8 @@ export default function MonthlyReports() {
 
   const allMonths = [...new Set([
     ...services.map(s => s.service_date?.slice(0, 7)),
-    ...payments.map(p => p.period?.slice(0, 7)),
+    // Only include valid YYYY-MM periods (not weekly sub-payment keys like "2026-05-week-...")
+    ...payments.map(p => p.period?.length === 7 ? p.period : null),
     ...expenses.map(e => e.expense_date?.slice(0, 7)),
   ].filter(Boolean))].sort((a, b) => b.localeCompare(a));
 
@@ -283,7 +284,7 @@ export default function MonthlyReports() {
                             const we = getWeekEnd(ws);
                             const wStr = ws.toISOString().split("T")[0];
                             const weStr = we.toISOString().split("T")[0];
-                            const weekSvcs = services.filter(s => s.service_date >= wStr && s.service_date <= weStr);
+                            const weekSvcs = services.filter(s => s.service_date && s.service_date >= wStr && s.service_date <= weStr);
                             const wComm = weekSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
                             const wSvcRev = weekSvcs.reduce((s, e) => s + (e.amount || 0), 0);
                             // Distribute monthly rent income evenly across weeks
@@ -320,7 +321,7 @@ export default function MonthlyReports() {
                       </div>
 
                       {/* Per-Stylist Breakdown */}
-                      <PerStylistBreakdown services={monthSvcs} payments={monthPmts} renters={renters} />
+                      <PerStylistBreakdown services={monthSvcs} payments={monthPmts} renters={renters} monthStr={m} />
                     </div>
                   )}
                 </div>
@@ -445,7 +446,7 @@ function PayrollHistory({ renters, services, payments }) {
   );
 }
 
-function PerStylistBreakdown({ services, payments, renters }) {
+function PerStylistBreakdown({ services, payments, renters, monthStr }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const rentRenters = renters.filter(r => r.payment_model === "rent");
@@ -461,10 +462,10 @@ function PerStylistBreakdown({ services, payments, renters }) {
       {open && (
         <div className="px-4 pb-4 space-y-3">
           {rentRenters.map(r => {
-            const p = payments.find(x => x.renter_id === r.id);
+            // Use exact month-period match — avoid picking up weekly sub-payments
+            const p = payments.find(x => x.renter_id === r.id && x.period === monthStr);
             const rs = services.filter(s => s.renter_id === r.id);
-            // Find the month string from the payments array context (passed as prop)
-            const monthKey = p?.period?.slice(0, 7) || new Date().toISOString().slice(0, 7);
+            const monthKey = monthStr;
             return (
               <div key={r.id} className="flex items-center justify-between py-1.5">
                 <span className="font-medium text-sm">{r.name}</span>

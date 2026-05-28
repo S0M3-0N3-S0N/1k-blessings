@@ -108,10 +108,14 @@ export function isBeforeStartDate(periodStr, renter) {
   return periodStr < renter.start_date.slice(0, 7);
 }
 
-// Check if a period (YYYY-MM) is after the renter's end date — no future charges after termination
+// Check if a period (YYYY-MM) is strictly after the renter's end date month
+// i.e., "2026-06" > "2026-05" → true (June is after May end date)
 export function isAfterEndDate(periodStr, renter) {
   if (!renter?.end_date) return false;
-  return periodStr > renter.end_date.slice(0, 7);
+  // Normalize both to YYYY-MM for month-level comparison
+  const periodMonth = periodStr.slice(0, 7);
+  const endMonth = renter.end_date.slice(0, 7);
+  return periodMonth > endMonth;
 }
 
 // Check if a specific week (YYYY-MM-DD) is after the renter's end date
@@ -160,7 +164,10 @@ export function calcMonthlyRent(renter, monthStr) {
 }
 
 export function getDueDate(periodStart, frequency) {
-  const d = new Date(periodStart);
+  // periodStart can be YYYY-MM or YYYY-MM-DD
+  // Append T12:00:00 to avoid timezone-shifting the date to the prior day
+  const normalized = periodStart.length === 7 ? `${periodStart}-01T12:00:00` : `${periodStart}T12:00:00`;
+  const d = new Date(normalized);
   if (frequency === 'weekly') d.setDate(d.getDate() + 7);
   else if (frequency === 'biweekly') d.setDate(d.getDate() + 14);
   else d.setDate(d.getDate() + 30);

@@ -102,8 +102,7 @@ export default function Payments() {
 
       if (markForm.pay_type === "weekly") {
         // Create a separate payment record for this specific week only — does NOT mark full month as paid
-        const todayNYDate = new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
-        const weekStartDate = getWeekStart(new Date(), 0).toISOString().split("T")[0];
+              const weekStartDate = getWeekStart(new Date(), 0).toISOString().split("T")[0];
         const weekPeriodKey = `${monthStr}-week-${weekStartDate}`;
         // Check if there's already a payment for this exact week
         const existingWeekPayment = payments.find(p => p.renter_id === renter.id && p.period === weekPeriodKey);
@@ -355,7 +354,7 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
   const we = getWeekEnd(ws);
   const wsStr = ws.toISOString().split("T")[0];
   const weStr = we.toISOString().split("T")[0];
-  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
+  const weekServices = services.filter(s => s.service_date && s.service_date >= wsStr && s.service_date <= weStr);
   const monthServices = services.filter(s => s.service_date?.startsWith(monthStr));
 
   return (
@@ -543,12 +542,15 @@ function ChargesLedger({ charges, renters, onRefresh }) {
 function PaymentHistory({ renters, allPayments, currentMonth }) {
   const { t } = useLanguage();
   const now = new Date();
+  // Show history relative to the currently-viewed month, not always relative to today
+  const [curYr, curMo] = currentMonth.split("-").map(Number);
   const prevMonths = [1, 2, 3].map(offset => {
-    const d = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+    const d = new Date(curYr, curMo - 1 - offset, 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
 
-  const hasHistory = renters.some(r => allPayments.some(p => p.renter_id === r.id && prevMonths.some(m => p.period?.startsWith(m))));
+  // Check for exact month-period payment history (exclude weekly sub-payments)
+  const hasHistory = renters.some(r => allPayments.some(p => p.renter_id === r.id && prevMonths.includes(p.period)));
   if (!hasHistory) return null;
 
   return (

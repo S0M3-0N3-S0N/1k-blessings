@@ -280,7 +280,7 @@ export default function Renters() {
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {["all", "rent", "commission", "hourly"].map(f => (
+                  {["all", "rent", "commission"].map(f => (
                     <button
                       key={f}
                       onClick={() => setModelFilter(f)}
@@ -457,12 +457,17 @@ function RenterCardActions({ renter, services, onDelete }) {
   // Get renter stats
   const thisMonthServices = services.filter(s => s.renter_id === renter.id && s.service_date?.startsWith(new Date().toISOString().slice(0, 7)));
   const thisMonthRevenue = thisMonthServices.reduce((s, e) => s + (e.amount || 0), 0);
+  // Use proper Mon-Sun week bounds consistent with the rest of the app
   const thisWeekServices = services.filter(s => {
     const ws = new Date();
-    ws.setDate(ws.getDate() - ws.getDay());
+    const day = ws.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    ws.setDate(ws.getDate() + diff);
     const we = new Date(ws);
-    we.setDate(we.getDate() + 7);
-    return s.renter_id === renter.id && s.service_date >= ws.toISOString().slice(0, 10) && s.service_date < we.toISOString().slice(0, 10);
+    we.setDate(we.getDate() + 6);
+    const wsStr = ws.toISOString().slice(0, 10);
+    const weStr = we.toISOString().slice(0, 10);
+    return s.renter_id === renter.id && s.service_date >= wsStr && s.service_date <= weStr;
   }).length;
 
   return (

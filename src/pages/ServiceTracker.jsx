@@ -113,7 +113,7 @@ export default function ServiceTracker() {
       };
       if (editService) {
         await base44.entities.ServiceEntry.update(editService.id, data);
-        toast({ title: t("save") });
+        toast({ title: t("serviceUpdated") || t("save") });
       } else {
         await base44.entities.ServiceEntry.create(data);
         // Update client stats if client_name provided
@@ -140,10 +140,14 @@ export default function ServiceTracker() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Delete this service?")) return;
-    await base44.entities.ServiceEntry.delete(id);
-    toast({ title: t("deleted") });
-    loadData();
+    if (!confirm(t("deleteServiceConfirm") || "Delete this service?")) return;
+    try {
+      await base44.entities.ServiceEntry.delete(id);
+      toast({ title: t("deleted") });
+      loadData();
+    } catch (err) {
+      toast({ title: t("deleteFailed"), description: err.message, variant: "destructive" });
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-[60vh]"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>;
@@ -184,7 +188,8 @@ export default function ServiceTracker() {
   const previewTip = parseFloat(form.tip_amount) || 0;
   const previewEarnings = selectedRenter && previewAmt > 0 ? computeEarnings(previewAmt, selectedRenter) : null;
 
-  const toggleMonth = (m) => setExpandedMonths(p => ({ ...p, [m]: p[m] === false ? true : p[m] === true ? false : false }));
+  // BUG FIX: triple-state was collapsing on first click then stuck — simplified to toggle
+  const toggleMonth = (m) => setExpandedMonths(p => ({ ...p, [m]: !p[m] }));
   const isExpanded = (m) => expandedMonths[m] !== false;
 
   return (

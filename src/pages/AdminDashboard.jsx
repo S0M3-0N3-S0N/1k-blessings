@@ -29,18 +29,7 @@ export default function AdminDashboard() {
   const [markPayType, setMarkPayType] = useState("full");
   const [markMethod, setMarkMethod] = useState("cash");
 
-  useEffect(() => {
-    const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
-    Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
-      const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
-      let count = 0;
-      rentRenters.forEach(r => {
-        const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
-        if (isPaymentOverdue(payment, r)) count++;
-      });
-      setOverdueCount(count);
-    }).catch(err => console.error('Overdue check error:', err));
-  }, []);
+  // Overdue count is derived from loaded data — no separate fetch needed
 
   const loadData = useCallback(async () => {
     try {
@@ -83,16 +72,16 @@ export default function AdminDashboard() {
   const commissionRenters = activeRenters.filter(r => r.payment_model === "commission");
   const hourlyRenters = []; // removed hourly model
 
-  // KPIs
+  // KPIs — use exact period match to avoid weekly sub-payments skewing the numbers
   const monthlyRentProjected = rentRenters.reduce((s, r) => s + calcMonthlyRent(r, currentMonthStr), 0);
-  const paidRenterIds = new Set(payments.filter(p => p.status === "paid" && p.period?.startsWith(currentMonthStr)).map(p => p.renter_id));
+  const paidRenterIds = new Set(payments.filter(p => p.status === "paid" && p.period === currentMonthStr).map(p => p.renter_id));
   const collectedThisMonth = rentRenters.filter(r => paidRenterIds.has(r.id)).reduce((s, r) => s + calcMonthlyRent(r, currentMonthStr), 0);
 
   const ws = getWeekStart(new Date(), weekOffset);
   const we = getWeekEnd(ws);
   const wsStr = ws.toISOString().split("T")[0];
   const weStr = we.toISOString().split("T")[0];
-  const weekServices = services.filter(s => s.service_date >= wsStr && s.service_date <= weStr);
+  const weekServices = services.filter(s => s.service_date && s.service_date >= wsStr && s.service_date <= weStr);
   const weekOwnerCommission = weekServices.reduce((s, e) => s + (e.owner_earnings || 0), 0);
 
   // Commission splits
@@ -109,7 +98,8 @@ export default function AdminDashboard() {
     .filter(r => r.payment_model === "rent" && r.status === "active" && !isBeforeStartDate(currentMonthStr, r))
     .map(r => {
       const monthlyAmt = calcMonthlyRent(r, currentMonthStr);
-      const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+      // Use exact period match — weekly sub-payments should not count as month paid
+      const payment = payments.find(p => p.renter_id === r.id && p.period === currentMonthStr);
       const isPaid = payment?.status === "paid";
       const overdue = !isPaid && isPaymentOverdue(payment, r);
       const status = isPaid ? "paid" : overdue ? "overdue" : "pending";
@@ -129,9 +119,11 @@ export default function AdminDashboard() {
       const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(currentMonthStr));
       if (markPayType === "weekly") {
         const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+        // Use consistent weekly period key format matching Payments.jsx
+        const weekStartDate = new Date().toISOString().split("T")[0];
         await base44.entities.Payment.create({
           renter_id: renter.id,
-          period: `${currentMonthStr}-w${weekLabel}`,
+          period: `${currentMonthStr}-week-${weekStartDate}`,
           status: "paid",
           paid_date: new Date().toISOString(),
           due_date: getDueDate(currentMonthStr, renter.frequency),
@@ -146,11 +138,10 @@ export default function AdminDashboard() {
         } else {
           await base44.entities.Payment.create({ renter_id: renter.id, period: currentMonthStr, ...data });
         }
-        setOverdueCount(prev => Math.max(0, prev - 1));
         window.dispatchEvent(new CustomEvent('overdueCountChanged'));
       }
       setMarkDialog(null);
-      await loadData();
+      await loadData(); // overdue count recomputes from fresh rentRows after re-render
     } catch (err) {
       console.error('Mark paid error:', err);
     } finally {
@@ -160,14 +151,22 @@ export default function AdminDashboard() {
 
 
 
-  // Birthday reminders (next 7 days)
+  // Overdue count derived from rent rows (no extra fetch needed)
+  const computedOverdueCount = rentRows.filter(r => r.status === "overdue").length;
+  // Sync to state if different (avoids stale initial value)
+  if (computedOverdueCount !== overdueCount) setOverdueCount(computedOverdueCount);
+
+  // Birthday reminders (next 7 days) — compare month/day only, ignore year
   const upcomingBirthdays = [...renters, ...clients].filter(p => {
     if (!p.birthday) return false;
     const [, bMo, bDay] = p.birthday.split('-').map(Number);
     const today = new Date();
-    const thisYear = new Date(today.getFullYear(), bMo - 1, bDay);
-    const diff = (thisYear - today) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff <= 7;
+    const thisYearBday = new Date(today.getFullYear(), bMo - 1, bDay);
+    // Also check next year in case birthday is Jan 1 and today is Dec 31
+    const nextYearBday = new Date(today.getFullYear() + 1, bMo - 1, bDay);
+    const diff = (thisYearBday - today) / (1000 * 60 * 60 * 24);
+    const diffNext = (nextYearBday - today) / (1000 * 60 * 60 * 24);
+    return (diff >= 0 && diff <= 7) || (diffNext >= 0 && diffNext <= 7);
   });
 
   // Today's schedule
@@ -209,8 +208,10 @@ export default function AdminDashboard() {
             {upcomingBirthdays.map((p, i) => {
               const [, bMo, bDay] = p.birthday.split('-').map(Number);
               const today = new Date();
-              const thisYear = new Date(today.getFullYear(), bMo - 1, bDay);
-              const diff = Math.round((thisYear - today) / (1000 * 60 * 60 * 24));
+              today.setHours(0, 0, 0, 0);
+              const thisYearBday = new Date(today.getFullYear(), bMo - 1, bDay);
+              const nextYearBday = new Date(today.getFullYear() + 1, bMo - 1, bDay);
+              const diff = Math.round(((thisYearBday >= today ? thisYearBday : nextYearBday) - today) / (1000 * 60 * 60 * 24));
               return (
                 <p key={i} className="text-xs text-foreground/80">
                   {p.name} · {p.role || "Client"} · {diff === 0 ? "🎉 Today!" : `in ${diff} day${diff !== 1 ? "s" : ""}`}
