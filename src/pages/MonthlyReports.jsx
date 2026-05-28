@@ -84,22 +84,23 @@ export default function MonthlyReports() {
 
   const getMonthData = (m) => {
     const [yr, mo] = m.split("-").map(Number);
-    const monthPmts = payments.filter(p => p.status === "paid" && p.period?.startsWith(m));
+    // Only exact month-period payments count as full-month rent (exclude weekly sub-payments like "2026-05-week-...")
+    const monthPmts = payments.filter(p => p.status === "paid" && (p.period === m || p.period?.startsWith(`${m}-week-`)));
     const monthSvcs = services.filter(s => s.service_date?.startsWith(m));
     const monthExp = expenses.filter(e => e.expense_date?.startsWith(m));
 
     // Count actual weeks (Sundays/Mondays) in this month for weekly renters
     const weeksInMonth = getMondaysInMonth(yr, mo).length;
 
-    // For each paid renter, compute their true monthly rent based on frequency
-    const paidRenterIds = new Set(monthPmts.map(p => p.renter_id));
-    const rentIncome = renters
-      .filter(r => r.payment_model === "rent" && paidRenterIds.has(r.id))
-      .reduce((sum, r) => {
-        if (r.frequency === "weekly") return sum + (r.rent_amount || 0) * weeksInMonth;
-        if (r.frequency === "biweekly") return sum + (r.rent_amount || 0) * Math.ceil(weeksInMonth / 2);
-        return sum + (r.rent_amount || 0); // monthly
-      }, 0);
+    // Rent income = sum of actual payment amounts recorded this month
+    // Full-month payments (period === m): use the payment amount
+    // Weekly sub-payments (period starts with m-week-): sum their actual amounts
+    const rentIncome = monthPmts
+      .filter(p => {
+        const renter = renters.find(r => r.id === p.renter_id);
+        return renter?.payment_model === "rent";
+      })
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
 
     const commissionIncome = monthSvcs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
     const totalIncome = rentIncome + commissionIncome;
@@ -347,7 +348,8 @@ function PayrollHistory({ renters, services, payments }) {
   }
   const [selectedMonth, setSelectedMonth] = useState(months[0]);
   const monthServices = services.filter(s => s.service_date?.startsWith(selectedMonth));
-  const monthPayments = payments.filter(p => p.period?.startsWith(selectedMonth));
+  // Only exact month-period payments for status display (not weekly sub-payments)
+  const monthPayments = payments.filter(p => p.period === selectedMonth);
   const rentRenters = renters.filter(r => r.payment_model === "rent");
   const commRenters = renters.filter(r => r.payment_model === "commission");
 

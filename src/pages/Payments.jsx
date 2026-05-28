@@ -64,7 +64,8 @@ export default function Payments() {
   );
 
   const getRenterStatus = (renter) => {
-    const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(monthStr));
+    // Only exact month-period payments count as full-month paid (not weekly sub-payments)
+    const existing = payments.find(p => p.renter_id === renter.id && p.period === monthStr);
     if (existing?.status === "paid") return { status: "paid", payment: existing };
     const isOverdue = isPaymentOverdue(existing, renter);
     return { status: isOverdue ? "overdue" : "pending", payment: existing };
@@ -572,7 +573,8 @@ function PaymentHistory({ renters, allPayments, currentMonth }) {
               <tr key={r.id} className="hover:bg-muted/20">
                 <td className="px-5 py-3 font-medium">{r.name}</td>
                 {prevMonths.map(m => {
-                  const p = allPayments.find(x => x.renter_id === r.id && x.period?.startsWith(m));
+                  // Only exact month-period payments represent a full payment status
+                  const p = allPayments.find(x => x.renter_id === r.id && x.period === m);
                   const s = p?.status || "pending";
                   return (
                     <td key={m} className="px-4 py-3 text-center">
