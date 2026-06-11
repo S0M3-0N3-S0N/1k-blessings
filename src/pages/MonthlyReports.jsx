@@ -376,22 +376,56 @@ function PayrollHistory({ renters, services, payments }) {
           </div>
           <div className="divide-y divide-border">
             {rentRenters.map(r => {
-              const rs = monthServices.filter(s => s.renter_id === r.id);
-              const rev = rs.reduce((s, e) => s + (e.amount || 0), 0);
-              const pmt = monthPayments.find(p => p.renter_id === r.id);
+              // All payments for this renter in this month (full + weekly)
+              const allRenterPmts = payments.filter(p =>
+                p.renter_id === r.id &&
+                (p.period === selectedMonth || p.period?.startsWith(`${selectedMonth}-week-`)) &&
+                p.status === "paid"
+              );
+              const fullPmt = allRenterPmts.find(p => p.period === selectedMonth);
+              const weeklyPmts = allRenterPmts.filter(p => p.period?.startsWith(`${selectedMonth}-week-`));
+              const totalCollected = allRenterPmts.reduce((s, p) => s + (p.amount || 0), 0);
+
               return (
-                <div key={r.id} className="flex items-center justify-between px-4 py-3">
-                  <div>
-                    <p className="font-medium text-sm">{r.name}</p>
-                    <p className="text-xs text-muted-foreground">{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</p>
+                <div key={r.id} className="px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-sm">{r.name}</p>
+                      <p className="text-xs text-muted-foreground">{formatCurrency(r.rent_amount)}/{freqLabel(r.frequency)}</p>
+                    </div>
+                    <div className="text-right">
+                      {totalCollected > 0 && <p className="font-mono text-sm font-semibold">{formatCurrency(totalCollected)}</p>}
+                      {fullPmt ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                          Full Month Paid
+                        </span>
+                      ) : weeklyPmts.length > 0 ? (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/30">
+                          {weeklyPmts.length} Week{weeklyPmts.length > 1 ? "s" : ""} Paid
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-600 border-amber-500/30">
+                          pending
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-mono text-sm font-semibold">{formatCurrency(rev)}</p>
-                    <span className={cn("text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                      pmt?.status === "paid" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" : "bg-amber-500/15 text-amber-600 border-amber-500/30")}>
-                      {pmt?.status || "pending"}
-                    </span>
-                  </div>
+                  {weeklyPmts.length > 0 && !fullPmt && (
+                    <div className="mt-1.5 ml-1 space-y-0.5">
+                      {weeklyPmts.map(wp => {
+                        const weekDate = wp.period?.split("-week-")[1];
+                        const weekLabel = weekDate
+                          ? new Date(weekDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                          : "Week";
+                        return (
+                          <div key={wp.id} className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span>↳ Week of {weekLabel}</span>
+                            <span className="font-mono">{formatCurrency(wp.amount)}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -462,20 +496,54 @@ function PerStylistBreakdown({ services, payments, renters, monthStr }) {
       {open && (
         <div className="px-4 pb-4 space-y-3">
           {rentRenters.map(r => {
-            // Use exact month-period match — avoid picking up weekly sub-payments
-            const p = payments.find(x => x.renter_id === r.id && x.period === monthStr);
-            const rs = services.filter(s => s.renter_id === r.id);
-            const monthKey = monthStr;
+            // Full-month payment (period === monthStr)
+            const fullMonthPmt = payments.find(x => x.renter_id === r.id && x.period === monthStr && x.status === "paid");
+            // Weekly sub-payments (period starts with `${monthStr}-week-`)
+            const weeklyPmts = payments.filter(x => x.renter_id === r.id && x.period?.startsWith(`${monthStr}-week-`) && x.status === "paid");
+            const totalPaid = fullMonthPmt
+              ? (fullMonthPmt.amount || 0)
+              : weeklyPmts.reduce((s, p) => s + (p.amount || 0), 0);
+            const hasPaid = fullMonthPmt || weeklyPmts.length > 0;
+
             return (
-              <div key={r.id} className="flex items-center justify-between py-1.5">
-                <span className="font-medium text-sm">{r.name}</span>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-mono">{formatCurrency(calcMonthlyRent(r, monthKey))}</span>
-                  <span className={cn("px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider text-[10px]",
-                    p?.status === "paid" ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" : "bg-amber-500/15 text-amber-600 border-amber-500/30")}>
-                    {p?.status || "pending"}
-                  </span>
+              <div key={r.id} className="py-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{r.name}</span>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="font-mono text-muted-foreground">{formatCurrency(totalPaid)}</span>
+                    {fullMonthPmt ? (
+                      <span className="px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                        Full Month Paid
+                      </span>
+                    ) : weeklyPmts.length > 0 ? (
+                      <span className="px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider text-[10px] bg-primary/10 text-primary border-primary/30">
+                        {weeklyPmts.length} Week{weeklyPmts.length > 1 ? "s" : ""} Paid
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider text-[10px] bg-amber-500/15 text-amber-600 border-amber-500/30">
+                        pending
+                      </span>
+                    )}
+                  </div>
                 </div>
+                {/* Show individual weekly payment rows */}
+                {weeklyPmts.length > 0 && !fullMonthPmt && (
+                  <div className="mt-1.5 ml-2 space-y-0.5">
+                    {weeklyPmts.map(wp => {
+                      // Extract week date from period key like "2026-05-week-2026-05-25"
+                      const weekDate = wp.period?.split("-week-")[1];
+                      const weekLabel = weekDate
+                        ? new Date(weekDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                        : "Week";
+                      return (
+                        <div key={wp.id} className="flex items-center justify-between text-[11px] text-muted-foreground">
+                          <span>↳ Week of {weekLabel}</span>
+                          <span className="font-mono">{formatCurrency(wp.amount)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             );
           })}

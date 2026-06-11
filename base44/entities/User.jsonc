@@ -19,5 +19,9 @@
       "type": "string",
       "title": "Birthday (YYYY-MM-DD)"
     }
-  }
+  },
+  "required": [
+    "phone",
+    "birthday"
+  ]
 }

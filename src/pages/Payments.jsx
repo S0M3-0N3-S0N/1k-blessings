@@ -81,7 +81,26 @@ export default function Payments() {
   const openMarkPaid = (renter) => {
     const { payment } = getRenterStatus(renter);
     const nowNY = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/New_York" });
-    setMarkForm({ amount: calcMonthlyRent(renter, monthStr) || "", payment_method: "cash", notes: "", paid_time: nowNY, pay_type: "full" });
+    // Compute all Monday-starting weeks that overlap with the viewed month
+    // (consistent with getWeekStart which uses Monday as week start)
+    const [yr, mo] = monthStr.split("-").map(Number);
+    const weeksInMonth = [];
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd = new Date(yr, mo, 0); // last day of month
+    // Start from the Monday on or before month start
+    const d = new Date(monthStart);
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    while (d <= monthEnd) {
+      weeksInMonth.push(d.toISOString().split("T")[0]);
+      d.setDate(d.getDate() + 7);
+    }
+    // Default week = current week (clamped to month)
+    const todayWeekStart = getWeekStart(new Date(), 0).toISOString().split("T")[0];
+    const defaultWeek = weeksInMonth.includes(todayWeekStart) ? todayWeekStart : weeksInMonth[weeksInMonth.length - 1] || todayWeekStart;
+
+    setMarkForm({ amount: calcMonthlyRent(renter, monthStr) || "", payment_method: "cash", notes: "", paid_time: nowNY, pay_type: "full", weekStartStr: defaultWeek, weeksInMonth });
     setMarkDialog({ renter, existing: payment });
   };
 
@@ -101,16 +120,16 @@ export default function Payments() {
         : new Date().toISOString();
 
       if (markForm.pay_type === "weekly") {
-        // Create a separate payment record for this specific week only — does NOT mark full month as paid
-              const weekStartDate = getWeekStart(new Date(), 0).toISOString().split("T")[0];
-        const weekPeriodKey = `${monthStr}-week-${weekStartDate}`;
+        // Use the selected week from markForm (weekStartStr)
+        const weekStartStr = markForm.weekStartStr || getWeekStart(new Date(), 0).toISOString().split("T")[0];
+        const weekPeriodKey = `${monthStr}-week-${weekStartStr}`;
         // Check if there's already a payment for this exact week
         const existingWeekPayment = payments.find(p => p.renter_id === renter.id && p.period === weekPeriodKey);
-        const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+        const weekLabel = new Date(weekStartStr + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
         const weekData = {
           status: "paid",
           paid_date: paidDateTime,
-          due_date: getDueDate(weekStartDate, "weekly"),
+          due_date: getDueDate(weekStartStr, "weekly"),
           amount,
           payment_method: markForm.payment_method,
           notes: markForm.notes || `Weekly payment — week of ${weekLabel}`,
@@ -121,7 +140,7 @@ export default function Payments() {
           await base44.entities.Payment.create({ renter_id: renter.id, period: weekPeriodKey, ...weekData });
         }
         setMarkDialog(null);
-        toast({ title: `${renter.name} — Weekly payment recorded` });
+        toast({ title: `${renter.name} — Week of ${weekLabel} paid` });
       } else {
         const data = {
           status: "paid",
@@ -298,6 +317,7 @@ export default function Payments() {
                       const amt = v === "weekly" ? getWeeklyRentAmount(renter) : calcMonthlyRent(renter, monthStr);
                       setMarkForm(f => ({ ...f, pay_type: v, amount: amt || "" }));
                     }}
+
                     className={cn("flex-1 py-2 rounded-md text-xs font-semibold transition-all", markForm.pay_type === v ? "bg-card shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
                   >
                     {label}
@@ -305,7 +325,29 @@ export default function Payments() {
                 ))}
               </div>
               {markForm.pay_type === "weekly" && (
-                <p className="text-[11px] text-amber-500 mt-1">⚠ This marks a partial weekly payment — the month will remain unpaid overall.</p>
+                <div className="mt-2 space-y-1.5">
+                  <label className="text-xs text-muted-foreground font-medium block">Select Week</label>
+                  <Select
+                    value={markForm.weekStartStr}
+                    onValueChange={v => setMarkForm(f => ({ ...f, weekStartStr: v }))}
+                  >
+                    <SelectTrigger className="min-h-[44px]"><SelectValue placeholder="Pick a week" /></SelectTrigger>
+                    <SelectContent>
+                      {(markForm.weeksInMonth || []).map(ws => {
+                        const wStart = new Date(ws + "T12:00:00");
+                        const wEnd = new Date(ws + "T12:00:00"); wEnd.setDate(wEnd.getDate() + 6);
+                        const label = `${wStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${wEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
+                        const alreadyPaid = payments.some(p => p.renter_id === markDialog?.renter?.id && p.period === `${monthStr}-week-${ws}` && p.status === "paid");
+                        return (
+                          <SelectItem key={ws} value={ws}>
+                            {label}{alreadyPaid ? " ✓" : ""}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[11px] text-amber-500">⚠ Partial week payment — month stays unpaid overall.</p>
+                </div>
               )}
             </div>
             <div>
@@ -575,15 +617,22 @@ function PaymentHistory({ renters, allPayments, currentMonth }) {
               <tr key={r.id} className="hover:bg-muted/20">
                 <td className="px-5 py-3 font-medium">{r.name}</td>
                 {prevMonths.map(m => {
-                  // Only exact month-period payments represent a full payment status
-                  const p = allPayments.find(x => x.renter_id === r.id && x.period === m);
-                  const s = p?.status || "pending";
-                  return (
-                    <td key={m} className="px-4 py-3 text-center">
-                      <StatusBadge status={s} />
-                    </td>
-                  );
-                })}
+                   const fullPmt = allPayments.find(x => x.renter_id === r.id && x.period === m && x.status === "paid");
+                   const weeklyPmts = allPayments.filter(x => x.renter_id === r.id && x.period?.startsWith(`${m}-week-`) && x.status === "paid");
+                   return (
+                     <td key={m} className="px-4 py-3 text-center">
+                       {fullPmt ? (
+                         <StatusBadge status="paid" />
+                       ) : weeklyPmts.length > 0 ? (
+                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-primary/30">
+                           {weeklyPmts.length}w
+                         </span>
+                       ) : (
+                         <StatusBadge status="pending" />
+                       )}
+                     </td>
+                   );
+                 })}
               </tr>
             ))}
           </tbody>
