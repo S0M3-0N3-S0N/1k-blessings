@@ -310,9 +310,7 @@ export default function RenterDashboard() {
 
         {/* Quick Links */}
         <div className="grid grid-cols-1 md:flex md:gap-2 gap-2">
-          <Link to="/paystub" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center">{t("paystub")}</Link>
-          <Link to="/services" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center md:flex-1">{t("logService")}</Link>
-          <Link to="/messages" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center md:flex-1">{t("messages")}</Link>
+          <Link to="/services" className="py-3 px-4 rounded-xl border border-border text-sm font-medium text-center hover:bg-muted/50 transition-colors min-h-[44px] md:min-h-[52px] flex items-center justify-center flex-1">{t("logService")}</Link>
         </div>
       </div>
 

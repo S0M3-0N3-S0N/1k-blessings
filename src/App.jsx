@@ -9,21 +9,15 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import Layout from './components/Layout.jsx';
 import AppErrorBoundary from '@/components/AppErrorBoundary';
-import AdminRoute from '@/components/AdminRoute';
 
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import RenterDashboard from './pages/RenterDashboard.jsx';
-import Paystub from './pages/Paystub.jsx';
-import TeamCalendar from './pages/TeamCalendar.jsx';
 import Renters from './pages/Renters.jsx';
-import Clients from './pages/Clients.jsx';
-import Messages from './pages/Messages.jsx';
 import ServiceTracker from './pages/ServiceTracker.jsx';
 import Payments from './pages/Payments.jsx';
 import Expenses from './pages/Expenses.jsx';
 import MonthlyReports from './pages/MonthlyReports.jsx';
 import AccountSettings from './pages/AccountSettings.jsx';
-import Notes from './pages/Notes.jsx';
 
 const ThemeProvider = ({ children }) => {
   useEffect(() => {
@@ -60,15 +54,10 @@ const AuthenticatedApp = () => {
       <Route element={<Layout />}>
         <Route path="/" element={isAdmin ? <AdminDashboard /> : <RenterDashboard />} />
         <Route path="/renters" element={isAdmin ? <Renters /> : <Navigate to="/" replace />} />
-        <Route path="/clients" element={!isAdmin ? <Clients /> : <Navigate to="/" replace />} />
         <Route path="/payments" element={isAdmin ? <Payments /> : <Navigate to="/" replace />} />
         <Route path="/reports" element={isAdmin ? <MonthlyReports /> : <Navigate to="/" replace />} />
         <Route path="/expenses" element={isAdmin ? <Expenses /> : <Navigate to="/" replace />} />
         <Route path="/services" element={<ServiceTracker />} />
-        <Route path="/calendar" element={<TeamCalendar />} />
-        <Route path="/paystub" element={<Paystub />} />
-        <Route path="/notes" element={<Notes />} />
-        <Route path="/messages" element={<Messages />} />
         <Route path="/account" element={<AccountSettings />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>

@@ -3,9 +3,9 @@ import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
 import {
-  LayoutDashboard, Users, CreditCard, MessageSquare,
-  Scissors, BarChart2, Receipt, Calendar, Settings, LogOut,
-  Sparkles, StickyNote, MoreHorizontal, X
+  LayoutDashboard, Users, CreditCard,
+  Scissors, BarChart2, Receipt, Settings, LogOut,
+  Sparkles, MoreHorizontal, X
 } from "lucide-react";
 import { cn, isPaymentOverdue } from "@/lib/utils";
 import { base44 } from "@/api/base44Client";
@@ -26,7 +26,6 @@ export default function Layout() {
   const navigate = useNavigate();
   const isAdmin = user?.role === "admin";
   const [overdueCount, setOverdueCount] = useState(0);
-  const [unreadCount, setUnreadCount] = useState(0);
 
   const refetchOverdue = () => {
     if (!isAdmin) return;
@@ -52,16 +51,6 @@ export default function Layout() {
     return () => window.removeEventListener('overdueCountChanged', handler);
   }, []);
 
-  useEffect(() => {
-    if (!user?.email) return;
-    base44.entities.Message.filter({ is_read: false }).then(msgs => {
-      const mine = isAdmin
-        ? msgs.filter(m => m.receiver_email === user.email)
-        : msgs.filter(m => m.receiver_email === user.email);
-      setUnreadCount(mine.length);
-    }).catch(() => {});
-  }, [user?.email, isAdmin]);
-
   const adminNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
     { path: "/renters", label: t("stylists"), icon: Users },
@@ -69,19 +58,12 @@ export default function Layout() {
     { path: "/services", label: t("services"), icon: Scissors },
     { path: "/reports", label: t("reports"), icon: BarChart2 },
     { path: "/expenses", label: t("expenses"), icon: Receipt },
-    { path: "/notes", label: t("notes"), icon: StickyNote },
-    { path: "/messages", label: t("messages"), icon: MessageSquare },
-    { path: "/calendar", label: t("calendar"), icon: Calendar },
     { path: "/account", label: t("account"), icon: Settings },
   ];
 
   const renterNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
-    { path: "/clients", label: t("clients"), icon: Users },
-    { path: "/paystub", label: t("paystub"), icon: Receipt },
     { path: "/services", label: t("services"), icon: Scissors },
-    { path: "/messages", label: t("messages"), icon: MessageSquare },
-    { path: "/calendar", label: t("calendar"), icon: Calendar },
     { path: "/account", label: t("account"), icon: Settings },
   ];
 
@@ -90,14 +72,11 @@ export default function Layout() {
     { path: "/renters", label: t("stylists"), icon: Users },
     { path: "/payments", label: t("payments"), icon: CreditCard },
     { path: "/services", label: t("services"), icon: Scissors },
-    { path: "/messages", label: t("messages"), icon: MessageSquare },
   ];
 
   const renterBottomTabs = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },
     { path: "/services", label: t("services"), icon: Scissors },
-    { path: "/paystub", label: t("paystub"), icon: Receipt },
-    { path: "/messages", label: t("messages"), icon: MessageSquare },
     { path: "/account", label: t("account"), icon: Settings },
   ];
 
@@ -127,7 +106,6 @@ export default function Layout() {
         {nav.map(({ path, label, icon: Icon }) => {
           const active = location.pathname === path;
           const showOverdue = path === "/payments" && overdueCount > 0;
-          const showUnread = path === "/messages" && unreadCount > 0;
           return (
             <Link
               key={path}
@@ -143,9 +121,6 @@ export default function Layout() {
               {label}
               {showOverdue && (
                 <span className="ml-auto bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{overdueCount}</span>
-              )}
-              {showUnread && (
-                <span className="ml-auto bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1">{unreadCount}</span>
               )}
             </Link>
           );
@@ -207,7 +182,6 @@ export default function Layout() {
           {bottomTabs.map(({ path, label, icon: Icon }) => {
             const active = location.pathname === path;
             const showOverdue = path === "/payments" && overdueCount > 0;
-            const showUnread = path === "/messages" && unreadCount > 0;
             return (
               <Link
                 key={path}
@@ -226,8 +200,8 @@ export default function Layout() {
                 )}
                 <div className="relative">
                   <Icon className="w-[18px] h-[18px] relative z-10" />
-                  {(showOverdue || showUnread) && (
-                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[13px] h-3.5 flex items-center justify-center px-0.5 z-20">{showOverdue ? overdueCount : unreadCount}</span>
+                  {showOverdue && (
+                    <span className="absolute -top-1.5 -right-2 bg-red-500 text-white text-[8px] font-bold rounded-full min-w-[13px] h-3.5 flex items-center justify-center px-0.5 z-20">{overdueCount}</span>
                   )}
                 </div>
               </Link>

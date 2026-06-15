@@ -18,7 +18,6 @@ export default function AdminDashboard() {
   const [renters, setRenters] = useState([]);
   const [services, setServices] = useState([]);
   const [payments, setPayments] = useState([]);
-  const [clients, setClients] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -34,13 +33,12 @@ export default function AdminDashboard() {
   const loadData = useCallback(async () => {
     try {
       setError(null);
-      const [r, s, p, c] = await Promise.all([
+      const [r, s, p] = await Promise.all([
         base44.entities.Renter.list(),
         base44.entities.ServiceEntry.list("-service_date", 100),
         base44.entities.Payment.list("-period"),
-        base44.entities.Client.list(),
       ]);
-      setRenters(r); setServices(s); setPayments(p); setClients(c); setLoading(false);
+      setRenters(r); setServices(s); setPayments(p); setLoading(false);
     } catch (err) {
       console.error('Load error:', err);
       setError("Failed to load data. Pull down to retry.");
@@ -157,7 +155,7 @@ export default function AdminDashboard() {
   if (computedOverdueCount !== overdueCount) setOverdueCount(computedOverdueCount);
 
   // Birthday reminders (next 7 days) — compare month/day only, ignore year
-  const upcomingBirthdays = [...renters, ...clients].filter(p => {
+  const upcomingBirthdays = [...renters].filter(p => {
     if (!p.birthday) return false;
     const [, bMo, bDay] = p.birthday.split('-').map(Number);
     const today = new Date();
@@ -356,7 +354,7 @@ export default function AdminDashboard() {
             {[
               { label: t("payments"), to: "/payments" }, { label: t("services"), to: "/services" },
               { label: t("stylists"), to: "/renters" }, { label: t("reports"), to: "/reports" },
-              { label: t("expenses"), to: "/expenses" }, { label: t("messages"), to: "/messages" },
+              { label: t("expenses"), to: "/expenses" },
             ].map(l => (
               <Link key={l.to} to={l.to} className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-muted/50 hover:border-primary/40 transition-all min-h-[44px] flex items-center">
                 {l.label}
