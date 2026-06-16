@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, Outlet, Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { useLanguage } from "@/lib/i18n";
@@ -27,7 +27,7 @@ export default function Layout() {
   const isAdmin = user?.role === "admin";
   const [overdueCount, setOverdueCount] = useState(0);
 
-  const refetchOverdue = () => {
+  const refetchOverdue = useCallback(() => {
     if (!isAdmin) return;
     const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`;
     Promise.all([base44.entities.Payment.list(), base44.entities.Renter.list()]).then(([payments, renters]) => {
@@ -39,17 +39,17 @@ export default function Layout() {
       });
       setOverdueCount(count);
     });
-  };
+  }, [isAdmin]);
 
   useEffect(() => {
     refetchOverdue();
-  }, [isAdmin]);
+  }, [refetchOverdue]);
 
   useEffect(() => {
     const handler = () => refetchOverdue();
     window.addEventListener('overdueCountChanged', handler);
     return () => window.removeEventListener('overdueCountChanged', handler);
-  }, []);
+  }, [refetchOverdue]);
 
   const adminNav = [
     { path: "/", label: t("dashboard"), icon: LayoutDashboard },

@@ -104,7 +104,8 @@ export default function AdminDashboard() {
     });
 
   const getWeeklyRentAmount = (renter) => {
-    if (renter.frequency === "weekly" || renter.frequency === "biweekly") return renter.rent_amount || 0;
+    if (renter.frequency === "weekly") return renter.rent_amount || 0;
+    if (renter.frequency === "biweekly") return (renter.rent_amount || 0) / 2;
     return parseFloat(((renter.rent_amount || 0) / (52 / 12)).toFixed(2));
   };
 
@@ -113,7 +114,7 @@ export default function AdminDashboard() {
     const renter = markDialog.renter;
     setMarkingId(renter.id);
     try {
-      const existing = payments.find(p => p.renter_id === renter.id && p.period?.startsWith(currentMonthStr));
+      const existing = payments.find(p => p.renter_id === renter.id && p.period === currentMonthStr);
       if (markPayType === "weekly") {
         const weekLabel = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
         // Use consistent weekly period key format matching Payments.jsx

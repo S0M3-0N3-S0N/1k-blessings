@@ -74,7 +74,7 @@ export default function Payments() {
   const getWeeklyRentAmount = (renter) => {
     // For weekly renters, one week's rent. For biweekly, half. For monthly, divide by ~4.33
     if (renter.frequency === "weekly") return renter.rent_amount || 0;
-    if (renter.frequency === "biweekly") return renter.rent_amount || 0;
+    if (renter.frequency === "biweekly") return (renter.rent_amount || 0) / 2;
     return parseFloat(((renter.rent_amount || 0) / (52 / 12)).toFixed(2));
   };
 
