@@ -34,7 +34,7 @@ export default function Layout() {
       const rentRenters = renters.filter(r => r.payment_model === "rent" && r.status === "active");
       let count = 0;
       rentRenters.forEach(r => {
-        const payment = payments.find(p => p.renter_id === r.id && p.period?.startsWith(currentMonthStr));
+        const payment = payments.find(p => p.renter_id === r.id && p.period === currentMonthStr);
         if (isPaymentOverdue(payment, r)) count++;
       });
       setOverdueCount(count);

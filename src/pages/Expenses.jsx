@@ -54,7 +54,7 @@ export default function Expenses() {
   const handleSave = async () => {
     if (!form.description || !form.amount || !form.expense_date) return;
     setSaving(true);
-    const data = { ...form, amount: parseFloat(form.amount) || 0, last_edited_at: new Date().toISOString() };
+    const data = { ...form, amount: parseFloat(form.amount) || 0 };
     if (editExpense) {
       await base44.entities.Expense.update(editExpense.id, data);
       toast({ title: t("save") });

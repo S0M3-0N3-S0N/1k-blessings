@@ -23,7 +23,6 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [weekOffset, setWeekOffset] = useState(0);
   const [markingId, setMarkingId] = useState(null);
-  const [overdueCount, setOverdueCount] = useState(0);
   const [markDialog, setMarkDialog] = useState(null); // { renter }
   const [markPayType, setMarkPayType] = useState("full");
   const [markMethod, setMarkMethod] = useState("cash");
@@ -149,10 +148,8 @@ export default function AdminDashboard() {
 
 
 
-  // Overdue count derived from rent rows (no extra fetch needed)
-  const computedOverdueCount = rentRows.filter(r => r.status === "overdue").length;
-  // Sync to state if different (avoids stale initial value)
-  if (computedOverdueCount !== overdueCount) setOverdueCount(computedOverdueCount);
+  // Overdue count derived from rent rows
+  const overdueCount = rentRows.filter(r => r.status === "overdue").length;
 
   // Birthday reminders (next 7 days) — compare month/day only, ignore year
   const upcomingBirthdays = [...renters].filter(p => {

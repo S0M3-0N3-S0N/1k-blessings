@@ -109,24 +109,12 @@ export default function ServiceTracker() {
         amount: amt,
         tip_amount: tip,
         ...earnings,
-        last_edited_at: new Date().toISOString()
       };
       if (editService) {
         await base44.entities.ServiceEntry.update(editService.id, data);
-        toast({ title: t("serviceUpdated") || t("save") });
+        toast({ title: t("save") });
       } else {
         await base44.entities.ServiceEntry.create(data);
-        // Update client stats if client_name provided
-        if (data.client_name) {
-          const clients = await base44.entities.Client.filter({ name: data.client_name });
-          if (clients[0]) {
-            await base44.entities.Client.update(clients[0].id, {
-              last_visit_date: data.service_date,
-              visit_count: (clients[0].visit_count || 0) + 1,
-              total_spent: (clients[0].total_spent || 0) + amt,
-            });
-          }
-        }
         toast({ title: t("serviceLogged") });
       }
       setShowDialog(false);
@@ -140,7 +128,7 @@ export default function ServiceTracker() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm(t("deleteServiceConfirm") || "Delete this service?")) return;
+    if (!confirm("Delete this service?")) return;
     try {
       await base44.entities.ServiceEntry.delete(id);
       toast({ title: t("deleted") });
