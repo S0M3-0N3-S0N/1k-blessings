@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { base44 } from "@/api/base44Client";
-import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate, isAfterEndDate, calcMonthlyRent } from "@/lib/utils";
+import { formatCurrency, freqLabel, PAYMENT_METHOD_LABELS, cn, getWeekStart, getWeekEnd, formatDateRange, getInitials, getAvatarColor, isPaymentOverdue, getDueDate, isBeforeStartDate, isAfterEndDate, calcMonthlyRent, getMonthlyBaseSalary, getWeeklyBaseSalary, calculateGuaranteedPay } from "@/lib/utils";
 import { Loader2, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw, Scissors, Plus, Trash2, AlertCircle } from "lucide-react";
 import KpiCard from "@/components/ui/KpiCard.jsx";
 import StatusBadge from "@/components/ui/StatusBadge.jsx";
@@ -431,32 +431,77 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
             const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
             const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
             const existingPayout = commPayouts?.find(p => p.renter_id === r.id && p.period === monthStr);
+            const monthlyBase = getMonthlyBaseSalary(r);
+            const drawBalance = r.draw_balance || 0;
+            const guarantee = calculateGuaranteedPay(stylistCut, monthlyBase, drawBalance);
+            const isPaid = existingPayout?.status === "paid";
+            const payoutAmount = isPaid ? existingPayout.amount : guarantee.guaranteedPay;
             return (
-              <div key={r.id} className="flex items-center justify-between px-5 py-4 hover:bg-muted/20 gap-3 flex-wrap">
-                <div>
-                  <p className="text-sm font-medium">{r.name}</p>
-                  <p className="text-xs text-muted-foreground">{r.role} · {rs.length} {t("services")} · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% {t("split")}</p>
-                  {existingPayout?.status === "paid" && (
-                    <p className="text-xs text-emerald-500 mt-0.5">✓ Payout sent · {new Date(existingPayout.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
-                  )}
+              <div key={r.id} className="px-5 py-4 hover:bg-muted/20">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-sm font-medium">{r.name}</p>
+                    <p className="text-xs text-muted-foreground">{r.role} · {rs.length} {t("services")} · {r.commission_owner || 40}% / {100 - (r.commission_owner || 40)}% {t("split")}</p>
+                    {isPaid && (
+                      <p className="text-xs text-emerald-500 mt-0.5">✓ Payout sent · {new Date(existingPayout.paid_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
+                    <div className="text-right"><p className="text-muted-foreground">{t("revenue")}</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
+                    <div className="text-right"><p className="text-muted-foreground">{t("stylist")}</p><p className="font-mono">{formatCurrency(stylistCut)}</p></div>
+                    <div className="text-right"><p className="text-muted-foreground">{t("owner")}</p><p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p></div>
+                    {!isPaid && (stylistCut > 0 || monthlyBase > 0) && (
+                      <GoldButton size="sm" onClick={async () => {
+                        const payoutData = {
+                          status: "paid",
+                          paid_date: new Date().toISOString(),
+                          amount: guarantee.guaranteedPay,
+                          topup_amount: guarantee.topUp,
+                          draw_deduction: guarantee.drawDeduction,
+                        };
+                        if (existingPayout) {
+                          await base44.entities.CommissionPayout.update(existingPayout.id, payoutData);
+                        } else {
+                          await base44.entities.CommissionPayout.create({ renter_id: r.id, period: monthStr, ...payoutData });
+                        }
+                        if (monthlyBase > 0) {
+                          await base44.entities.Renter.update(r.id, { draw_balance: guarantee.drawBalanceAfter });
+                        }
+                        onRefresh();
+                      }}>
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Mark Payout Sent
+                      </GoldButton>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-4 flex-wrap justify-end text-xs">
-                  <div className="text-right"><p className="text-muted-foreground">{t("revenue")}</p><p className="font-mono font-semibold">{formatCurrency(gross)}</p></div>
-                  <div className="text-right"><p className="text-muted-foreground">{t("stylist")}</p><p className="font-mono">{formatCurrency(stylistCut)}</p></div>
-                  <div className="text-right"><p className="text-muted-foreground">{t("owner")}</p><p className="font-mono text-primary font-semibold">{formatCurrency(ownerCut)}</p></div>
-                  {existingPayout?.status !== "paid" && stylistCut > 0 && (
-                    <GoldButton size="sm" onClick={async () => {
-                      if (existingPayout) {
-                        await base44.entities.CommissionPayout.update(existingPayout.id, { status: "paid", paid_date: new Date().toISOString(), amount: stylistCut });
-                      } else {
-                        await base44.entities.CommissionPayout.create({ renter_id: r.id, period: monthStr, amount: stylistCut, status: "paid", paid_date: new Date().toISOString() });
-                      }
-                      onRefresh();
-                    }}>
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Mark Payout Sent
-                    </GoldButton>
-                  )}
-                </div>
+                {monthlyBase > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/50 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                    <span className="text-muted-foreground">Base: <span className="font-mono font-medium text-foreground">{formatCurrency(monthlyBase)}/mo</span></span>
+                    {isPaid ? (
+                      <>
+                        {existingPayout.topup_amount > 0 && (
+                          <span className="text-amber-500">⚠ Salon covered: <span className="font-mono font-medium">{formatCurrency(existingPayout.topup_amount)}</span></span>
+                        )}
+                        {existingPayout.draw_deduction > 0 && (
+                          <span className="text-blue-500">← Draw recovered: <span className="font-mono font-medium">{formatCurrency(existingPayout.draw_deduction)}</span></span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {guarantee.topUp > 0 && (
+                          <span className="text-amber-500">⚠ Salon covers: <span className="font-mono font-medium">{formatCurrency(guarantee.topUp)}</span></span>
+                        )}
+                        {guarantee.drawDeduction > 0 && (
+                          <span className="text-blue-500">← Draw recovered: <span className="font-mono font-medium">{formatCurrency(guarantee.drawDeduction)}</span></span>
+                        )}
+                      </>
+                    )}
+                    {drawBalance > 0 && (
+                      <span className="text-muted-foreground">Draw balance: <span className="font-mono">{formatCurrency(drawBalance)}</span></span>
+                    )}
+                    <span className="text-muted-foreground ml-auto">Guaranteed payout: <span className="font-mono font-bold text-primary">{formatCurrency(payoutAmount)}</span></span>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -477,6 +522,7 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
                 const gross = rs.reduce((s, e) => s + (e.amount || 0), 0);
                 const ownerCut = rs.reduce((s, e) => s + (e.owner_earnings || 0), 0);
                 const stylistCut = rs.reduce((s, e) => s + (e.renter_earnings || 0), 0);
+                const weeklyBase = getWeeklyBaseSalary(r);
                 const av = getAvatarColor(i);
                 return (
                   <tr key={r.id} className={cn("hover:bg-muted/20", gross === 0 && "opacity-50")}>
@@ -488,7 +534,10 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">{rs.length}</td>
                     <td className="px-4 py-3 text-right font-mono tabular-nums">{formatCurrency(gross)}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground"><span className="text-xs mr-1">{100 - (r.commission_owner || 40)}%</span>{formatCurrency(stylistCut)}</td>
+                    <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground">
+                      <span className="text-xs mr-1">{100 - (r.commission_owner || 40)}%</span>{formatCurrency(stylistCut)}
+                      {weeklyBase > 0 && stylistCut < weeklyBase && <div className="text-[9px] text-amber-500 font-normal">↓ {formatCurrency(weeklyBase - stylistCut)} to base</div>}
+                    </td>
                     <td className="px-4 py-3 text-right font-mono tabular-nums text-primary font-semibold"><span className="text-xs mr-1">{r.commission_owner || 40}%</span>{formatCurrency(ownerCut)}</td>
                     <td className="px-4 py-3 w-28"><SplitBar ownerPct={r.commission_owner || 40} /></td>
                   </tr>

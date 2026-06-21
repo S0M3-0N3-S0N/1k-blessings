@@ -102,6 +102,41 @@ export function getWeeklyBaseSalary(renter) {
   return base; // weekly
 }
 
+// Returns monthly base salary for a commission stylist
+export function getMonthlyBaseSalary(renter) {
+  if (!renter || renter.payment_model !== "commission") return 0;
+  const base = renter.base_salary || 0;
+  if (!base) return 0;
+  if (renter.base_salary_frequency === "weekly") return base * (52 / 12);
+  return base; // monthly
+}
+
+// Calculate guaranteed pay with base salary guarantee and draw recovery.
+// If earnings < base: salon covers the gap (top-up), draw balance increases.
+// If earnings >= base: recover prior draws from the surplus.
+export function calculateGuaranteedPay(commissionEarned, baseSalary, drawBalance = 0) {
+  if (baseSalary <= 0) {
+    return { guaranteedPay: commissionEarned, topUp: 0, drawDeduction: 0, drawBalanceAfter: drawBalance };
+  }
+  if (commissionEarned < baseSalary) {
+    const topUp = baseSalary - commissionEarned;
+    return {
+      guaranteedPay: baseSalary,
+      topUp,
+      drawDeduction: 0,
+      drawBalanceAfter: drawBalance + topUp,
+    };
+  }
+  const surplus = commissionEarned - baseSalary;
+  const drawDeduction = Math.min(drawBalance, surplus);
+  return {
+    guaranteedPay: commissionEarned - drawDeduction,
+    topUp: 0,
+    drawDeduction,
+    drawBalanceAfter: drawBalance - drawDeduction,
+  };
+}
+
 // Check if a date is before the renter's start date (no backdated debt)
 export function isBeforeStartDate(periodStr, renter) {
   if (!renter?.start_date) return false;

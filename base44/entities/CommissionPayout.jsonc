@@ -14,6 +14,16 @@
       "type": "number",
       "title": "Amount"
     },
+    "topup_amount": {
+      "type": "number",
+      "title": "Top-up Amount ($)",
+      "default": 0
+    },
+    "draw_deduction": {
+      "type": "number",
+      "title": "Draw Deduction ($)",
+      "default": 0
+    },
     "paid_date": {
       "type": "string",
       "title": "Paid Date",
