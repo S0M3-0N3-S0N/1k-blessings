@@ -209,12 +209,11 @@ export default function Payments() {
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary mb-1">{t("finance")}</p>
-            <h1 className="font-serif text-3xl font-light tracking-wide">{monthLabel}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">{t("rent")}</p>
+            <h1 className="font-serif text-3xl font-light tracking-wide">{t("payments")}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">{monthLabel}</p>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setMonthOffset(o => o + 1)} className="p-2 rounded-lg border border-border hover:bg-muted min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronLeft className="w-4 h-4" /></button>
-            <span className="text-xs text-muted-foreground">{monthLabel}</span>
             <button onClick={() => setMonthOffset(o => Math.max(0, o - 1))} disabled={monthOffset === 0} className="p-2 rounded-lg border border-border hover:bg-muted disabled:opacity-30 min-h-[44px] min-w-[44px] flex items-center justify-center"><ChevronRight className="w-4 h-4" /></button>
           </div>
         </div>
