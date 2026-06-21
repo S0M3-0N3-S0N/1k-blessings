@@ -467,6 +467,16 @@ function CommissionSection({ renters, services, monthStr, weekOffset, setWeekOff
                         if (monthlyBase > 0) {
                           await base44.entities.Renter.update(r.id, { draw_balance: guarantee.drawBalanceAfter });
                         }
+                        if (guarantee.topUp > 0) {
+                          await base44.entities.Expense.create({
+                            description: `Base salary top-up — ${r.name} (${monthStr})`,
+                            amount: guarantee.topUp,
+                            category: "other",
+                            expense_date: new Date().toISOString().split("T")[0],
+                            paid_by: "salon",
+                            notes: `Guaranteed base salary coverage for ${r.name}. Commission earned: ${formatCurrency(stylistCut)}, base: ${formatCurrency(monthlyBase)}.`,
+                          });
+                        }
                         onRefresh();
                       }}>
                         <CheckCircle2 className="w-3.5 h-3.5" /> Mark Payout Sent
